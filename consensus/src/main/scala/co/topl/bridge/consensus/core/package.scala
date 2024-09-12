@@ -16,6 +16,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 package object core {
 
+  import scala.concurrent.duration.Duration
+
+  class RequestTimeout(val underlying: Duration) extends AnyVal
+
   class PeginWalletManager[F[_]](val underlying: BTCWalletAlgebra[F])
       extends AnyVal
   class BridgeWalletManager[F[_]](val underlying: BTCWalletAlgebra[F])
