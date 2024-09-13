@@ -1,4 +1,4 @@
-FROM ghcr.io/topl/bifrost-node:2.0.0-beta3-29-11442de4
+FROM ghcr.io/stratalab/strata-node:0.0.0-8200-7a9041ed
 USER root
 RUN curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
 RUN chmod +x cs

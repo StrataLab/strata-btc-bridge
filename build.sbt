@@ -53,12 +53,12 @@ lazy val commonDockerSettings = List(
   dockerAliases := dockerAliases.value.flatMap { alias =>
     if (sys.env.get("RELEASE_PUBLISH").getOrElse("false").toBoolean)
       Seq(
-        alias.withRegistryHost(Some("ghcr.io/topl")),
-        alias.withRegistryHost(Some("docker.io/toplprotocol"))
+        alias.withRegistryHost(Some("ghcr.io/stratalab")),
+        alias.withRegistryHost(Some("docker.io/stratalab"))
       )
     else
       Seq(
-        alias.withRegistryHost(Some("ghcr.io/topl"))
+        alias.withRegistryHost(Some("ghcr.io/stratalab"))
       )
   },
   dockerBaseImage := "adoptopenjdk/openjdk11:jdk-11.0.16.1_1-ubuntu",
@@ -69,12 +69,12 @@ lazy val commonDockerSettings = List(
 
 lazy val dockerPublishSettingsConsensus = List(
   dockerExposedPorts ++= Seq(4000),
-  Docker / packageName := "topl-btc-bridge-consensus"
+  Docker / packageName := "strata-btc-bridge-consensus"
 ) ++ commonDockerSettings
 
 lazy val dockerPublishSettingsPublicApi = List(
   dockerExposedPorts ++= Seq(5000),
-  Docker / packageName := "topl-btc-bridge-public-api"
+  Docker / packageName := "strata-btc-bridge-public-api"
 ) ++ commonDockerSettings
 
 def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
@@ -137,7 +137,7 @@ lazy val consensus = (project in file("consensus"))
       dockerPublishSettingsConsensus
     else mavenPublishSettings,
     commonSettings,
-    name := "topl-btc-bridge-consensus",
+    name := "strata-btc-bridge-consensus",
     libraryDependencies ++=
       Dependencies.toplBtcBridge.consensus ++
         Dependencies.toplBtcBridge.test
@@ -152,7 +152,7 @@ lazy val publicApi =
         dockerPublishSettingsPublicApi
       else mavenPublishSettings,
       commonSettings,
-      name := "topl-btc-bridge-public-api",
+      name := "strata-btc-bridge-public-api",
       libraryDependencies ++=
         Dependencies.toplBtcBridge.publicApi ++
           Dependencies.toplBtcBridge.test

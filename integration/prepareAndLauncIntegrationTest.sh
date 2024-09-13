@@ -15,14 +15,14 @@ openssl ec -in clientPrivateKey.pem -pubout -out clientPublicKey.pem
 
 # Start the containers
 echo "Starting containers"
-docker run --rm -d --add-host host.docker.internal:host-gateway -p 18444:18444 -p 18443:18443 -p 28332:28332 --name bitcoin01 toplprotocol/bitcoin-zmq:v25-regtest
-docker run --rm -d --add-host host.docker.internal:host-gateway -p 18446:18444 -p 18445:18443 -p 28333:28332 --name bitcoin02 toplprotocol/bitcoin-zmq:v25-regtest
+docker run --rm -d --add-host host.docker.internal:host-gateway -p 18444:18444 -p 18443:18443 -p 28332:28332 --name bitcoin01 stratalab/bitcoin-zmq:v25-regtest
+docker run --rm -d --add-host host.docker.internal:host-gateway -p 18446:18444 -p 18445:18443 -p 28333:28332 --name bitcoin02 stratalab/bitcoin-zmq:v25-regtest
 
 
 sudo rm -fr node01
 sudo rm -fr node02
 #rm -fr staking/*
-#docker run --rm -i --user root  -p 9085:9085 -p 9084:9084 -p 9091:9091 -v (pwd)/config:/bifrost -v (pwd)/staking:/bifrost-staking:rw ghcr.io/topl/bifrost-node:2.0.0-beta3-24-7fd725a9 -- --cli true --config  /bifrost/config.conf < config.txt
+#docker run --rm -i --user root  -p 9085:9085 -p 9084:9084 -p 9091:9091 -v (pwd)/config:/bifrost -v (pwd)/staking:/bifrost-staking:rw ghcr.io/stratalab/strata-node:0.0.0-8200-7a9041ed -- --cli true --config  /bifrost/config.conf < config.txt
 #sudo chown -R mundacho staking/
 mkdir -p node01
 mkdir -p node02
