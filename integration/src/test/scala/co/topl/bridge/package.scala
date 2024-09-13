@@ -391,7 +391,7 @@ package object bridge extends ProcessOps {
   }
 
   val CS_CMD = Option(System.getenv("CI"))
-    .map(_ => s"${Option(System.getenv("GITHUB_WORKSPACE"))}/cs")
+    .map(_ => s"${Option(System.getenv("""GITHUB_WORKSPACE"""))}/cs")
     .getOrElse("cs")
 
   val csParams = Seq(
