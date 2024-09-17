@@ -1,4 +1,4 @@
-package co.topl.bridge.consensus.core.pbft
+package co.topl.bridge.consensus.core.pbft.activities
 import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.brambl.utils.Encoding
@@ -7,13 +7,14 @@ import co.topl.bridge.consensus.core.StableCheckpointRef
 import co.topl.bridge.consensus.core.StateSnapshotRef
 import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
-import co.topl.bridge.consensus.core.pbft.PBFTState
+import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
+import co.topl.bridge.consensus.core.pbft.createStateDigestAux
 
 import java.security.PublicKey
 
@@ -217,7 +218,6 @@ object CheckpointActivity {
       _ <- checkExistingLog(request)
     } yield ()
   }
-
 
   def apply[F[_]: Async: Logger](
       replicaKeysMap: Map[Int, PublicKey],

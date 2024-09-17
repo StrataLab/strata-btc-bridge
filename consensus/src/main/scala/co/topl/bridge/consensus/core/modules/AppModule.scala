@@ -15,9 +15,6 @@ import co.topl.brambl.servicekit.WalletStateApi
 import co.topl.brambl.servicekit.WalletStateResource
 import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
-import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
-import co.topl.bridge.consensus.shared.BTCRetryThreshold
-import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
 import co.topl.bridge.consensus.core.CurrentBTCHeightRef
@@ -35,27 +32,32 @@ import co.topl.bridge.consensus.core.StateSnapshotRef
 import co.topl.bridge.consensus.core.SystemGlobalState
 import co.topl.bridge.consensus.core.Template
 import co.topl.bridge.consensus.core.ToplBTCBridgeConsensusParamConfig
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
 import co.topl.bridge.consensus.core.ToplKeypair
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
 import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.channelResource
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
-import co.topl.bridge.consensus.subsystems.monitor.SessionEvent
-import co.topl.bridge.consensus.subsystems.monitor.SessionManagerImpl
 import co.topl.bridge.consensus.core.managers.WalletManagementUtils
-import co.topl.bridge.consensus.core.pbft.PBFTState
-import co.topl.bridge.consensus.shared.persistence.StorageApi
+import co.topl.bridge.consensus.core.pbft.PBFTRequestPreProcessorImpl
+import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
+import co.topl.bridge.consensus.core.pbft.RequestStateManager
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.service.StateMachineReply.Result
 import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
+import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
+import co.topl.bridge.consensus.shared.BTCRetryThreshold
+import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.shared.Lvl
+import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
+import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.consensus.subsystems.monitor.MonitorStateMachine
+import co.topl.bridge.consensus.subsystems.monitor.SessionEvent
+import co.topl.bridge.consensus.subsystems.monitor.SessionManagerImpl
 import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.StateMachineServiceGrpcClient
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
+import co.topl.bridge.shared.StateMachineServiceGrpcClient
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import io.grpc.Metadata
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
@@ -79,7 +81,6 @@ trait AppModule extends WalletStateResource {
   def createApp(
       replicaKeysMap: Map[Int, PublicKey],
       replicaKeyPair: JKeyPair,
-      pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
       idReplicaClientMap: Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
       params: ToplBTCBridgeConsensusParamConfig,
       queue: Queue[IO, SessionEvent],
@@ -91,6 +92,7 @@ trait AppModule extends WalletStateResource {
       currentToplHeight: Ref[IO, Long],
       currentState: Ref[IO, SystemGlobalState]
   )(implicit
+      pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
       currentView: CurrentViewRef[IO],
       clientId: ClientId,
@@ -158,6 +160,7 @@ trait AppModule extends WalletStateResource {
       stateSnapshot <- Ref.of[IO, (Long, String, Map[String, PBFTState])](
         (0, Encoding.encodeToHex(Array.emptyByteArray), Map())
       )
+      requestStateManager <- RequestStateManager.make[IO](replicaKeyPair)
     } yield {
       implicit val lastReplyMap = new LastReplyMap(
         new ConcurrentHashMap[(ClientId, Long), Result]()
@@ -198,6 +201,10 @@ trait AppModule extends WalletStateResource {
         Ref.unsafe[IO, (Long, Long)]((0, 0))
       )
       implicit val kWatermark = new KWatermark(params.kWatermark)
+      implicit val iRequestStateManager = requestStateManager
+      implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
+        replicaKeysMap
+      )
       val peginStateMachine = MonitorStateMachine
         .make[IO](
           currentBitcoinNetworkHeight,
@@ -205,19 +212,18 @@ trait AppModule extends WalletStateResource {
           new ConcurrentHashMap()
         )
       (
-        co.topl.bridge.consensus.core.StateMachineGrpcServiceServer.stateMachineGrpcServiceServer(
-          replicaKeyPair,
-          pbftProtocolClient,
-          idReplicaClientMap,
-          currentSequenceRef
-        ),
+        co.topl.bridge.consensus.core.StateMachineGrpcServiceServer
+          .stateMachineGrpcServiceServer(
+            replicaKeyPair,
+            pbftProtocolClient,
+            idReplicaClientMap,
+            currentSequenceRef
+          ),
         InitializationModule
           .make[IO](currentBitcoinNetworkHeight, currentState),
         peginStateMachine,
         co.topl.bridge.consensus.core.pbft.PBFTInternalGrpcServiceServer
           .pbftInternalGrpcServiceServer(
-            pbftProtocolClient,
-            replicaKeyPair,
             replicaKeysMap
           )
       )

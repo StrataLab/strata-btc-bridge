@@ -2,6 +2,8 @@ package co.topl.bridge.consensus.core.pbft
 
 import cats.effect.kernel.Async
 import java.util.concurrent.ConcurrentHashMap
+import statemachine.PBFTEvent
+import statemachine.PBFTState
 
 trait PBFTStateMachineAlgebra[F[_]] {
 

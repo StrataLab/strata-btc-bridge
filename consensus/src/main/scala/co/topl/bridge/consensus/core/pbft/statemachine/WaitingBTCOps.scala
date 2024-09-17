@@ -1,4 +1,4 @@
-package co.topl.bridge.consensus.core.pbft
+package co.topl.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.Async
 import cats.effect.kernel.Resource

@@ -3,7 +3,7 @@ package co.topl.bridge.consensus
 import cats.effect.kernel.Ref
 import cats.effect.kernel.Sync
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
-import co.topl.bridge.consensus.core.pbft.PBFTState
+import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.service.StateMachineReply.Result
 import co.topl.bridge.shared.ClientId

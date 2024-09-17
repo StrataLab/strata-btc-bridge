@@ -1,4 +1,4 @@
-package co.topl.bridge.consensus.core.pbft
+package co.topl.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.Async
 import cats.effect.kernel.Resource
@@ -12,7 +12,6 @@ import co.topl.brambl.models.GroupId
 import co.topl.brambl.models.SeriesId
 import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
-import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.core.BitcoinNetworkIdentifiers
 import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
@@ -21,6 +20,32 @@ import co.topl.bridge.consensus.core.CurrentToplHeightRef
 import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.core.LastReplyMap
+import co.topl.bridge.consensus.core.PeginWalletManager
+import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
+import co.topl.bridge.consensus.core.SessionState
+import co.topl.bridge.consensus.core.Template
+import co.topl.bridge.consensus.core.ToplKeypair
+import co.topl.bridge.consensus.core.controllers.StartSessionController
+import co.topl.bridge.consensus.core.pbft.statemachine.ConfirmDepositBTCEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.ConfirmTBTCMintEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.PBFTEvent
+import co.topl.bridge.consensus.core.pbft.statemachine.PBFTTransitionRelation
+import co.topl.bridge.consensus.core.pbft.statemachine.PostClaimTxEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.PostDepositBTCEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.PostRedemptionTxEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.PostTBTCMintEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.UndoClaimTxEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.UndoDepositBTCEvt
+import co.topl.bridge.consensus.core.pbft.statemachine.UndoTBTCMintEvt
+import co.topl.bridge.consensus.pbft.CheckpointRequest
+import co.topl.bridge.consensus.core.pbft.createStateDigest
+import co.topl.bridge.consensus.service.InvalidInputRes
+import co.topl.bridge.consensus.service.StartSessionRes
+import co.topl.bridge.consensus.service.StateMachineReply.Result
+import co.topl.bridge.consensus.shared.AssetToken
+import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
+import co.topl.bridge.consensus.shared.Lvl
+import co.topl.bridge.consensus.shared.MiscUtils
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionMintingTBTCConfirmation
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionStateMintingTBTC
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionStateSuccessfulPegin
@@ -30,46 +55,11 @@ import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForC
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForClaimBTCConfirmation
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForEscrowBTCConfirmation
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForRedemption
-import co.topl.bridge.consensus.core.PeginWalletManager
-import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.consensus.core.SessionState
-import co.topl.bridge.consensus.core.Template
-import co.topl.bridge.consensus.core.ToplKeypair
 import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
-import co.topl.bridge.consensus.core.controllers.StartSessionController
 import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import co.topl.bridge.consensus.core.pbft.ConfirmDepositBTCEvt
-import co.topl.bridge.consensus.core.pbft.ConfirmTBTCMintEvt
-import co.topl.bridge.consensus.core.pbft.PBFTEvent
-import co.topl.bridge.consensus.core.pbft.PBFTState
-import co.topl.bridge.consensus.core.pbft.PBFTTransitionRelation
-import co.topl.bridge.consensus.core.pbft.PSClaimingBTC
-import co.topl.bridge.consensus.core.pbft.PSConfirmingBTCClaim
-import co.topl.bridge.consensus.core.pbft.PSConfirmingBTCDeposit
-import co.topl.bridge.consensus.core.pbft.PSConfirmingTBTCMint
-import co.topl.bridge.consensus.core.pbft.PSMintingTBTC
-import co.topl.bridge.consensus.core.pbft.PSWaitingForBTCDeposit
-import co.topl.bridge.consensus.core.pbft.PSWaitingForRedemption
-import co.topl.bridge.consensus.core.pbft.PostClaimTxEvt
-import co.topl.bridge.consensus.core.pbft.PostDepositBTCEvt
-import co.topl.bridge.consensus.core.pbft.PostRedemptionTxEvt
-import co.topl.bridge.consensus.core.pbft.PostTBTCMintEvt
-import co.topl.bridge.consensus.core.pbft.UndoClaimTxEvt
-import co.topl.bridge.consensus.core.pbft.UndoDepositBTCEvt
-import co.topl.bridge.consensus.core.pbft.UndoTBTCMintEvt
-import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.consensus.shared.MiscUtils
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.service.InvalidInputRes
-import co.topl.bridge.consensus.service.StartSessionRes
-import co.topl.bridge.consensus.service.StateMachineReply.Result
-import co.topl.bridge.consensus.shared.AssetToken
-import co.topl.bridge.consensus.shared.Lvl
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.BridgeError
 import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
 import co.topl.bridge.shared.StartSessionOperation
 import co.topl.bridge.shared.StateMachineRequest
@@ -98,7 +88,7 @@ import scodec.bits.ByteVector
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
 
-object StateMachineExecution {
+object BridgeStateMachineExecution {
 
   import org.typelevel.log4cats.syntax._
   import cats.implicits._
@@ -353,17 +343,13 @@ object StateMachineExecution {
     } yield Result.Empty
   }
 
-  def waitForProtocol[F[_]: Async: Logger](
+  def executeRequest[F[_]: Async: Logger](
       request: co.topl.bridge.shared.StateMachineRequest,
       keyPair: JKeyPair,
-      digest: ByteString,
-      currentView: Long,
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       currentSequence: Long
   )(implicit
       replica: ReplicaId,
-      storageApi: StorageApi[F],
-      replicaCount: ReplicaCount,
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
       currentViewRef: CurrentViewRef[F],
       checkpointInterval: CheckpointInterval,
@@ -393,35 +379,10 @@ object StateMachineExecution {
       bitcoindInstance: BitcoindRpcClient,
       defaultFeePerByte: CurrencyUnit
   ) = {
-    import scala.concurrent.duration._
     import co.topl.bridge.shared.implicits._
     import cats.implicits._
     for {
-      _ <- (Async[F].sleep(1.seconds) >>
-        isPrepared[F](
-          currentView,
-          currentSequence
-        )).iterateUntil(identity)
-      commitRequest = CommitRequest(
-        viewNumber = currentView,
-        sequenceNumber = currentSequence,
-        digest = digest,
-        replicaId = replica.id
-      )
-      signedBytes <- BridgeCryptoUtils.signBytes[F](
-        keyPair.getPrivate(),
-        commitRequest.signableBytes
-      )
-      _ <- pbftProtocolClientGrpc.commit(
-        commitRequest.withSignature(
-          ByteString.copyFrom(signedBytes)
-        )
-      )
-      _ <- (Async[F].sleep(1.second) >> isCommitted[F](
-        currentView,
-        currentSequence
-      )).iterateUntil(identity)
-      _ <- executeRequest(
+      _ <- executeRequestAux(
         request
       )
       // here we start the checkpoint
@@ -447,7 +408,7 @@ object StateMachineExecution {
     } yield ()
   }
 
-  def executeRequest[F[_]: Async: Logger](
+  private def executeRequestAux[F[_]: Async: Logger](
       request: co.topl.bridge.shared.StateMachineRequest
   )(implicit
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],

@@ -34,6 +34,7 @@ import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import io.grpc.ManagedChannel
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.typelevel.log4cats.Logger
+import statemachine.PBFTState
 
 
 trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {

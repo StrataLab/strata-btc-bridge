@@ -216,6 +216,7 @@ object Main
   ) = {
     implicit val consensusClientImpl = consensusClient
     implicit val storageApiImpl = storageApi
+    implicit val iPbftProtocolClient = pbftProtocolClient
     implicit val pbftProtocolClientImpl =
       new PublicApiClientGrpcMap[IO](publicApiClientGrpcMap)
     implicit val currentViewRef = new CurrentViewRef[IO](currentView)
@@ -225,7 +226,6 @@ object Main
       res <- createApp(
         replicaKeysMap,
         replicaKeyPair,
-        pbftProtocolClient,
         idReplicaClientMap,
         params,
         queue,
