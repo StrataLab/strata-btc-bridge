@@ -31,6 +31,7 @@ object PBFTRequestPreProcessorImpl {
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
+      requestTimerManager: RequestTimerManager[F],
       requestStateManager: RequestStateManager[F],
       currentViewRef: CurrentViewRef[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
@@ -39,20 +40,43 @@ object PBFTRequestPreProcessorImpl {
       replicaCount: ReplicaCount
   ): PBFTRequestPreProcessor[F] = new PBFTRequestPreProcessor[F] {
 
+    import org.typelevel.log4cats.syntax._
+    import cats.implicits._
+
     override def preProcessRequest(request: PrePrepareRequest): F[Unit] = {
-      PrePrepareActivity(
-        request
-      )(replicaKeysMap)
+      for {
+        timerExpired <- requestTimerManager.hasExpiredTimer()
+        _ <-
+          if (timerExpired)
+            error"Cannot process pre-prepare request, timer expired"
+          else
+            PrePrepareActivity(
+              request
+            )(replicaKeysMap)
+      } yield ()
     }
 
     override def preProcessRequest(request: PrepareRequest): F[Unit] =
-      PrepareActivity(
-        request
-      )(replicaKeysMap)
+      for {
+        timerExpired <- requestTimerManager.hasExpiredTimer()
+        _ <-
+          if (timerExpired)
+            error"Cannot process prepare request, timer expired"
+          else
+            PrepareActivity(
+              request
+            )(replicaKeysMap)
+      } yield ()
     override def preProcessRequest(request: CommitRequest): F[Unit] =
-      CommitActivity(
-        request
-      )(replicaKeysMap)
-
+      for {
+        timerExpired <- requestTimerManager.hasExpiredTimer()
+        _ <-
+          if (timerExpired)
+            error"Cannot process commit request, timer expired"
+          else
+            CommitActivity(
+              request
+            )(replicaKeysMap)
+      } yield ()
   }
 }

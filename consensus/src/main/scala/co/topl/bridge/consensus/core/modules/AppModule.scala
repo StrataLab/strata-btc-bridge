@@ -215,10 +215,10 @@ trait AppModule extends WalletStateResource {
         new StableCheckpointRef[IO](stableCheckpoint)
 
       implicit val iRequestStateManager = requestStateManager
+      implicit val iRequestTimerManager = requestTimerManager
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
         replicaKeysMap
       )
-      implicit val iRequestTimerManager = requestTimerManager
       val peginStateMachine = MonitorStateMachine
         .make[IO](
           currentBitcoinNetworkHeight,
