@@ -21,13 +21,13 @@ jobs:
       - name: Setup Scala
         uses: olafurpg/setup-scala@v13
       - uses: olafurpg/setup-gpg@v3
-      - name: Deploy (release only)
-        run: sbt "buildClient; ci-release"
-        env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-          PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      # - name: Deploy (release only)
+      #   run: sbt "buildClient; ci-release"
+      #   env:
+      #     PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+      #     PGP_SECRET: ${{ secrets.PGP_SECRET }}
+      #     SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      #     SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       - name: Log in to the Github Container registry
         uses: docker/login-action@v1
         with:
@@ -44,25 +44,25 @@ jobs:
         env:
           DOCKER_PUBLISH: true
           RELEASE_PUBLISH: true
-  deploy-docs:
-    name: Deploy to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: [ sbt-build-and-test ]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
-          cache-dependency-path: microsite/package-lock.json
-      - name: Install dependencies
-        run: cd microsite && npm ci
-      - name: Build website
-        run: cd microsite &&  npm run build
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./microsite/build
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+  # deploy-docs:
+  #   name: Deploy to GitHub Pages
+  #   runs-on: ubuntu-latest
+  #   needs: [ sbt-build-and-test ]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: npm
+  #         cache-dependency-path: microsite/package-lock.json
+  #     - name: Install dependencies
+  #       run: cd microsite && npm ci
+  #     - name: Build website
+  #       run: cd microsite &&  npm run build
+  #     - name: Deploy to GitHub Pages
+  #       uses: peaceiris/actions-gh-pages@v3
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         publish_dir: ./microsite/build
+  #         user_name: github-actions[bot]
+  #         user_email: 41898282+github-actions[bot]@users.noreply.github.com

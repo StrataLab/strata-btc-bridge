@@ -17,8 +17,8 @@ trait ConsensusParamsDescriptor {
     import builder._
 
     OParser.sequence(
-      programName("topl-btc-bridge-consensus"),
-      head("topl-btc-bridge-consensus", "0.1"),
+      programName("strata-btc-bridge-consensus"),
+      head("strata-btc-bridge-consensus", "0.1"),
       opt[Int]("checkpoint-interval")
         .action((x, c) => c.copy(checkpointInterval = x))
         .text(
