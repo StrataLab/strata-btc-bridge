@@ -2,19 +2,19 @@ package co.topl.bridge.consensus.core.pbft.activities
 
 import cats.effect.kernel.Async
 import cats.implicits._
+import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.pbft.Commited
 import co.topl.bridge.consensus.core.pbft.RequestStateManager
 import co.topl.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
+import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
 import co.topl.bridge.shared.implicits._
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
 
 object CommitActivity {
 
@@ -22,6 +22,7 @@ object CommitActivity {
   private case object InvalidPrepareSignature extends CommitProblem
   private case object InvalidView extends CommitProblem
   private case object InvalidWatermark extends CommitProblem
+  private case object LogAlreadyExists extends CommitProblem
 
   def apply[F[_]: Async: Logger](
       request: CommitRequest
@@ -53,6 +54,17 @@ object CommitActivity {
       waterMarkCheck <- checkWaterMark()
       _ <- Async[F].raiseUnless(waterMarkCheck)(
         InvalidWatermark
+      )
+      canInsert <- storageApi
+        .getCommitMessages(request.viewNumber, request.sequenceNumber)
+        .map(x =>
+          x.find(y =>
+            Encoding.encodeToHex(y.digest.toByteArray()) == Encoding
+              .encodeToHex(request.digest.toByteArray())
+          ).isEmpty
+        )
+      _ <- Async[F].raiseUnless(canInsert)(
+        LogAlreadyExists
       )
       _ <- storageApi.insertCommitMessage(request)
       isCommited <- isCommitted[F](

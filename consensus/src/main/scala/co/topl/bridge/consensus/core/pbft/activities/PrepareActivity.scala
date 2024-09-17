@@ -13,6 +13,7 @@ import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
 import co.topl.bridge.shared.ReplicaCount
+import co.topl.brambl.utils.Encoding
 
 object PrepareActivity {
 
@@ -20,6 +21,7 @@ object PrepareActivity {
   private case object InvalidPrepareSignature extends PrepareProblem
   private case object InvalidView extends PrepareProblem
   private case object InvalidWatermark extends PrepareProblem
+  private case object LogAlreadyExists extends PrepareProblem
   import cats.implicits._
 
   def apply[F[_]: Async: Logger](
@@ -53,6 +55,17 @@ object PrepareActivity {
       _ <- Async[F].raiseUnless(waterMarkCheck)(
         InvalidWatermark
       )
+      canInsert <- storageApi
+        .getPrepareMessages(request.viewNumber, request.sequenceNumber)
+        .map(x =>
+          x.find(y =>
+            Encoding.encodeToHex(y.digest.toByteArray()) == Encoding
+              .encodeToHex(request.digest.toByteArray())
+          ).isEmpty
+        )
+      _ <- Async[F].raiseUnless(canInsert)(
+        LogAlreadyExists
+      )
       _ <- storageApi.insertPrepareMessage(request)
       isPrepared <- isPrepared[F](
         request.viewNumber,
@@ -67,6 +80,8 @@ object PrepareActivity {
           error"Invalid view number"
         case InvalidWatermark =>
           error"Invalid watermark"
+        case LogAlreadyExists =>
+          warn"Prepare message already exists for this sequence number"
       }
     }
   }

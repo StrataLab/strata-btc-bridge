@@ -68,6 +68,8 @@ import org.typelevel.log4cats.Logger
 import java.security.PublicKey
 import java.security.{KeyPair => JKeyPair}
 import java.util.concurrent.ConcurrentHashMap
+import co.topl.bridge.consensus.core.pbft.RequestTimerManagerImpl
+import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 
 trait AppModule extends WalletStateResource {
 
@@ -172,7 +174,9 @@ trait AppModule extends WalletStateResource {
       Ref.unsafe[IO, (Long, Long)]((0, 0))
     )
     implicit val kWatermark = new KWatermark(params.kWatermark)
+    import scala.concurrent.duration._
     for {
+      queue <- Queue.unbounded[IO, PBFTInternalEvent]
       bridgeStateMachineExecutionManager <-
         BridgeStateMachineExecutionManagerImpl
           .make[IO](
@@ -181,8 +185,16 @@ trait AppModule extends WalletStateResource {
             params.toplWalletSeedFile,
             params.toplWalletPassword
           )
+      requestTimerManager <- RequestTimerManagerImpl.make[IO](
+        params.requestTimeout.seconds,
+        queue
+      )
       requestStateManager <- RequestStateManagerImpl
-        .make[IO](replicaKeyPair, bridgeStateMachineExecutionManager)
+        .make[IO](
+          replicaKeyPair,
+          requestTimerManager,
+          bridgeStateMachineExecutionManager
+        )
       stableCheckpoint <- Ref.of(StableCheckpoint(0, Map(), Map()))
       unstableCheckpoints <- Ref.of[
         IO,
@@ -206,6 +218,7 @@ trait AppModule extends WalletStateResource {
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
         replicaKeysMap
       )
+      implicit val iRequestTimerManager = requestTimerManager
       val peginStateMachine = MonitorStateMachine
         .make[IO](
           currentBitcoinNetworkHeight,

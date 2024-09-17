@@ -6,8 +6,8 @@ import cats.effect.kernel.Sync
 import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.consensus.shared.PeginSessionInfo
-import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
+import co.topl.bridge.consensus.core.pbft.RequestIdentifier
+import co.topl.bridge.consensus.core.pbft.RequestTimerManager
 import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.service.MintingStatusReply
@@ -15,13 +15,15 @@ import co.topl.bridge.consensus.service.MintingStatusReply.{Result => MSReply}
 import co.topl.bridge.consensus.service.MintingStatusRes
 import co.topl.bridge.consensus.service.SessionNotFoundRes
 import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.MintingStatusOperation
-import co.topl.consensus.core.PBFTInternalGrpcServiceClient
+import co.topl.bridge.consensus.shared.PeginSessionInfo
+import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ClientId
+import co.topl.bridge.shared.Empty
+import co.topl.bridge.shared.MintingStatusOperation
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
+import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
 import org.typelevel.log4cats.Logger
@@ -31,7 +33,6 @@ import java.security.{KeyPair => JKeyPair}
 
 object StateMachineGrpcServiceServer {
 
-
   def stateMachineGrpcServiceServer(
       keyPair: JKeyPair,
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[IO],
@@ -39,6 +40,7 @@ object StateMachineGrpcServiceServer {
       currentSequenceRef: Ref[IO, Long]
   )(implicit
       lastReplyMap: LastReplyMap,
+      requestTimerManager: RequestTimerManager[IO],
       sessionManager: SessionManagerAlgebra[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
       currentViewRef: CurrentViewRef[IO],
@@ -117,9 +119,15 @@ object StateMachineGrpcServiceServer {
               _ <-
                 if (currentPrimary != replicaId.id)
                   // we are not the primary, forward the request
-                  idReplicaClientMap(
-                    replicaId.id
-                  ).executeRequest(request, ctx)
+                  requestTimerManager.startTimer(
+                    RequestIdentifier(
+                      ClientId(request.clientNumber),
+                      request.timestamp
+                    )
+                  ) >>
+                    idReplicaClientMap(
+                      replicaId.id
+                    ).executeRequest(request, ctx)
                 else {
                   import co.topl.bridge.shared.implicits._
                   val prePrepareRequest = PrePrepareRequest(

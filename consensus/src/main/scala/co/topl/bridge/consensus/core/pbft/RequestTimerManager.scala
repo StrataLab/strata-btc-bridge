@@ -5,6 +5,7 @@ import cats.effect.kernel.Ref
 import cats.effect.kernel.Async
 import co.topl.bridge.consensus.core.RequestTimeout
 import cats.effect.std.Queue
+import scala.concurrent.duration.Duration
 
 case class RequestIdentifier(
     cliendId: ClientId,
@@ -25,8 +26,8 @@ trait RequestTimerManager[F[_]] {
 
 object RequestTimerManagerImpl {
 
-  def make[F[_]: Async](implicit
-      requestTimeout: RequestTimeout,
+  def make[F[_]: Async](
+      requestTimeout: Duration,
       queue: Queue[F, PBFTInternalEvent]
   ): F[RequestTimerManager[F]] = {
     import cats.implicits._
@@ -39,7 +40,7 @@ object RequestTimerManagerImpl {
           _ <- runningTimers.update(_ + timerIdentifier)
           _ <- Async[F].start(
             for {
-              _ <- Async[F].sleep(requestTimeout.underlying)
+              _ <- Async[F].sleep(requestTimeout)
               map <- runningTimers.get
               _ <-
                 if (map.contains(timerIdentifier)) {

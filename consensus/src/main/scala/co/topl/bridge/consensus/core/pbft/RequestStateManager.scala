@@ -12,6 +12,7 @@ import com.google.protobuf.ByteString
 import co.topl.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.shared.StateMachineRequest
 import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
+import co.topl.bridge.shared.ClientId
 
 case class RequestSMIdentifier(
     viewNumber: Long,
@@ -76,6 +77,7 @@ object RequestStateMachineTransitionRelation {
       request: PrePrepareRequest
   )(implicit
       replica: ReplicaId,
+      requestTimerManager: RequestTimerManager[F],
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ) = {
     val prepareRequest = PrepareRequest(
@@ -85,6 +87,12 @@ object RequestStateMachineTransitionRelation {
       replicaId = replica.id
     )
     for {
+      _ <- requestTimerManager.startTimer(
+        RequestIdentifier(
+          ClientId(request.payload.get.clientNumber),
+          request.payload.get.timestamp
+        )
+      )
       signedBytes <- BridgeCryptoUtils.signBytes[F](
         keyPair.getPrivate(),
         prepareRequest.signableBytes
@@ -123,11 +131,31 @@ object RequestStateMachineTransitionRelation {
     } yield ()
   }
 
+  private def complete[F[_]: Async](
+      smRequest: StateMachineRequest,
+      rmOp: F[Unit]
+  )(implicit
+      requestTimerManager: RequestTimerManager[F],
+      bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
+  ) = {
+    for {
+      _ <- bridgeStateMachineExecutionManager.executeRequest(smRequest)
+      _ <- requestTimerManager.clearTimer(
+        RequestIdentifier(
+          ClientId(smRequest.clientNumber),
+          smRequest.timestamp
+        )
+      )
+      _ <- rmOp
+    } yield ()
+  }
+
   def transition[F[_]: Async](
       keyPair: KeyPair,
       rmOp: F[Unit]
   )(requestState: RequestState, event: StateMachineEvent)(implicit
       replica: ReplicaId,
+      requestTimerManager: RequestTimerManager[F],
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
   ): (Option[RequestState], F[Unit]) = {
@@ -137,12 +165,7 @@ object RequestStateMachineTransitionRelation {
       case (PreparePhase(smRequest), Prepared(request)) =>
         (Some(CommitPhase(smRequest)), commit[F](keyPair, request))
       case (CommitPhase(smRequest), Commited(_)) =>
-        (
-          Some(Completed),
-          bridgeStateMachineExecutionManager.executeRequest(
-            smRequest
-          ) >> rmOp
-        )
+        (Some(Completed), complete(smRequest, rmOp))
       case (_, _) =>
         (None, Async[F].unit)
     }
@@ -155,12 +178,14 @@ object RequestStateManagerImpl {
 
   def make[F[_]: Async](
       keyPair: KeyPair,
+      requestTimerManager: RequestTimerManager[F],
       bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[
         F
       ]
   ): F[RequestStateManager[F]] = {
     implicit val iBridgeStateMachineExecutionManager =
       bridgeStateMachineExecutionManager
+    implicit val iRequestTimerManager = requestTimerManager
     for {
       state <- Ref.of[F, Map[RequestSMIdentifier, RequestState]](Map.empty)
     } yield new RequestStateManager[F] {
