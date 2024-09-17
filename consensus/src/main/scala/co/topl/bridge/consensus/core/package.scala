@@ -13,6 +13,7 @@ import quivr.models.KeyPair
 
 import java.security.PublicKey
 import java.util.concurrent.ConcurrentHashMap
+import java.security.MessageDigest
 
 package object core {
 
@@ -29,8 +30,6 @@ package object core {
   class CurrentToplHeightRef[F[_]](val underlying: Ref[F, Long]) extends AnyVal
   class CurrentBTCHeightRef[F[_]](val underlying: Ref[F, Int]) extends AnyVal
   class ToplKeypair(val underlying: KeyPair) extends AnyVal
-  class SessionState(val underlying: ConcurrentHashMap[String, PBFTState])
-      extends AnyVal
   case class StableCheckpoint(
       sequenceNumber: Long,
       certificates: Map[Int, CheckpointRequest],
@@ -86,6 +85,17 @@ package object core {
        ManagedChannelBuilder
          .forAddress(address, port)
          .usePlaintext()).resource[F]
+
+  def stateDigest(state: Map[String, PBFTState]) = {
+    val stateBytes =
+      state.toList
+        .sortBy(_._1)
+        .map(x => x._1.getBytes ++ x._2.toBytes)
+        .flatten
+    MessageDigest
+      .getInstance("SHA-256")
+      .digest(stateBytes.toArray)
+  }
 
   class Fellowship(val underlying: String) extends AnyVal
 

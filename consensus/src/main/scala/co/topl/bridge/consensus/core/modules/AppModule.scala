@@ -25,22 +25,21 @@ import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PeginWalletManager
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.consensus.core.SessionState
 import co.topl.bridge.consensus.core.StableCheckpoint
 import co.topl.bridge.consensus.core.StableCheckpointRef
 import co.topl.bridge.consensus.core.StateSnapshotRef
 import co.topl.bridge.consensus.core.SystemGlobalState
 import co.topl.bridge.consensus.core.Template
 import co.topl.bridge.consensus.core.ToplBTCBridgeConsensusParamConfig
-import co.topl.bridge.consensus.core.ToplKeypair
 import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.channelResource
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
 import co.topl.bridge.consensus.core.managers.WalletManagementUtils
 import co.topl.bridge.consensus.core.pbft.PBFTRequestPreProcessorImpl
+import co.topl.bridge.consensus.core.pbft.RequestStateManagerImpl
+import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManagerImpl
 import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
-import co.topl.bridge.consensus.core.pbft.RequestStateManager
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.service.StateMachineReply.Result
 import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
@@ -147,11 +146,43 @@ trait AppModule extends WalletStateResource {
     implicit val toplConfirmationThreshold = new ToplConfirmationThreshold(
       params.toplConfirmationThreshold
     )
+    implicit val checkpointInterval = new CheckpointInterval(
+      params.checkpointInterval
+    )
+    implicit val lastReplyMap = new LastReplyMap(
+      new ConcurrentHashMap[(ClientId, Long), Result]()
+    )
+    implicit val defaultFeePerByte = params.feePerByte
+    implicit val iPeginWalletManager = new PeginWalletManager(
+      pegInWalletManager
+    )
+    implicit val iBridgeWalletManager = new BridgeWalletManager(walletManager)
+    implicit val btcNetwork = params.btcNetwork
+    implicit val toplChannelResource = channelResource(
+      params.toplHost,
+      params.toplPort,
+      params.toplSecureConnection
+    )
+    implicit val currentBTCHeightRef =
+      new CurrentBTCHeightRef[IO](currentBitcoinNetworkHeight)
+    implicit val currentToplHeightRef = new CurrentToplHeightRef[IO](
+      currentToplHeight
+    )
+    implicit val watermarkRef = new WatermarkRef[IO](
+      Ref.unsafe[IO, (Long, Long)]((0, 0))
+    )
+    implicit val kWatermark = new KWatermark(params.kWatermark)
     for {
-      keyPair <- walletManagementUtils.loadKeys(
-        params.toplWalletSeedFile,
-        params.toplWalletPassword
-      )
+      bridgeStateMachineExecutionManager <-
+        BridgeStateMachineExecutionManagerImpl
+          .make[IO](
+            replicaKeyPair,
+            walletManagementUtils,
+            params.toplWalletSeedFile,
+            params.toplWalletPassword
+          )
+      requestStateManager <- RequestStateManagerImpl
+        .make[IO](replicaKeyPair, bridgeStateMachineExecutionManager)
       stableCheckpoint <- Ref.of(StableCheckpoint(0, Map(), Map()))
       unstableCheckpoints <- Ref.of[
         IO,
@@ -160,36 +191,7 @@ trait AppModule extends WalletStateResource {
       stateSnapshot <- Ref.of[IO, (Long, String, Map[String, PBFTState])](
         (0, Encoding.encodeToHex(Array.emptyByteArray), Map())
       )
-      requestStateManager <- RequestStateManager.make[IO](replicaKeyPair)
     } yield {
-      implicit val lastReplyMap = new LastReplyMap(
-        new ConcurrentHashMap[(ClientId, Long), Result]()
-      )
-      implicit val kp = new ToplKeypair(keyPair)
-      implicit val defaultFeePerByte = params.feePerByte
-      implicit val iPeginWalletManager = new PeginWalletManager(
-        pegInWalletManager
-      )
-      implicit val iBridgeWalletManager = new BridgeWalletManager(walletManager)
-      implicit val btcNetwork = params.btcNetwork
-      implicit val toplChannelResource = channelResource(
-        params.toplHost,
-        params.toplPort,
-        params.toplSecureConnection
-      )
-      implicit val currentBTCHeightRef =
-        new CurrentBTCHeightRef[IO](currentBitcoinNetworkHeight)
-      implicit val currentToplHeightRef = new CurrentToplHeightRef[IO](
-        currentToplHeight
-      )
-      implicit val sessionState = new SessionState(
-        new ConcurrentHashMap[String, PBFTState]()
-      )
-      implicit val checkpointInterval = new CheckpointInterval(
-        params.checkpointInterval
-      )
-      implicit val lastStableCheckpointRef: StableCheckpointRef[IO] =
-        new StableCheckpointRef[IO](stableCheckpoint)
       implicit val untableCheckpoints: UnstableCheckpointsRef[IO] =
         new UnstableCheckpointsRef[IO](
           unstableCheckpoints
@@ -197,10 +199,9 @@ trait AppModule extends WalletStateResource {
       implicit val stateSnapshotRef = new StateSnapshotRef[IO](
         stateSnapshot
       )
-      implicit val watermarkRef = new WatermarkRef[IO](
-        Ref.unsafe[IO, (Long, Long)]((0, 0))
-      )
-      implicit val kWatermark = new KWatermark(params.kWatermark)
+      implicit val lastStableCheckpointRef: StableCheckpointRef[IO] =
+        new StableCheckpointRef[IO](stableCheckpoint)
+
       implicit val iRequestStateManager = requestStateManager
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
         replicaKeysMap

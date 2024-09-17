@@ -11,6 +11,7 @@ import java.security.KeyPair
 import com.google.protobuf.ByteString
 import co.topl.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.shared.StateMachineRequest
+import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
 
 case class RequestSMIdentifier(
     viewNumber: Long,
@@ -40,6 +41,7 @@ case class Commited(
       viewNumber = request.viewNumber,
       sequenceNumber = request.sequenceNumber
     )
+
 trait RequestStateManager[F[_]] {
 
   def createStateMachine(viewNumber: Long, sequenceNumber: Long): F[Unit]
@@ -61,6 +63,8 @@ case class PreparePhase(stateMachineRequest: StateMachineRequest)
 case class CommitPhase(
     stateMachineRequest: StateMachineRequest
 ) extends RequestState
+
+case object Completed extends RequestState
 
 object RequestStateMachineTransitionRelation {
 
@@ -94,8 +98,11 @@ object RequestStateMachineTransitionRelation {
     } yield ()
   }
 
-  private def commit[F[_]: Async](keyPair: KeyPair, request: PrepareRequest)(
-      implicit pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+  private def commit[F[_]: Async](
+      keyPair: KeyPair,
+      request: PrepareRequest
+  )(implicit
+      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ) = {
     val commitRequest = CommitRequest(
       viewNumber = request.viewNumber,
@@ -117,35 +124,51 @@ object RequestStateMachineTransitionRelation {
   }
 
   def transition[F[_]: Async](
-      keyPair: KeyPair
+      keyPair: KeyPair,
+      rmOp: F[Unit]
   )(requestState: RequestState, event: StateMachineEvent)(implicit
       replica: ReplicaId,
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
-  ): (RequestState, F[Unit]) = {
+      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
+      bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
+  ): (Option[RequestState], F[Unit]) = {
     (requestState, event) match {
       case (PrePreparePhase, PrePreparedInserted(request)) =>
-        (PreparePhase(request.payload.get), prepare[F](keyPair, request))
+        (Some(PreparePhase(request.payload.get)), prepare[F](keyPair, request))
       case (PreparePhase(smRequest), Prepared(request)) =>
-        (CommitPhase(smRequest), commit[F](keyPair, request))
-      case (CommitPhase(smRequest), PrePreparedInserted(_)) =>
-        (PrePreparePhase, ???)
+        (Some(CommitPhase(smRequest)), commit[F](keyPair, request))
+      case (CommitPhase(smRequest), Commited(_)) =>
+        (
+          Some(Completed),
+          bridgeStateMachineExecutionManager.executeRequest(
+            smRequest
+          ) >> rmOp
+        )
+      case (_, _) =>
+        (None, Async[F].unit)
     }
   }
 }
 
-object RequestStateManager {
+object RequestStateManagerImpl {
 
   import cats.implicits._
 
-  def make[F[_]: Async](keyPair: KeyPair): F[RequestStateManager[F]] =
+  def make[F[_]: Async](
+      keyPair: KeyPair,
+      bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[
+        F
+      ]
+  ): F[RequestStateManager[F]] = {
+    implicit val iBridgeStateMachineExecutionManager =
+      bridgeStateMachineExecutionManager
     for {
-      map <- Ref.of[F, Map[RequestSMIdentifier, RequestState]](Map.empty)
+      state <- Ref.of[F, Map[RequestSMIdentifier, RequestState]](Map.empty)
     } yield new RequestStateManager[F] {
       override def createStateMachine(
           viewNumber: Long,
           sequenceNumber: Long
       ): F[Unit] = {
-        map.update(
+        state.update(
           _ + (RequestSMIdentifier(
             viewNumber,
             sequenceNumber
@@ -159,18 +182,21 @@ object RequestStateManager {
           replica: ReplicaId,
           pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
       ): F[Unit] = for {
-        _ <- map.flatModify { map =>
+        _ <- state.flatModify { map =>
+          val identifier =
+            RequestSMIdentifier(event.viewNumber, event.sequenceNumber)
           val currentState =
-            map(RequestSMIdentifier(event.viewNumber, event.sequenceNumber))
+            map(identifier)
           val (newState, action) =
-            RequestStateMachineTransitionRelation.transition[F](keyPair)(
-              currentState,
-              event
-            )
+            RequestStateMachineTransitionRelation
+              .transition[F](keyPair, state.update(_ - identifier))(
+                currentState,
+                event
+              )
           (
             map.updated(
               RequestSMIdentifier(event.viewNumber, event.sequenceNumber),
-              newState
+              newState.getOrElse(currentState)
             ),
             action
           )
@@ -178,4 +204,5 @@ object RequestStateManager {
 
       } yield ()
     }
+  }
 }

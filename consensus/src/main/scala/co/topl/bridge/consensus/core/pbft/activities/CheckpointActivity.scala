@@ -8,13 +8,13 @@ import co.topl.bridge.consensus.core.StateSnapshotRef
 import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
+import co.topl.bridge.consensus.core.stateDigest
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
-import co.topl.bridge.consensus.core.pbft.createStateDigestAux
 
 import java.security.PublicKey
 
@@ -157,7 +157,7 @@ object CheckpointActivity {
       lastStableCheckpoint,
       lastStableCheckpoint.sequenceNumber == request.sequenceNumber &&
         Encoding.encodeToHex(
-          createStateDigestAux(lastStableCheckpoint.state)
+          stateDigest(lastStableCheckpoint.state)
         ) == Encoding.encodeToHex(request.digest.toByteArray())
     )
   }

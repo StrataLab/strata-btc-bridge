@@ -1,10 +1,8 @@
 package co.topl.bridge.consensus.core.pbft
 
-import cats.data.Validated
 import cats.effect.kernel.Async
 import cats.effect.kernel.Resource
 import cats.implicits._
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.StableCheckpointRef
 import co.topl.bridge.consensus.core.StateSnapshotRef
@@ -19,7 +17,6 @@ import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.implicits._
 import io.grpc.Metadata
 import io.grpc.ServerServiceDefinition
 import org.typelevel.log4cats.Logger
@@ -38,8 +35,7 @@ object PBFTInternalGrpcServiceServer {
       lastStableCheckpointRef: StableCheckpointRef[F],
       unstableCheckpointsRef: UnstableCheckpointsRef[F],
       storageApi: StorageApi[F],
-      replicaCount: ReplicaCount,
-      currentViewRef: CurrentViewRef[F]
+      replicaCount: ReplicaCount
   ) = new PBFTInternalServiceFs2Grpc[F, Metadata] {
 
     override def prePrepare(
@@ -78,8 +74,7 @@ object PBFTInternalGrpcServiceServer {
       lastStableCheckpointRef: StableCheckpointRef[F],
       unstableCheckpointsRef: UnstableCheckpointsRef[F],
       storageApi: StorageApi[F],
-      replicaCount: ReplicaCount,
-      currentViewRef: CurrentViewRef[F]
+      replicaCount: ReplicaCount
   ): Resource[F, ServerServiceDefinition] =
     PBFTInternalServiceFs2Grpc.bindServiceResource(
       pbftInternalGrpcServiceServerAux(

@@ -14,6 +14,7 @@ import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
 import co.topl.bridge.shared.ReplicaCount
+import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
 
 object CommitActivity {
 
