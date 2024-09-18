@@ -8,7 +8,6 @@ import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.stubs.BaseLogger
-import co.topl.bridge.stubs.BasePBFTInternalGrpcServiceClient
 import co.topl.bridge.stubs.BaseStorageApi
 import com.google.protobuf.ByteString
 import fs2.io.process
@@ -169,8 +168,7 @@ class PBFTInternalGrpcServiceServerSpec
         for {
           currentViewRef <- Ref.of[IO, Long](0L).toResource
           serverUnderTest <- createSimpleInternalServer(
-            currentViewRef,
-            new BasePBFTInternalGrpcServiceClient()
+            currentViewRef
           )
         } yield {
           (serverUnderTest, loggedError, loggedWarning)

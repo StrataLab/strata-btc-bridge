@@ -18,8 +18,6 @@ trait RequestTimerManager[F[_]] {
 
   def clearTimer(timerIdentifier: RequestIdentifier): F[Unit]
 
-  def expireTimer(timerIdentifier: RequestIdentifier): F[Unit]
-
   def hasExpiredTimer(): F[Boolean]
 
   def resetAllTimers(): F[Unit]
@@ -38,9 +36,6 @@ object RequestTimerManagerImpl {
       expiredTimers <- Ref.of[F, Set[RequestIdentifier]](Set())
     } yield new RequestTimerManager[F] {
 
-      override def expireTimer(timerIdentifier: RequestIdentifier): F[Unit] =
-        runningTimers.update(_ - timerIdentifier) >>
-          expiredTimers.update(_ + timerIdentifier)
 
       override def startTimer(timerIdentifier: RequestIdentifier): F[Unit] = {
         for {
@@ -51,7 +46,9 @@ object RequestTimerManagerImpl {
               map <- runningTimers.get
               _ <-
                 if (map.contains(timerIdentifier)) {
-                  queue.offer(PBFTTimeoutEvent(timerIdentifier))
+                  runningTimers.update(_ - timerIdentifier) >>
+                    expiredTimers.update(_ + timerIdentifier) >>
+                    queue.offer(PBFTTimeoutEvent(timerIdentifier))
                 } else {
                   Async[F].unit
                 }

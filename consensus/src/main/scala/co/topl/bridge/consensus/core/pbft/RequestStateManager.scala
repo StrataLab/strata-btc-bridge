@@ -120,22 +120,10 @@ object RequestStateMachineTransitionRelation {
     } yield ()
   }
 
-  private def timeout[F[_]: Async](
-      identifier: RequestIdentifier,
-      cleanUpState: F[Unit]
-  )(implicit
-      requestTimerManager: RequestTimerManager[F]
-  ) = {
-    for {
-      _ <- requestTimerManager.expireTimer(identifier)
-      _ <- cleanUpState
-    } yield ()
-  }
 
   def transition[F[_]: Async](
       keyPair: KeyPair,
-      rmOp: F[Unit],
-      cleanUpUp: F[Unit]
+      rmOp: F[Unit]
   )(requestState: RequestState, event: PBFTInternalEvent)(implicit
       replica: ReplicaId,
       requestTimerManager: RequestTimerManager[F],
@@ -149,8 +137,14 @@ object RequestStateMachineTransitionRelation {
         (Some(CommitPhase(smRequest)), commit[F](keyPair, request))
       case (CommitPhase(smRequest), Commited(_, _)) =>
         (Some(Completed), complete(smRequest, rmOp))
-      case (_, PBFTTimeoutEvent(identifier)) =>
-        (None, timeout(identifier, cleanUpUp))
+      case (_, PBFTTimeoutEvent(_)) =>
+        // if there is a timeout event, then we remove only
+        // the request from the state machine
+        // we do not touch other request because there might be other
+        // messages that are still in the pipeline
+        // however, the pipeline will stop processing the messages so
+        // eventually there will not be any more changes.
+        (Some(Completed), rmOp)
       case (_, _) =>
         (None, Async[F].unit)
     }
@@ -209,8 +203,7 @@ object RequestStateManagerImpl {
             RequestStateMachineTransitionRelation
               .transition[F](
                 keyPair,
-                state.update(_ - identifier),
-                state.set(Map.empty)
+                state.update(_ - identifier)
               )(
                 currentState,
                 event

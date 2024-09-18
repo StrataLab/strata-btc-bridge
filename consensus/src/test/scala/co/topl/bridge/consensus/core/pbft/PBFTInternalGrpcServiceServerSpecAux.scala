@@ -13,26 +13,25 @@ import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.consensus.shared.utils.ConfUtils._
 import co.topl.bridge.stubs.BaseRequestStateManager
-import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import org.typelevel.log4cats.Logger
 
 import statemachine.PBFTState
+import cats.effect.std.Queue
+import co.topl.bridge.stubs.BaseRequestTimerManager
 
 trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
 
   def createSimpleInternalServer(
       currentViewRef: Ref[IO, Long],
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[IO]
   )(implicit
       storageApi: StorageApi[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
       logger: Logger[IO]
   ) = {
     implicit val iCurrentViewRef = new CurrentViewRef(currentViewRef)
-    implicit val iPbftProtocolClientGrpc = pbftProtocolClientGrpc
-    
 
     implicit val rquestStateManager = new BaseRequestStateManager()
+    implicit val requestTimerManager = new BaseRequestTimerManager()
     for {
       replicaKeysMap <- createReplicaPublicKeyMap[IO](conf).toResource
       lowAndHigh <- Ref.of[IO, (Long, Long)]((0L, 0L)).toResource
@@ -42,6 +41,7 @@ trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
       stableCheckpoint <- Ref
         .of[IO, StableCheckpoint](StableCheckpoint(100L, Map.empty, Map.empty))
         .toResource
+      queue <- Queue.unbounded[IO, PBFTInternalEvent].toResource
       unstableCheckpoint <- Ref
         .of[
           IO,
@@ -54,6 +54,7 @@ trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
     } yield {
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl
         .make[IO](
+          queue,
           replicaKeysMap
         )
       implicit val watermarkRef = new WatermarkRef(lowAndHigh)
