@@ -1,19 +1,19 @@
 package co.topl.bridge.consensus.core.pbft.activities
 
 import cats.effect.kernel.Async
+import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.CurrentViewRef
+import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.Prepared
-import co.topl.bridge.consensus.core.pbft.RequestStateManager
+import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.ReplicaId
+import co.topl.bridge.shared.ClientId
+import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._
-import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.brambl.utils.Encoding
 
 object PrepareActivity {
 
@@ -29,13 +29,10 @@ object PrepareActivity {
   )(
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
-      requestStateManager: RequestStateManager[F],
       currentViewRef: CurrentViewRef[F],
       storageApi: StorageApi[F],
-      replicaCount: ReplicaCount,
-      replica: ReplicaId
-  ): F[Unit] = {
+      replicaCount: ReplicaCount
+  ): F[Option[PBFTInternalEvent]] = {
     import org.typelevel.log4cats.syntax._
     (for {
       reqSignCheck <- checkMessageSignature(
@@ -71,17 +68,38 @@ object PrepareActivity {
         request.viewNumber,
         request.sequenceNumber
       )
-      _ <- requestStateManager.processEvent(Prepared(request)).whenA(isPrepared)
-    } yield ()).handleErrorWith {
+      somePrePrepareMessage <-
+        if (isPrepared)
+          storageApi
+            .getPrePrepareMessage(request.viewNumber, request.sequenceNumber)
+        else
+          Async[F].pure(None)
+    } yield Option.when(isPrepared)(
+      Prepared(
+        RequestIdentifier(
+          ClientId(
+            somePrePrepareMessage.flatMap(_.payload).get.clientNumber
+          ),
+          somePrePrepareMessage.flatMap(_.payload).get.timestamp
+        ),
+        request
+      ): PBFTInternalEvent
+    )).handleErrorWith {
       _ match {
         case InvalidPrepareSignature =>
-          error"Invalid Prepare signature"
+          error"Invalid Prepare signature" >> none[PBFTInternalEvent]
+            .pure[F]
         case InvalidView =>
-          error"Invalid view number"
+          error"Invalid view number" >> none[PBFTInternalEvent]
+            .pure[F]
         case InvalidWatermark =>
-          error"Invalid watermark"
+          error"Invalid watermark" >> none[PBFTInternalEvent]
+            .pure[F]
         case LogAlreadyExists =>
-          warn"Prepare message already exists for this sequence number"
+          warn"Prepare message already exists for this sequence number" >> none[
+            PBFTInternalEvent
+          ]
+            .pure[F]
       }
     }
   }

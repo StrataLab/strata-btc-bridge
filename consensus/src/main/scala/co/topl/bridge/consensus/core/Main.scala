@@ -243,7 +243,8 @@ object Main
       res._1,
       res._2,
       res._3,
-      res._4
+      res._4,
+      res._5
     )
   }
 
@@ -332,8 +333,10 @@ object Main
         grpcServiceResource,
         init,
         peginStateMachine,
-        pbftServiceResource
+        pbftServiceResource,
+        requestStateManager
       ) = res
+      _ <- requestStateManager.startProcessingEvents()
       pbftService <- pbftServiceResource
       bifrostQueryAlgebra = BifrostQueryAlgebra
         .make[IO](

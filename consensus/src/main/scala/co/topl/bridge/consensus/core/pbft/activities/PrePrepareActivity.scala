@@ -5,16 +5,16 @@ import cats.implicits._
 import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
+import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.PrePreparedInserted
+import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import co.topl.bridge.consensus.core.pbft.RequestStateManager
 import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ClientId
 import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
 import co.topl.bridge.shared.implicits._
-import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import org.typelevel.log4cats.Logger
 
 import java.security.MessageDigest
@@ -106,14 +106,12 @@ object PrePrepareActivity {
   )(
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       requestStateManager: RequestStateManager[F],
       currentViewRef: CurrentViewRef[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
       storageApi: StorageApi[F],
-      replica: ReplicaId,
       replicaCount: ReplicaCount
-  ): F[Unit] = {
+  ): F[Option[PBFTInternalEvent]] = {
     import org.typelevel.log4cats.syntax._
     (for {
       _ <- trace"Received pre-prepare request"
@@ -142,23 +140,26 @@ object PrePrepareActivity {
       )
       _ <- storageApi.insertPrePrepareMessage(request)
       _ <- requestStateManager.createStateMachine(
-        request.viewNumber,
-        request.sequenceNumber
+        RequestIdentifier(
+          ClientId(request.payload.get.clientNumber),
+          request.payload.get.timestamp
+        )
       )
-      _ <- requestStateManager.processEvent(
-        PrePreparedInserted(request)
-      )
-    } yield ()).handleErrorWith(_ match {
-      case InvalidPrepreareSignature =>
-        error"Invalid pre-prepare signature"
-      case InvalidRequestSignature =>
-        error"Invalid request signature"
-      case InvalidView =>
-        warn"Invalid view number"
-      case LogAlreadyExists =>
-        warn"Log already exists"
-      case e =>
-        error"Error handling pre-prepare request: $e"
-    })
+    } yield Option(PrePreparedInserted(request): PBFTInternalEvent))
+      .handleErrorWith(_ match {
+        case InvalidPrepreareSignature =>
+          error"Invalid pre-prepare signature" >> none[PBFTInternalEvent]
+            .pure[F]
+        case InvalidRequestSignature =>
+          error"Invalid request signature" >> none[PBFTInternalEvent].pure[F]
+        case InvalidView =>
+          warn"Invalid view number" >> none[PBFTInternalEvent].pure[F]
+        case LogAlreadyExists =>
+          warn"Log already exists" >> none[PBFTInternalEvent].pure[F]
+        case e =>
+          error"Error handling pre-prepare request: $e" >> none[
+            PBFTInternalEvent
+          ].pure[F]
+      })
   }
 }

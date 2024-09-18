@@ -192,6 +192,7 @@ trait AppModule extends WalletStateResource {
       requestStateManager <- RequestStateManagerImpl
         .make[IO](
           replicaKeyPair,
+          queue,
           requestTimerManager,
           bridgeStateMachineExecutionManager
         )
@@ -217,6 +218,7 @@ trait AppModule extends WalletStateResource {
       implicit val iRequestStateManager = requestStateManager
       implicit val iRequestTimerManager = requestTimerManager
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
+        queue,
         replicaKeysMap
       )
       val peginStateMachine = MonitorStateMachine
@@ -239,7 +241,8 @@ trait AppModule extends WalletStateResource {
         co.topl.bridge.consensus.core.pbft.PBFTInternalGrpcServiceServer
           .pbftInternalGrpcServiceServer(
             replicaKeysMap
-          )
+          ),
+        requestStateManager
       )
     }
   }

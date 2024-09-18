@@ -5,13 +5,13 @@ import cats.implicits._
 import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.pbft.Commited
-import co.topl.bridge.consensus.core.pbft.RequestStateManager
+import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
+import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import co.topl.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
+import co.topl.bridge.shared.ClientId
 import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
 import co.topl.bridge.shared.implicits._
-import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
@@ -29,13 +29,10 @@ object CommitActivity {
   )(
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       replicaCount: ReplicaCount,
-      requestStateManager: RequestStateManager[F],
       currentViewRef: CurrentViewRef[F],
-      storageApi: StorageApi[F],
-      replica: ReplicaId
-  ): F[Unit] = {
+      storageApi: StorageApi[F]
+  ): F[Option[PBFTInternalEvent]] = {
     import org.typelevel.log4cats.syntax._
     (for {
       reqSignCheck <- checkMessageSignature(
@@ -71,15 +68,40 @@ object CommitActivity {
         request.viewNumber,
         request.sequenceNumber
       )
-      _ <- requestStateManager.processEvent(Commited(request)).whenA(isCommited)
-    } yield ()).handleErrorWith {
+      somePrePrepareMessage <-
+        if (isCommited)
+          storageApi
+            .getPrePrepareMessage(request.viewNumber, request.sequenceNumber)
+        else
+          Async[F].pure(None)
+    } yield Option.when(isCommited)(
+      Commited(
+        RequestIdentifier(
+          ClientId(
+            somePrePrepareMessage.flatMap(_.payload).get.clientNumber
+          ),
+          somePrePrepareMessage.flatMap(_.payload).get.timestamp
+        ),
+        request
+      ): PBFTInternalEvent
+    )).handleErrorWith {
       _ match {
         case InvalidPrepareSignature =>
-          error"Invalid commit signature"
+          error"Invalid commit signature" >> none[PBFTInternalEvent]
+            .pure[F]
         case InvalidView =>
-          error"Invalid view number"
+          error"Invalid view number in commit message" >> none[
+            PBFTInternalEvent
+          ]
+            .pure[F]
         case InvalidWatermark =>
-          error"Invalid watermark"
+          error"Invalid watermark in commit message" >> none[PBFTInternalEvent]
+            .pure[F]
+        case LogAlreadyExists =>
+          error"Log already exists for this commit message" >> none[
+            PBFTInternalEvent
+          ]
+            .pure[F]
       }
     }
   }

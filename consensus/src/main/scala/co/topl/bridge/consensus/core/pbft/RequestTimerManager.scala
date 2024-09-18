@@ -1,10 +1,10 @@
 package co.topl.bridge.consensus.core.pbft
 
-import co.topl.bridge.shared.ClientId
-import cats.effect.kernel.Ref
 import cats.effect.kernel.Async
-import co.topl.bridge.consensus.core.RequestTimeout
+import cats.effect.kernel.Ref
 import cats.effect.std.Queue
+import co.topl.bridge.shared.ClientId
+
 import scala.concurrent.duration.Duration
 
 case class RequestIdentifier(
