@@ -22,6 +22,7 @@ import io.grpc.ServerServiceDefinition
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
+import co.topl.bridge.consensus.pbft.ViewChangeRequest
 
 object PBFTInternalGrpcServiceServer {
 
@@ -37,6 +38,11 @@ object PBFTInternalGrpcServiceServer {
       storageApi: StorageApi[F],
       replicaCount: ReplicaCount
   ) = new PBFTInternalServiceFs2Grpc[F, Metadata] {
+
+    override def viewChange(
+        request: ViewChangeRequest,
+        ctx: Metadata
+    ): F[Empty] = ???
 
     override def prePrepare(
         request: PrePrepareRequest,

@@ -17,23 +17,34 @@ message PrepareRequest {
   uint64 viewNumber     = 1;
   uint64 sequenceNumber = 2;
   bytes  digest         = 3;
-  int32  replicaId      = 4;
-  bytes signature       = 5;
+  uint32 replicaId      = 4;
+  bytes  signature       = 5;
 }
 
 message CommitRequest {
-  uint64 viewNumber     = 1;
-  uint64 sequenceNumber = 2;
-  bytes  digest         = 3;
-  int32  replicaId      = 4;
-  bytes signature       = 5;
+  uint64  viewNumber     = 1;
+  uint64  sequenceNumber = 2;
+  bytes   digest         = 3;
+  uint32  replicaId      = 4;
+  bytes   signature       = 5;
 }
 
 message CheckpointRequest {
   uint64 sequenceNumber = 1;
   bytes  digest         = 2;
-  int32  replicaId      = 3;
+  uint32 replicaId     = 3;
   bytes signature       = 4;
+}
+
+message ViewChangeRequest {
+  uint64 newViewNumber = 1;
+  uint64 lastStableCheckpoinSeqNumber = 2;
+  // list of checkpoint requests
+  repeated CheckpointRequest checkpoints = 3;
+  // list of pre-prepare requests
+  repeated PrePrepareRequest prePrepares = 4;
+  uint32 replicaId = 5;
+  bytes signature = 6;
 }
 
 service PBFTInternalService {
@@ -41,4 +52,5 @@ service PBFTInternalService {
   rpc Prepare(PrepareRequest)          returns (co.topl.bridge.shared.Empty);
   rpc Commit(CommitRequest)            returns (co.topl.bridge.shared.Empty);
   rpc Checkpoint(CheckpointRequest)    returns (co.topl.bridge.shared.Empty);
+  rpc ViewChange(ViewChangeRequest)    returns (co.topl.bridge.shared.Empty);
 }
