@@ -120,9 +120,22 @@ object RequestStateMachineTransitionRelation {
     } yield ()
   }
 
+  private def timeout[F[_]: Async](
+      identifier: RequestIdentifier,
+      cleanUpState: F[Unit]
+  )(implicit
+      requestTimerManager: RequestTimerManager[F]
+  ) = {
+    for {
+      _ <- requestTimerManager.expireTimer(identifier)
+      _ <- cleanUpState
+    } yield ()
+  }
+
   def transition[F[_]: Async](
       keyPair: KeyPair,
-      rmOp: F[Unit]
+      rmOp: F[Unit],
+      cleanUpUp: F[Unit]
   )(requestState: RequestState, event: PBFTInternalEvent)(implicit
       replica: ReplicaId,
       requestTimerManager: RequestTimerManager[F],
@@ -136,6 +149,8 @@ object RequestStateMachineTransitionRelation {
         (Some(CommitPhase(smRequest)), commit[F](keyPair, request))
       case (CommitPhase(smRequest), Commited(_, _)) =>
         (Some(Completed), complete(smRequest, rmOp))
+      case (_, PBFTTimeoutEvent(identifier)) =>
+        (None, timeout(identifier, cleanUpUp))
       case (_, _) =>
         (None, Async[F].unit)
     }
@@ -192,7 +207,11 @@ object RequestStateManagerImpl {
             map(identifier)
           val (newState, action) =
             RequestStateMachineTransitionRelation
-              .transition[F](keyPair, state.update(_ - identifier))(
+              .transition[F](
+                keyPair,
+                state.update(_ - identifier),
+                state.set(Map.empty)
+              )(
                 currentState,
                 event
               )
