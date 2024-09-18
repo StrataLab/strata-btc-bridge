@@ -24,7 +24,6 @@ package object core {
       extends AnyVal
   class BridgeWalletManager[F[_]](val underlying: BTCWalletAlgebra[F])
       extends AnyVal
-  class CurrentViewRef[F[_]](val underlying: Ref[F, Long]) extends AnyVal
   class CheckpointInterval(val underlying: Int) extends AnyVal
   class CurrentToplHeightRef[F[_]](val underlying: Ref[F, Long]) extends AnyVal
   class CurrentBTCHeightRef[F[_]](val underlying: Ref[F, Int]) extends AnyVal

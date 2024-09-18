@@ -166,10 +166,7 @@ class PBFTInternalGrpcServiceServerSpec
               loggedWarning.update(_ :+ message)
           }
         for {
-          currentViewRef <- Ref.of[IO, Long](0L).toResource
-          serverUnderTest <- createSimpleInternalServer(
-            currentViewRef
-          )
+          serverUnderTest <- createSimpleInternalServer()
         } yield {
           (serverUnderTest, loggedError, loggedWarning)
         }

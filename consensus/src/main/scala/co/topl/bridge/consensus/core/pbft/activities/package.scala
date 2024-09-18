@@ -1,7 +1,6 @@
 package co.topl.bridge.consensus.core.pbft
 import cats.effect.kernel.Async
 import cats.implicits._
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.shared.BridgeCryptoUtils
 
 import java.security.PublicKey
@@ -13,9 +12,9 @@ package object activities {
 
   private[activities] def checkViewNumber[F[_]: Async](
       requestViewNumber: Long
-  )(implicit currentViewRef: CurrentViewRef[F]): F[Boolean] = {
+  )(implicit viewManager: ViewManager[F]): F[Boolean] = {
     for {
-      currentView <- currentViewRef.underlying.get
+      currentView <- viewManager.currentView
       isValidViewNumber = requestViewNumber == currentView
     } yield isValidViewNumber
   }

@@ -3,7 +3,6 @@ package co.topl.bridge.consensus.core
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.kernel.Sync
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
@@ -30,6 +29,7 @@ import org.typelevel.log4cats.Logger
 
 import java.security.MessageDigest
 import java.security.{KeyPair => JKeyPair}
+import co.topl.bridge.consensus.core.pbft.ViewManager
 
 object StateMachineGrpcServiceServer {
 
@@ -43,7 +43,7 @@ object StateMachineGrpcServiceServer {
       requestTimerManager: RequestTimerManager[IO],
       sessionManager: SessionManagerAlgebra[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
-      currentViewRef: CurrentViewRef[IO],
+      viewManager: ViewManager[IO],
       replicaId: ReplicaId,
       replicaCount: ReplicaCount,
       logger: Logger[IO]
@@ -104,7 +104,7 @@ object StateMachineGrpcServiceServer {
         ) match {
           case Some(result) => // we had a cached response
             for {
-              viewNumber <- currentViewRef.underlying.get
+              viewNumber <- viewManager.currentView
               _ <- debug"Request.clientNumber: ${request.clientNumber}"
               _ <- publicApiClientGrpcMap
                 .underlying(ClientId(request.clientNumber))
@@ -113,7 +113,7 @@ object StateMachineGrpcServiceServer {
             } yield Empty()
           case None =>
             for {
-              currentView <- currentViewRef.underlying.get
+              currentView <- viewManager.currentView
               currentSequence <- currentSequenceRef.updateAndGet(_ + 1)
               currentPrimary = currentView % replicaCount.value
               _ <-

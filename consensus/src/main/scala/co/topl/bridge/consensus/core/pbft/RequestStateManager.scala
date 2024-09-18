@@ -120,7 +120,6 @@ object RequestStateMachineTransitionRelation {
     } yield ()
   }
 
-
   def transition[F[_]: Async](
       keyPair: KeyPair,
       rmOp: F[Unit]
@@ -144,7 +143,7 @@ object RequestStateMachineTransitionRelation {
         // messages that are still in the pipeline
         // however, the pipeline will stop processing the messages so
         // eventually there will not be any more changes.
-        (Some(Completed), rmOp)
+        (Some(Completed), pbftProtocolClientGrpc.viewChange(???) >> rmOp)
       case (_, _) =>
         (None, Async[F].unit)
     }

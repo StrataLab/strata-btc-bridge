@@ -200,7 +200,6 @@ object Main
       currentBitcoinNetworkHeight: Ref[IO, Int],
       currentSequenceRef: Ref[IO, Long],
       currentToplHeight: Ref[IO, Long],
-      currentView: Ref[IO, Long],
       currentState: Ref[IO, SystemGlobalState]
   )(implicit
       clientId: ClientId,
@@ -219,7 +218,6 @@ object Main
     implicit val iPbftProtocolClient = pbftProtocolClient
     implicit val pbftProtocolClientImpl =
       new PublicApiClientGrpcMap[IO](publicApiClientGrpcMap)
-    implicit val currentViewRef = new CurrentViewRef[IO](currentView)
     for {
       currentToplHeightVal <- currentToplHeight.get
       currentBitcoinNetworkHeightVal <- currentBitcoinNetworkHeight.get
@@ -257,7 +255,6 @@ object Main
       currentBitcoinNetworkHeight: Ref[IO, Int],
       currentSequenceRef: Ref[IO, Long],
       currentToplHeight: Ref[IO, Long],
-      currentViewRef: Ref[IO, Long],
       currentState: Ref[IO, SystemGlobalState]
   )(implicit
       conf: Config,
@@ -299,9 +296,10 @@ object Main
       pbftProtocolClientGrpc <- PBFTInternalGrpcServiceClientImpl.make[IO](
         replicaNodes
       )
+      viewReference <- Ref[IO].of(0L).toResource
       replicaClients <- StateMachineServiceGrpcClientImpl
         .makeContainer[IO](
-          currentViewRef,
+          viewReference,
           replicaKeyPair,
           mutex,
           replicaNodes,
@@ -324,7 +322,6 @@ object Main
         currentBitcoinNetworkHeight,
         currentSequenceRef,
         currentToplHeight,
-        currentViewRef,
         currentState
       ).toResource
       (
@@ -358,6 +355,7 @@ object Main
         bifrostQueryAlgebra
       )
       _ <- storageApi.initializeStorage().toResource
+      currentViewRef <- Ref[IO].of(0L).toResource
       responsesService <- ResponseGrpcServiceServer
         .responseGrpcServiceServer[IO](
           currentViewRef,
@@ -524,7 +522,6 @@ object Main
       currentToplHeight <- Ref[IO].of(0L)
       queue <- Queue.unbounded[IO, SessionEvent]
       currentBitcoinNetworkHeight <- Ref[IO].of(0)
-      currentView <- Ref[IO].of(0L)
       currentSequenceRef <- Ref[IO].of(0L)
       _ <- startResources(
         privateKeyFile,
@@ -535,7 +532,6 @@ object Main
         currentBitcoinNetworkHeight,
         currentSequenceRef,
         currentToplHeight,
-        currentView,
         globalState
       ).useForever
     } yield {

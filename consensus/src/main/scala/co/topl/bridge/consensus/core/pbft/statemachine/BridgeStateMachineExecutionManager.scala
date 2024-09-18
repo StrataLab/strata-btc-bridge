@@ -18,7 +18,6 @@ import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
 import co.topl.bridge.consensus.core.CurrentBTCHeightRef
 import co.topl.bridge.consensus.core.CurrentToplHeightRef
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PeginWalletManager
@@ -89,6 +88,7 @@ import scodec.bits.ByteVector
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
+import co.topl.bridge.consensus.core.pbft.ViewManager
 
 trait BridgeStateMachineExecutionManager[F[_]] {
 
@@ -107,6 +107,7 @@ object BridgeStateMachineExecutionManagerImpl {
 
   def make[F[_]: Async: Logger](
       keyPair: JKeyPair,
+      viewManager: ViewManager[F],
       walletManagementUtils: WalletManagementUtils[F],
       toplWalletSeedFile: String,
       toplWalletPassword: String
@@ -114,7 +115,6 @@ object BridgeStateMachineExecutionManagerImpl {
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       replica: ReplicaId,
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
-      currentViewRef: CurrentViewRef[F],
       checkpointInterval: CheckpointInterval,
       sessionManager: SessionManagerAlgebra[F],
       currentBTCHeightRef: CurrentBTCHeightRef[F],
@@ -147,6 +147,7 @@ object BridgeStateMachineExecutionManagerImpl {
       )
       state <- Ref.of[F, Map[String, PBFTState]](Map.empty)
     } yield {
+      implicit val iViewManager = viewManager
       implicit val toplKeypair = new ToplKeypair(tKeyPair)
       new BridgeStateMachineExecutionManager[F] {
 
@@ -166,7 +167,7 @@ object BridgeStateMachineExecutionManagerImpl {
               sessionId,
               sc
             )
-            viewNumber <- currentViewRef.underlying.get
+            viewNumber <- viewManager.currentView
             currentBTCHeight <- currentBTCHeightRef.underlying.get
             resp <- res match {
               case Left(e: BridgeError) =>
@@ -341,7 +342,7 @@ object BridgeStateMachineExecutionManagerImpl {
             value: StateMachineRequest.Operation
         ) = {
           for {
-            viewNumber <- currentViewRef.underlying.get
+            viewNumber <- viewManager.currentView
             newState <- executeStateMachine(
               sessionId,
               toEvt(value)
@@ -368,11 +369,11 @@ object BridgeStateMachineExecutionManagerImpl {
             clientNumber: Int,
             timestamp: Long
         )(implicit
-            currentView: CurrentViewRef[F],
+            viewManager: ViewManager[F],
             publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
         ) = {
           for {
-            viewNumber <- currentView.underlying.get
+            viewNumber <- viewManager.currentView
             _ <- publicApiClientGrpcMap
               .underlying(ClientId(clientNumber))
               ._1
@@ -554,7 +555,7 @@ object BridgeStateMachineExecutionManagerImpl {
           import co.topl.bridge.shared.implicits._
           import cats.implicits._
           for {
-            currentSequence <- currentViewRef.underlying.get
+            currentSequence <- viewManager.currentView
             _ <- executeRequestAux(request)
             // here we start the checkpoint
             _ <-

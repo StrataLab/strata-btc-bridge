@@ -2,7 +2,6 @@ package co.topl.bridge.consensus.core.pbft
 
 import cats.effect.kernel.Async
 import cats.effect.std.Queue
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.activities.CommitActivity
 import co.topl.bridge.consensus.core.pbft.activities.PrePrepareActivity
@@ -28,11 +27,11 @@ object PBFTRequestPreProcessorImpl {
 
   def make[F[_]: Async: Logger](
       queue: Queue[F, PBFTInternalEvent],
+      viewManager: ViewManager[F],
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
       requestTimerManager: RequestTimerManager[F],
       requestStateManager: RequestStateManager[F],
-      currentViewRef: CurrentViewRef[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
       storageApi: StorageApi[F],
       replicaCount: ReplicaCount
@@ -40,6 +39,8 @@ object PBFTRequestPreProcessorImpl {
 
     import org.typelevel.log4cats.syntax._
     import cats.implicits._
+
+    private implicit val viewManagerImplicit: ViewManager[F] = viewManager
 
     override def preProcessRequest(request: PrePrepareRequest): F[Unit] = {
       for {

@@ -18,7 +18,6 @@ import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
 import co.topl.bridge.consensus.core.CurrentBTCHeightRef
 import co.topl.bridge.consensus.core.CurrentToplHeightRef
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.LastReplyMap
@@ -64,6 +63,7 @@ import org.typelevel.log4cats.Logger
 import java.security.PublicKey
 import java.security.{KeyPair => JKeyPair}
 import java.util.concurrent.ConcurrentHashMap
+import co.topl.bridge.consensus.core.pbft.ViewManagerImpl
 
 trait AppModule extends WalletStateResource {
 
@@ -89,7 +89,6 @@ trait AppModule extends WalletStateResource {
   )(implicit
       pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
-      currentView: CurrentViewRef[IO],
       clientId: ClientId,
       storageApi: StorageApi[IO],
       consensusClient: StateMachineServiceGrpcClient[IO],
@@ -172,10 +171,12 @@ trait AppModule extends WalletStateResource {
     for {
       queue <- Queue.unbounded[IO, PBFTInternalEvent]
       checkpointManager <- CheckpointManagerImpl.make[IO]()
+      viewManager <- ViewManagerImpl.make[IO]()
       bridgeStateMachineExecutionManager <-
         BridgeStateMachineExecutionManagerImpl
           .make[IO](
             replicaKeyPair,
+            viewManager,
             walletManagementUtils,
             params.toplWalletSeedFile,
             params.toplWalletPassword
@@ -195,9 +196,11 @@ trait AppModule extends WalletStateResource {
     } yield {
       implicit val iRequestStateManager = requestStateManager
       implicit val iRequestTimerManager = requestTimerManager
+      implicit val iViewManager = viewManager
       implicit val iCheckpointManager = checkpointManager
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
         queue,
+        viewManager,
         replicaKeysMap
       )
       val peginStateMachine = MonitorStateMachine

@@ -2,7 +2,6 @@ package co.topl.bridge.consensus.core.pbft.activities
 
 import cats.effect.kernel.Async
 import co.topl.brambl.utils.Encoding
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.Prepared
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
@@ -14,6 +13,7 @@ import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
+import co.topl.bridge.consensus.core.pbft.ViewManager
 
 object PrepareActivity {
 
@@ -29,7 +29,7 @@ object PrepareActivity {
   )(
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      currentViewRef: CurrentViewRef[F],
+      viewManager: ViewManager[F],
       storageApi: StorageApi[F],
       replicaCount: ReplicaCount
   ): F[Option[PBFTInternalEvent]] = {

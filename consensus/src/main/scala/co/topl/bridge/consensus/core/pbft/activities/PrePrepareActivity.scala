@@ -3,7 +3,6 @@ package co.topl.bridge.consensus.core.pbft.activities
 import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.brambl.utils.Encoding
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.PrePreparedInserted
@@ -19,6 +18,7 @@ import org.typelevel.log4cats.Logger
 
 import java.security.MessageDigest
 import java.security.PublicKey
+import co.topl.bridge.consensus.core.pbft.ViewManager
 
 object PrePrepareActivity {
 
@@ -62,9 +62,9 @@ object PrePrepareActivity {
 
   private def checkViewNumber[F[_]: Async](
       requestViewNumber: Long
-  )(implicit currentViewRef: CurrentViewRef[F]): F[Unit] = {
+  )(implicit viewManager: ViewManager[F]): F[Unit] = {
     for {
-      currentView <- currentViewRef.underlying.get
+      currentView <- viewManager.currentView
       isValidViewNumber = requestViewNumber == currentView
       _ <- Async[F].raiseUnless(isValidViewNumber)(
         InvalidView
@@ -81,12 +81,12 @@ object PrePrepareActivity {
       requestSignableBytes: Array[Byte],
       requestSignature: Array[Byte]
   )(implicit
-      currentViewRef: CurrentViewRef[F],
+      viewManager: ViewManager[F],
       replicaCount: ReplicaCount
   ): F[Boolean] = {
     import cats.implicits._
     for {
-      currentView <- currentViewRef.underlying.get
+      currentView <- viewManager.currentView
       currentPrimary = (currentView % replicaCount.value).toInt
       publicKey = replicaKeysMap(currentPrimary)
       isValidSignature <- BridgeCryptoUtils.verifyBytes[F](
@@ -107,7 +107,7 @@ object PrePrepareActivity {
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
       requestStateManager: RequestStateManager[F],
-      currentViewRef: CurrentViewRef[F],
+      viewManager: ViewManager[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
       storageApi: StorageApi[F],
       replicaCount: ReplicaCount
