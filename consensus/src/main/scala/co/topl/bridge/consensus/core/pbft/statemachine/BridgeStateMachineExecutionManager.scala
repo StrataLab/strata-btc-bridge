@@ -26,6 +26,7 @@ import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.Template
 import co.topl.bridge.consensus.core.ToplKeypair
 import co.topl.bridge.consensus.core.controllers.StartSessionController
+import co.topl.bridge.consensus.core.managers.WalletManagementUtils
 import co.topl.bridge.consensus.core.pbft.statemachine.ConfirmDepositBTCEvt
 import co.topl.bridge.consensus.core.pbft.statemachine.ConfirmTBTCMintEvt
 import co.topl.bridge.consensus.core.pbft.statemachine.PBFTEvent
@@ -88,8 +89,6 @@ import scodec.bits.ByteVector
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
-import co.topl.bridge.consensus.core.managers.WalletManagementUtils
-import co.topl.bridge.consensus.core.ToplKeypair
 
 trait BridgeStateMachineExecutionManager[F[_]] {
 

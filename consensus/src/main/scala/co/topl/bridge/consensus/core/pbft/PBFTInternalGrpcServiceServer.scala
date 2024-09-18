@@ -4,9 +4,6 @@ import cats.effect.kernel.Async
 import cats.effect.kernel.Resource
 import cats.implicits._
 import co.topl.bridge.consensus.core.KWatermark
-import co.topl.bridge.consensus.core.StableCheckpointRef
-import co.topl.bridge.consensus.core.StateSnapshotRef
-import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.pbft.activities.CheckpointActivity
 import co.topl.bridge.consensus.pbft.CheckpointRequest
@@ -29,12 +26,10 @@ object PBFTInternalGrpcServiceServer {
   def pbftInternalGrpcServiceServerAux[F[_]: Async: Logger](
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
+      checkpointManager: CheckpointManager[F],
       pbftReqProcessor: PBFTRequestPreProcessor[F],
       watermarkRef: WatermarkRef[F],
       kWatermark: KWatermark,
-      latestStateSnapshotRef: StateSnapshotRef[F],
-      lastStableCheckpointRef: StableCheckpointRef[F],
-      unstableCheckpointsRef: UnstableCheckpointsRef[F],
       storageApi: StorageApi[F],
       replicaCount: ReplicaCount
   ) = new PBFTInternalServiceFs2Grpc[F, Metadata] {
@@ -73,12 +68,10 @@ object PBFTInternalGrpcServiceServer {
   def pbftInternalGrpcServiceServer[F[_]: Async: Logger](
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
+      checkpointManager: CheckpointManager[F],
       pbftReqProcessor: PBFTRequestPreProcessor[F],
       watermarkRef: WatermarkRef[F],
       kWatermark: KWatermark,
-      latestStateSnapshotRef: StateSnapshotRef[F],
-      lastStableCheckpointRef: StableCheckpointRef[F],
-      unstableCheckpointsRef: UnstableCheckpointsRef[F],
       storageApi: StorageApi[F],
       replicaCount: ReplicaCount
   ): Resource[F, ServerServiceDefinition] =

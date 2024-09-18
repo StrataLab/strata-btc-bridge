@@ -205,7 +205,7 @@ class PBFTInternalGrpcServiceServerSpec
 
     import co.topl.bridge.shared.implicits._
     val checkpointRequest = CheckpointRequest(
-      sequenceNumber = 0L,
+      sequenceNumber = -1L,
       digest = ByteString.copyFrom(stateDigest(Map.empty)),
       replicaId = 1
     )

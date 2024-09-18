@@ -13,7 +13,6 @@ import co.topl.brambl.servicekit.TemplateStorageApi
 import co.topl.brambl.servicekit.WalletKeyApi
 import co.topl.brambl.servicekit.WalletStateApi
 import co.topl.brambl.servicekit.WalletStateResource
-import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
 import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
@@ -25,22 +24,19 @@ import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PeginWalletManager
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.consensus.core.StableCheckpoint
-import co.topl.bridge.consensus.core.StableCheckpointRef
-import co.topl.bridge.consensus.core.StateSnapshotRef
 import co.topl.bridge.consensus.core.SystemGlobalState
 import co.topl.bridge.consensus.core.Template
 import co.topl.bridge.consensus.core.ToplBTCBridgeConsensusParamConfig
-import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.channelResource
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
 import co.topl.bridge.consensus.core.managers.WalletManagementUtils
+import co.topl.bridge.consensus.core.pbft.CheckpointManagerImpl
+import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.PBFTRequestPreProcessorImpl
 import co.topl.bridge.consensus.core.pbft.RequestStateManagerImpl
+import co.topl.bridge.consensus.core.pbft.RequestTimerManagerImpl
 import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManagerImpl
-import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
-import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.service.StateMachineReply.Result
 import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
 import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
@@ -68,8 +64,6 @@ import org.typelevel.log4cats.Logger
 import java.security.PublicKey
 import java.security.{KeyPair => JKeyPair}
 import java.util.concurrent.ConcurrentHashMap
-import co.topl.bridge.consensus.core.pbft.RequestTimerManagerImpl
-import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 
 trait AppModule extends WalletStateResource {
 
@@ -177,6 +171,7 @@ trait AppModule extends WalletStateResource {
     import scala.concurrent.duration._
     for {
       queue <- Queue.unbounded[IO, PBFTInternalEvent]
+      checkpointManager <- CheckpointManagerImpl.make[IO]()
       bridgeStateMachineExecutionManager <-
         BridgeStateMachineExecutionManagerImpl
           .make[IO](
@@ -196,27 +191,11 @@ trait AppModule extends WalletStateResource {
           requestTimerManager,
           bridgeStateMachineExecutionManager
         )
-      stableCheckpoint <- Ref.of(StableCheckpoint(0, Map(), Map()))
-      unstableCheckpoints <- Ref.of[
-        IO,
-        Map[(Long, String), Map[Int, CheckpointRequest]]
-      ](Map())
-      stateSnapshot <- Ref.of[IO, (Long, String, Map[String, PBFTState])](
-        (0, Encoding.encodeToHex(Array.emptyByteArray), Map())
-      )
-    } yield {
-      implicit val untableCheckpoints: UnstableCheckpointsRef[IO] =
-        new UnstableCheckpointsRef[IO](
-          unstableCheckpoints
-        )
-      implicit val stateSnapshotRef = new StateSnapshotRef[IO](
-        stateSnapshot
-      )
-      implicit val lastStableCheckpointRef: StableCheckpointRef[IO] =
-        new StableCheckpointRef[IO](stableCheckpoint)
 
+    } yield {
       implicit val iRequestStateManager = requestStateManager
       implicit val iRequestTimerManager = requestTimerManager
+      implicit val iCheckpointManager = checkpointManager
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
         queue,
         replicaKeysMap
