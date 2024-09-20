@@ -5,10 +5,10 @@ import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.consensus.pbft.CheckpointRequest
+import co.topl.bridge.consensus.pbft.ViewChangeRequest
 
 package object shared {
 
-  
   case class ReplicaId(
       id: Int
   )
@@ -40,6 +40,23 @@ package object shared {
   )
 
   object implicits {
+
+    implicit class ViewChangeRequestOp(val request: ViewChangeRequest) {
+      def signableBytes: Array[Byte] = {
+        BigInt(request.newViewNumber).toByteArray ++
+          BigInt(request.lastStableCheckpoinSeqNumber).toByteArray ++
+          request.checkpoints.flatMap(_.signableBytes).toArray ++
+          request.pms
+            .map(x =>
+              x.prePrepare
+                .map(_.signableBytes)
+                .get ++ x.prepares.flatMap(_.signableBytes)
+            )
+            .toArray
+            .flatten ++
+          BigInt(request.replicaId).toByteArray
+      }
+    }
 
     implicit class CheckpointRequestOp(val request: CheckpointRequest) {
       def signableBytes: Array[Byte] = {

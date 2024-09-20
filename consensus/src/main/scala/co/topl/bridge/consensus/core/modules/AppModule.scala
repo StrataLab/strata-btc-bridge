@@ -171,7 +171,10 @@ trait AppModule extends WalletStateResource {
     for {
       queue <- Queue.unbounded[IO, PBFTInternalEvent]
       checkpointManager <- CheckpointManagerImpl.make[IO]()
-      viewManager <- ViewManagerImpl.make[IO]()
+      viewManager <- ViewManagerImpl.make[IO](
+        storageApi,
+        checkpointManager
+      )
       bridgeStateMachineExecutionManager <-
         BridgeStateMachineExecutionManagerImpl
           .make[IO](
@@ -188,6 +191,7 @@ trait AppModule extends WalletStateResource {
       requestStateManager <- RequestStateManagerImpl
         .make[IO](
           replicaKeyPair,
+          viewManager,
           queue,
           requestTimerManager,
           bridgeStateMachineExecutionManager

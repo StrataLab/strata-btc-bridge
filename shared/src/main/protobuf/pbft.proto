@@ -36,13 +36,18 @@ message CheckpointRequest {
   bytes signature       = 4;
 }
 
+message Pm {
+  PrePrepareRequest prePrepare = 1;
+  repeated PrepareRequest prepares = 2;
+}
+
 message ViewChangeRequest {
   uint64 newViewNumber = 1;
   uint64 lastStableCheckpoinSeqNumber = 2;
   // list of checkpoint requests
   repeated CheckpointRequest checkpoints = 3;
   // list of pre-prepare requests
-  repeated PrePrepareRequest prePrepares = 4;
+  repeated Pm pms = 4;
   uint32 replicaId = 5;
   bytes signature = 6;
 }

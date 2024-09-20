@@ -30,6 +30,11 @@ trait StorageApi[F[_]] {
       sequenceNumber: Long
   ): F[Option[PrePrepareRequest]]
 
+  def getPrePrepareMessagesFromSeqNumber(
+      viewNumber: Long,
+      sequenceNumber: Long
+  ): F[Seq[PrePrepareRequest]]
+
   def getPrepareMessages(
       viewNumber: Long,
       sequenceNumber: Long
@@ -199,6 +204,49 @@ object StorageApiImpl {
               prepareMessages.toSeq
             }
           } yield prepareMessages
+        }
+      }
+
+      def getPrePrepareMessagesFromSeqNumber(
+          viewNumber: Long,
+          sequenceNumber: Long
+      ): F[Seq[PrePrepareRequest]] = {
+        val selectPrePrepareStmnt =
+          s"SELECT * FROM pre_prepare_message WHERE view_number = ${viewNumber} AND sequence_number > ${sequenceNumber}"
+        statementResource.use { stmnt =>
+          for {
+            rs <- Sync[F]
+              .blocking(
+                stmnt.executeQuery(
+                  selectPrePrepareStmnt
+                )
+              )
+            prePrepareMessages <- Sync[F].blocking {
+              val prePrepareMessages =
+                scala.collection.mutable.ArrayBuffer.empty[PrePrepareRequest]
+              while (rs.next()) {
+                val digest = rs.getString("digest")
+                val signature = rs.getString("signature")
+                val payload = rs.getString("payload")
+                val prePrepare = PrePrepareRequest(
+                  viewNumber,
+                  sequenceNumber,
+                  ByteString.copyFrom(
+                    Encoding.decodeFromHex(digest).toOption.get
+                  ),
+                  ByteString.copyFrom(
+                    Encoding.decodeFromHex(signature).toOption.get
+                  ),
+                  Encoding
+                    .decodeFromHex(payload)
+                    .map(StateMachineRequest.parseFrom(_))
+                    .toOption
+                )
+                prePrepareMessages += prePrepare
+              }
+              prePrepareMessages.toSeq
+            }
+          } yield prePrepareMessages
         }
       }
 

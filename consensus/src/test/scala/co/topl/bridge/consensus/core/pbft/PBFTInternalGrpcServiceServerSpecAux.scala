@@ -10,6 +10,7 @@ import co.topl.bridge.consensus.shared.utils.ConfUtils._
 import co.topl.bridge.stubs.BaseRequestStateManager
 import co.topl.bridge.stubs.BaseRequestTimerManager
 import org.typelevel.log4cats.Logger
+import java.security.KeyPair
 
 trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
 
@@ -25,7 +26,13 @@ trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
       checkpointManager <- CheckpointManagerImpl.make[IO]().toResource
       replicaKeysMap <- createReplicaPublicKeyMap[IO](conf).toResource
       lowAndHigh <- Ref.of[IO, (Long, Long)]((0L, 0L)).toResource
-      viewManager <- ViewManagerImpl.make[IO]().toResource
+      viewManager <- ViewManagerImpl
+        .make[IO](
+          replicaKeyPair,
+          storageApi,
+          checkpointManager
+        )
+        .toResource
       queue <- Queue.unbounded[IO, PBFTInternalEvent].toResource
     } yield {
       implicit val iCheckpointManager = checkpointManager

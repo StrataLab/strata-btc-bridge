@@ -8,57 +8,24 @@ import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.PrePreparedInserted
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import co.topl.bridge.consensus.core.pbft.RequestStateManager
+import co.topl.bridge.consensus.core.pbft.ViewManager
 import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ClientId
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
-import java.security.MessageDigest
 import java.security.PublicKey
-import co.topl.bridge.consensus.core.pbft.ViewManager
 
 object PrePrepareActivity {
 
   private sealed trait PreprepareProblem extends Throwable
   private case object InvalidPrepreareSignature extends PreprepareProblem
   private case object InvalidRequestSignature extends PreprepareProblem
+  private case object InvalidRequestDigest extends PreprepareProblem
   private case object InvalidView extends PreprepareProblem
   private case object LogAlreadyExists extends PreprepareProblem
-
-  private def checkDigest[F[_]: Async](
-      requestDigest: Array[Byte],
-      payloadSignableBytes: Array[Byte]
-  ): F[Unit] = {
-    val isValidDigest =
-      Encoding.encodeToHex(requestDigest) == Encoding.encodeToHex(
-        MessageDigest
-          .getInstance("SHA-256")
-          .digest(payloadSignableBytes)
-      )
-    Async[F].raiseUnless(isValidDigest)(
-      InvalidRequestSignature
-    )
-  }
-
-  private def checkRequestSignatures[F[_]: Async](
-      request: PrePrepareRequest
-  )(implicit publicApiClientGrpcMap: PublicApiClientGrpcMap[F]): F[Unit] = {
-    val publicKey = publicApiClientGrpcMap
-      .underlying(new ClientId(request.payload.get.clientNumber))
-      ._2
-    BridgeCryptoUtils.verifyBytes[F](
-      publicKey,
-      request.payload.get.signableBytes,
-      request.payload.get.signature.toByteArray()
-    ) >>= (x =>
-      Async[F].raiseUnless(x)(
-        InvalidRequestSignature
-      )
-    )
-  }
 
   private def checkViewNumber[F[_]: Async](
       requestViewNumber: Long
@@ -76,7 +43,7 @@ object PrePrepareActivity {
       : F[Unit] = // FIXME: add check when watermarks are implemented
     ().pure[F]
 
-  private def checkMessageSignaturePrimary[F[_]: Async](
+  private def checkMessageSignaturePrimaryAux[F[_]: Async](
       replicaKeysMap: Map[Int, PublicKey],
       requestSignableBytes: Array[Byte],
       requestSignature: Array[Byte]
@@ -86,11 +53,8 @@ object PrePrepareActivity {
   ): F[Boolean] = {
     import cats.implicits._
     for {
-      currentView <- viewManager.currentView
-      currentPrimary = (currentView % replicaCount.value).toInt
-      publicKey = replicaKeysMap(currentPrimary)
-      isValidSignature <- BridgeCryptoUtils.verifyBytes[F](
-        publicKey,
+      isValidSignature <- checkMessageSignaturePrimary(
+        replicaKeysMap,
         requestSignableBytes,
         requestSignature
       )
@@ -115,16 +79,27 @@ object PrePrepareActivity {
     import org.typelevel.log4cats.syntax._
     (for {
       _ <- trace"Received pre-prepare request"
-      _ <- checkRequestSignatures(request)
-      _ <- checkMessageSignaturePrimary(
+      _ <- checkRequestSignatures(request) >>= (
+        Async[F].raiseUnless(_)(
+          InvalidRequestSignature
+        )
+      )
+      _ <- checkMessageSignaturePrimaryAux(
         replicaKeysMap,
         request.signableBytes,
         request.signature.toByteArray()
-      )
-      _ <- checkDigest(
-        request.digest.toByteArray(),
-        request.payload.get.signableBytes
-      )
+      ) >>= (Async[F].raiseUnless(_)(
+        InvalidPrepreareSignature
+      ))
+      _ <-
+        Async[F].raiseUnless(
+          checkDigest(
+            request.digest.toByteArray(),
+            request.payload.get.signableBytes
+          )
+        )(
+          InvalidRequestSignature
+        )
       _ <- checkViewNumber(request.viewNumber)
       _ <- checkWaterMark()
       canInsert <- storageApi

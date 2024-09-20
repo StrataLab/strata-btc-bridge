@@ -120,11 +120,31 @@ object RequestStateMachineTransitionRelation {
     } yield ()
   }
 
+  private def viewChange[F[_]: Async](
+      keyPair: KeyPair
+  )(implicit
+      viewManager: ViewManager[F],
+      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+  ) = {
+    for {
+      evt <- viewManager.createViewChangeRequest()
+      signedBytes <- BridgeCryptoUtils.signBytes[F](
+        keyPair.getPrivate(),
+        evt.signableBytes
+      )
+      evtSigned = evt.withSignature(
+        ByteString.copyFrom(signedBytes)
+      )
+      _ <- pbftProtocolClientGrpc.viewChange(evtSigned)
+    } yield ()
+  }
+
   def transition[F[_]: Async](
       keyPair: KeyPair,
       rmOp: F[Unit]
   )(requestState: RequestState, event: PBFTInternalEvent)(implicit
       replica: ReplicaId,
+      viewManager: ViewManager[F],
       requestTimerManager: RequestTimerManager[F],
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
@@ -143,7 +163,10 @@ object RequestStateMachineTransitionRelation {
         // messages that are still in the pipeline
         // however, the pipeline will stop processing the messages so
         // eventually there will not be any more changes.
-        (Some(Completed), pbftProtocolClientGrpc.viewChange(???) >> rmOp)
+        (
+          Some(Completed),
+          viewChange(keyPair)
+        )
       case (_, _) =>
         (None, Async[F].unit)
     }
@@ -156,6 +179,7 @@ object RequestStateManagerImpl {
 
   def make[F[_]: Async](
       keyPair: KeyPair,
+      viewManager: ViewManager[F],
       queue: Queue[F, PBFTInternalEvent],
       requestTimerManager: RequestTimerManager[F],
       bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[
@@ -165,6 +189,8 @@ object RequestStateManagerImpl {
       replica: ReplicaId,
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ): F[RequestStateManager[F]] = {
+
+    implicit val iViewManager = viewManager
 
     implicit val iBridgeStateMachineExecutionManager =
       bridgeStateMachineExecutionManager
