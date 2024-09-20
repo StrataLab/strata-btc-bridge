@@ -9,11 +9,10 @@ import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._
+import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
-import org.typelevel.log4cats.Logger
 
 object ViewChangeActivity {
 
@@ -29,7 +28,6 @@ object ViewChangeActivity {
       prePrepare: PrePrepareRequest,
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      replicaCount: ReplicaCount,
       viewManager: ViewManager[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
   ): F[Unit] = {
@@ -70,7 +68,6 @@ object ViewChangeActivity {
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
       viewManager: ViewManager[F],
-      replicaCount: ReplicaCount,
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
   ): F[Unit] = {
     for {
@@ -114,8 +111,7 @@ object ViewChangeActivity {
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
       viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
-      replicaCount: ReplicaCount
+      publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
   ): F[Empty] = {
 
     import org.typelevel.log4cats.syntax._

@@ -119,13 +119,11 @@ package object activities {
       requestSignableBytes: Array[Byte],
       requestSignature: Array[Byte]
   )(implicit
-      viewManager: ViewManager[F],
-      replicaCount: ReplicaCount
+      viewManager: ViewManager[F]
   ): F[Boolean] = {
     import cats.implicits._
     for {
-      currentView <- viewManager.currentView
-      currentPrimary = (currentView % replicaCount.value).toInt
+      currentPrimary <- viewManager.currentPrimary
       publicKey = replicaKeysMap(currentPrimary)
       isValidSignature <- BridgeCryptoUtils.verifyBytes[F](
         publicKey,

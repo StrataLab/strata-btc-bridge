@@ -2,33 +2,220 @@ package co.topl.bridge.consensus.core.pbft
 
 import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
+import co.topl.bridge.consensus.pbft.NewViewRequest
 import co.topl.bridge.consensus.pbft.Pm
+import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
+import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
+import co.topl.consensus.core.PBFTInternalGrpcServiceClient
+import com.google.protobuf.ByteString
+
+import java.security.KeyPair
 
 trait ViewManager[F[_]] {
 
   def currentView: F[Long]
 
+  def currentPrimary: F[Int]
+
   def createViewChangeRequest(): F[ViewChangeRequest]
+
+  def logViewChangeRequest(viewChangeRequest: ViewChangeRequest): F[Unit]
 
 }
 
 object ViewManagerImpl {
   import cats.implicits._
+  import co.topl.bridge.shared.implicits._
 
   def make[F[_]: Async](
+      keyPair: KeyPair,
+      viewChangeTimeout: Int,
       storageApi: StorageApi[F],
-      checkpointManager: CheckpointManager[F]
+      checkpointManager: CheckpointManager[F],
+      requestTimerManager: RequestTimerManager[F],
   )(implicit
       replica: ReplicaId,
+      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
       replicaCount: ReplicaCount
   ): F[ViewManager[F]] = {
     for {
+      viewChangeRequestMap <- Ref.of[F, Map[Long, Map[Int, ViewChangeRequest]]](
+        Map.empty
+      )
       currentViewRef <- Ref.of[F, Long](0L)
     } yield new ViewManager[F] {
+
+      override def currentPrimary: F[Int] = {
+        for {
+          view <- currentViewRef.get
+          primary = (view % replicaCount.value).toInt
+        } yield primary
+      }
+
+      private def computeNewViewMessage(
+          newView: Long
+      ): F[(Long, NewViewRequest)] = {
+        for {
+          // get view changes
+          viewChangeRequests <- viewChangeRequestMap.get.map(
+            _.getOrElse(newView, Map.empty)
+          )
+          mins = viewChangeRequests.values
+            .map(_.lastStableCheckpoinSeqNumber)
+            .max
+          maxs = viewChangeRequests.values
+            .flatMap(
+              _.pms.flatMap(_.prepares.map(_.sequenceNumber))
+            )
+            .max
+          newViewMessage = NewViewRequest(
+            newViewNumber = newView,
+            viewChanges = viewChangeRequests.values.toList,
+            preprepares =
+              for {
+                i <- (mins + 1) to maxs
+                thePayload = viewChangeRequests.values
+                  .flatMap(_.pms.map(_.prePrepare))
+                  .collect({
+                    case Some(prePrepare) if prePrepare.sequenceNumber == i =>
+                      prePrepare
+                  })
+                  .headOption
+              } yield PrePrepareRequest(
+                viewNumber = newView,
+                sequenceNumber = i,
+                digest = thePayload.map(_.digest).get,
+                payload = thePayload.map(_.payload).flatten
+              )
+          )
+          newViewRequest = NewViewRequest(
+            newViewNumber = newView,
+            viewChanges = viewChangeRequests.values.toList,
+            preprepares = newViewMessage.preprepares
+          )
+          signedBytes <- BridgeCryptoUtils.signBytes[F](
+            keyPair.getPrivate(),
+            newViewRequest.signableBytes
+          )
+        } yield (
+          mins,
+          newViewRequest.withSignature(
+            ByteString.copyFrom(signedBytes)
+          )
+        )
+      }
+
+      private def updateToLatestCheckpoint(
+          mins: Long,
+          newViewRequest: NewViewRequest
+      ): F[Unit] = {
+        for {
+          // insert proof of checkpoint
+          _ <- newViewRequest.viewChanges.toList
+            .flatMap(_.checkpoints)
+            .map { checkpoint =>
+              storageApi.insertCheckpointMessage(checkpoint)
+            }
+            .sequence
+          _ <- checkpointManager.setLatestStableCheckpoint(
+            StableCheckpoint(
+              sequenceNumber = mins,
+              certificates = newViewRequest.viewChanges.toList
+                .flatMap(_.checkpoints)
+                .map(checkpoint => checkpoint.replicaId -> checkpoint)
+                .toMap,
+              state = Map.empty // FIXME: get the state
+            )
+          )
+          _ <- storageApi.cleanLog(mins)
+          _ <- currentViewRef.set(newViewRequest.newViewNumber)
+          _ <- requestTimerManager.resetAllTimers()
+        } yield ()
+      }
+
+      private def performViewChangeForPrimary(newView: Long) = {
+        for {
+          minSAndNewViewRequest <- computeNewViewMessage(newView)
+          (mins, newViewRequest) = minSAndNewViewRequest
+          _ <- pbftProtocolClientGrpc.newView(newViewRequest)
+          _ <- newViewRequest.preprepares.toList
+            .map(prePrepareRequest =>
+              storageApi.insertPrePrepareMessage(prePrepareRequest)
+            )
+            .sequence
+          shouldWeUpdateCheckpoint <- checkpointManager.latestStableCheckpoint
+            .map(
+              _.sequenceNumber < mins
+            )
+          _ <- updateToLatestCheckpoint(mins, newViewRequest).whenA(
+            shouldWeUpdateCheckpoint
+          )
+        } yield ()
+
+      }
+
+      override def logViewChangeRequest(
+          viewChangeRequest: ViewChangeRequest
+      ): F[Unit] = {
+        import scala.concurrent.duration._
+        for {
+          currentView <- currentViewRef.get
+          _ <-
+            if (viewChangeRequest.newViewNumber > currentView) {
+              // save view change request to storage
+              viewChangeRequestMap.update { viewChangeRequestMap =>
+                viewChangeRequestMap + (viewChangeRequest.newViewNumber ->
+                  (viewChangeRequestMap.getOrElse(
+                    viewChangeRequest.newViewNumber,
+                    Map.empty
+                  ) + (viewChangeRequest.replicaId -> viewChangeRequest)))
+              }
+            } else {
+              ().pure[F]
+            }
+          canChangeView <- viewChangeRequestMap.get.map(
+            _.get(viewChangeRequest.newViewNumber)
+              .map(viewChangeRequestMap =>
+                viewChangeRequestMap.size > 2 * replicaCount.maxFailures
+              )
+              .getOrElse(false)
+          )
+          currentPrimaryValue <- currentPrimary
+          amIThePrimary = currentPrimaryValue == replica.id
+          _ <-
+            if (canChangeView && amIThePrimary) {
+              performViewChangeForPrimary(viewChangeRequest.newViewNumber)
+            } else if (canChangeView && !amIThePrimary) {
+              // start timer
+              Async[F]
+                .background(for {
+                  _ <- Async[F].sleep(viewChangeTimeout.seconds)
+                  futureView <- currentViewRef.get
+                  _ <-
+                    if (futureView == currentView) { // we have not changed
+                      for {
+                        newViewChangeRequest <- createViewChangeRequest()
+                        _ <- pbftProtocolClientGrpc.viewChange(
+                          newViewChangeRequest.withNewViewNumber(
+                            viewChangeRequest.newViewNumber + 1
+                          )
+                        )
+                      } yield ()
+                    } else {
+                      // the future view has changed
+                      Async[F].unit // do nothing
+                    }
+                } yield ())
+                .use(_ => Async[F].unit)
+            } else {
+              Async[F].unit // do nothing
+            }
+        } yield ()
+      }
 
       override def currentView: F[Long] = currentViewRef.get
 

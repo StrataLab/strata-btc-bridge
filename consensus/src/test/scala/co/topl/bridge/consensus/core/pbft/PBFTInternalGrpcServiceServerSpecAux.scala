@@ -11,15 +11,19 @@ import co.topl.bridge.stubs.BaseRequestStateManager
 import co.topl.bridge.stubs.BaseRequestTimerManager
 import org.typelevel.log4cats.Logger
 import java.security.KeyPair
+import co.topl.bridge.stubs.BasePBFTInternalGrpcServiceClient
 
 trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
 
-  def createSimpleInternalServer()(implicit
+  def createSimpleInternalServer(
+      replicaKeyPair: KeyPair
+  )(implicit
       storageApi: StorageApi[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
       logger: Logger[IO]
   ) = {
-
+    implicit val pbftInternalGrpcServiceClient =
+      new BasePBFTInternalGrpcServiceClient()
     implicit val rquestStateManager = new BaseRequestStateManager()
     implicit val requestTimerManager = new BaseRequestTimerManager()
     for {
@@ -29,8 +33,10 @@ trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
       viewManager <- ViewManagerImpl
         .make[IO](
           replicaKeyPair,
+          5,
           storageApi,
-          checkpointManager
+          checkpointManager,
+          requestTimerManager
         )
         .toResource
       queue <- Queue.unbounded[IO, PBFTInternalEvent].toResource

@@ -6,6 +6,7 @@ import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import co.topl.bridge.consensus.pbft.NewViewRequest
 
 package object shared {
 
@@ -55,6 +56,14 @@ package object shared {
             .toArray
             .flatten ++
           BigInt(request.replicaId).toByteArray
+      }
+    }
+
+    implicit class NewViewRequestOp(val request: NewViewRequest) {
+      def signableBytes: Array[Byte] = {
+        BigInt(request.newViewNumber).toByteArray ++
+          request.viewChanges.flatMap(_.signableBytes).toArray ++
+          request.preprepares.flatMap(_.signableBytes).toArray
       }
     }
 

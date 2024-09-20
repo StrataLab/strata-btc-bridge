@@ -166,7 +166,10 @@ class PBFTInternalGrpcServiceServerSpec
               loggedWarning.update(_ :+ message)
           }
         for {
-          serverUnderTest <- createSimpleInternalServer()
+          replicaKeyPair <- BridgeCryptoUtils
+            .getKeyPair[IO](privateKeyFile)
+            .use(IO.pure).toResource
+          serverUnderTest <- createSimpleInternalServer(replicaKeyPair)
         } yield {
           (serverUnderTest, loggedError, loggedWarning)
         }

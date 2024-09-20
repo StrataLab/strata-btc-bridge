@@ -52,10 +52,18 @@ message ViewChangeRequest {
   bytes signature = 6;
 }
 
+message NewViewRequest {
+  uint64 newViewNumber = 1;
+  repeated ViewChangeRequest viewChanges = 2; // Vs
+  repeated PrePrepareRequest preprepares = 3; // Os
+  bytes signature = 6;
+}
+
 service PBFTInternalService {
   rpc PrePrepare(PrePrepareRequest)    returns (co.topl.bridge.shared.Empty);
   rpc Prepare(PrepareRequest)          returns (co.topl.bridge.shared.Empty);
   rpc Commit(CommitRequest)            returns (co.topl.bridge.shared.Empty);
   rpc Checkpoint(CheckpointRequest)    returns (co.topl.bridge.shared.Empty);
   rpc ViewChange(ViewChangeRequest)    returns (co.topl.bridge.shared.Empty);
+  rpc NewView(NewViewRequest)          returns (co.topl.bridge.shared.Empty);
 }

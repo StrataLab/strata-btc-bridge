@@ -12,7 +12,6 @@ import co.topl.bridge.consensus.core.pbft.ViewManager
 import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
@@ -48,8 +47,7 @@ object PrePrepareActivity {
       requestSignableBytes: Array[Byte],
       requestSignature: Array[Byte]
   )(implicit
-      viewManager: ViewManager[F],
-      replicaCount: ReplicaCount
+      viewManager: ViewManager[F]
   ): F[Boolean] = {
     import cats.implicits._
     for {
@@ -73,8 +71,7 @@ object PrePrepareActivity {
       requestStateManager: RequestStateManager[F],
       viewManager: ViewManager[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
-      storageApi: StorageApi[F],
-      replicaCount: ReplicaCount
+      storageApi: StorageApi[F]
   ): F[Option[PBFTInternalEvent]] = {
     import org.typelevel.log4cats.syntax._
     (for {

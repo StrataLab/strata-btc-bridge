@@ -14,6 +14,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import co.topl.bridge.consensus.pbft.NewViewRequest
 
 trait PBFTInternalGrpcServiceClient[F[_]] {
 
@@ -35,6 +36,10 @@ trait PBFTInternalGrpcServiceClient[F[_]] {
 
   def viewChange(
       request: ViewChangeRequest
+  ): F[Empty]
+
+  def newView(
+      request: NewViewRequest
   ): F[Empty]
 
 }
@@ -109,6 +114,15 @@ object PBFTInternalGrpcServiceClientImpl {
         _ <- trace"Sending Checkpoint to all replicas"
         _ <- backupMap.toList.traverse { case (_, backup) =>
           backup.checkpoint(request, new Metadata())
+        }
+      } yield Empty()
+
+      override def newView(
+          request: NewViewRequest
+      ): F[Empty] = for {
+        _ <- trace"Sending NewViewRequest to all replicas"
+        _ <- backupMap.toList.traverse { case (_, backup) =>
+          backup.newView(request, new Metadata())
         }
       } yield Empty()
 
