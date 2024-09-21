@@ -222,24 +222,28 @@ object RequestStateManagerImpl {
       ): F[Unit] = for {
         _ <- state.flatModify { map =>
           val identifier = event.requestIdentifier
-          val currentState =
-            map(identifier)
-          val (newState, action) =
-            RequestStateMachineTransitionRelation
-              .transition[F](
-                keyPair,
-                state.update(_ - identifier)
-              )(
-                currentState,
-                event
+          val someCurrentState = map.get(identifier)
+          someCurrentState match {
+            case None =>
+              (map, Async[F].unit)
+            case Some(currentState) =>
+              val (newState, action) =
+                RequestStateMachineTransitionRelation
+                  .transition[F](
+                    keyPair,
+                    state.update(_ - identifier)
+                  )(
+                    currentState,
+                    event
+                  )
+              (
+                map.updated(
+                  identifier,
+                  newState.getOrElse(currentState)
+                ),
+                action
               )
-          (
-            map.updated(
-              identifier,
-              newState.getOrElse(currentState)
-            ),
-            action
-          )
+          }
         }
 
       } yield ()
