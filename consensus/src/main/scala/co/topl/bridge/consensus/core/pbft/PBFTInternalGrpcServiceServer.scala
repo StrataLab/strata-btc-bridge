@@ -40,7 +40,7 @@ object PBFTInternalGrpcServiceServer {
     override def viewChange(
         request: ViewChangeRequest,
         ctx: Metadata
-    ): F[Empty] = ???
+    ): F[Empty] = pbftReqProcessor.preProcessRequest(request) >> Empty().pure[F]
 
     override def prePrepare(
         request: PrePrepareRequest,

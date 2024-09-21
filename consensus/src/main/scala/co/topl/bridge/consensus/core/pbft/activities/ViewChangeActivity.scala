@@ -8,7 +8,6 @@ import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
@@ -106,13 +105,12 @@ object ViewChangeActivity {
   }
 
   def apply[F[_]: Async: Logger](
-      request: ViewChangeRequest
-  )(
+      request: ViewChangeRequest,
       replicaKeysMap: Map[Int, PublicKey]
   )(implicit
       viewManager: ViewManager[F],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
-  ): F[Empty] = {
+  ): F[Unit] = {
 
     import org.typelevel.log4cats.syntax._
     (for {
@@ -120,23 +118,18 @@ object ViewChangeActivity {
         request,
         replicaKeysMap
       )
-    } yield Empty()).handleErrorWith {
+    } yield ()).handleErrorWith {
       _ match {
         case InvalidCertificates =>
           error"View Change: An invalid certificate was found in the view change request"
-            .as(Empty())
         case InvalidViewChangeSignature =>
           error"View Change: An invalid signature was found in the view change request"
-            .as(Empty())
         case InvalidPreprepareSignature =>
           error"View Change: An invalid signature was found in the preprepare request"
-            .as(Empty())
         case InvalidPrepareSignature =>
           error"View Change: An invalid signature was found in the prepare request"
-            .as(Empty())
         case InvalidPreprepareRequestSignature =>
           error"View Change: An invalid signature was found in the preprepare request"
-            .as(Empty())
       }
     }
   }

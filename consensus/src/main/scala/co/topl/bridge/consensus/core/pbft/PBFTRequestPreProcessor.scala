@@ -14,12 +14,15 @@ import co.topl.bridge.shared.ReplicaCount
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
+import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import co.topl.bridge.consensus.core.pbft.activities.ViewChangeActivity
 
 trait PBFTRequestPreProcessor[F[_]] {
 
   def preProcessRequest(request: PrePrepareRequest): F[Unit]
   def preProcessRequest(request: PrepareRequest): F[Unit]
   def preProcessRequest(request: CommitRequest): F[Unit]
+  def preProcessRequest(request: ViewChangeRequest): F[Unit]
 
 }
 
@@ -87,5 +90,10 @@ object PBFTRequestPreProcessorImpl {
               _ <- someEvent.map(evt => queue.offer(evt)).sequence
             } yield ()
       } yield ()
+
+    override def preProcessRequest(request: ViewChangeRequest): F[Unit] = {
+      ViewChangeActivity(request, replicaKeysMap)
+    }
+
   }
 }
