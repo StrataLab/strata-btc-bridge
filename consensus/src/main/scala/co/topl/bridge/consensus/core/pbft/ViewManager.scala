@@ -21,6 +21,11 @@ trait ViewManager[F[_]] {
 
   def currentPrimary: F[Int]
 
+  def resyncAfterViewChange(
+      newView: Long,
+      prePrepares: Seq[PrePrepareRequest]
+  ): F[Unit]
+
   def createViewChangeRequest(): F[ViewChangeRequest]
 
   def logViewChangeRequest(viewChangeRequest: ViewChangeRequest): F[Unit]
@@ -36,7 +41,7 @@ object ViewManagerImpl {
       viewChangeTimeout: Int,
       storageApi: StorageApi[F],
       checkpointManager: CheckpointManager[F],
-      requestTimerManager: RequestTimerManager[F],
+      requestTimerManager: RequestTimerManager[F]
   )(implicit
       replica: ReplicaId,
       pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
@@ -48,6 +53,20 @@ object ViewManagerImpl {
       )
       currentViewRef <- Ref.of[F, Long](0L)
     } yield new ViewManager[F] {
+
+      override def resyncAfterViewChange(
+          newView: Long,
+          prePrepares: Seq[PrePrepareRequest]
+      ): F[Unit] = {
+        for {
+          _ <- currentViewRef.set(newView)
+          _ <- prePrepares.toList
+            .map(prePrepareRequest =>
+              pbftProtocolClientGrpc.prePrepare(prePrepareRequest)
+            )
+            .sequence
+        } yield ()
+      }
 
       override def currentPrimary: F[Int] = {
         for {

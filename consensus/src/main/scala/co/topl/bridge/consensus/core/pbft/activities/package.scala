@@ -113,6 +113,7 @@ package object activities {
       request.payload.get.signature.toByteArray()
     )
   }
+  
 
   private[activities] def checkMessageSignaturePrimary[F[_]: Async](
       replicaKeysMap: Map[Int, PublicKey],
