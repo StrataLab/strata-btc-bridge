@@ -2,12 +2,12 @@ package co.topl
 
 import cats.effect.IO
 import cats.effect.kernel.Resource
-import co.topl.bridge.shared.BridgeContants
-import co.topl.bridge.shared.MintingStatusRequest
-import co.topl.bridge.shared.MintingStatusResponse
-import co.topl.bridge.shared.StartPeginSessionRequest
-import co.topl.bridge.shared.StartPeginSessionResponse
-import co.topl.bridge.shared.SyncWalletRequest
+import xyz.stratalab.bridge.shared.BridgeContants
+import xyz.stratalab.bridge.shared.MintingStatusRequest
+import xyz.stratalab.bridge.shared.MintingStatusResponse
+import xyz.stratalab.bridge.shared.StartPeginSessionRequest
+import xyz.stratalab.bridge.shared.StartPeginSessionResponse
+import xyz.stratalab.bridge.shared.SyncWalletRequest
 import fs2.io.process
 import io.circe.generic.auto._
 import io.circe.parser._

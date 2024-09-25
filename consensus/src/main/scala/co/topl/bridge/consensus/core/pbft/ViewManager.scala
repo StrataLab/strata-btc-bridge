@@ -7,9 +7,9 @@ import xyz.stratalab.bridge.consensus.pbft.Pm
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaId
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
 
@@ -34,7 +34,7 @@ trait ViewManager[F[_]] {
 
 object ViewManagerImpl {
   import cats.implicits._
-  import co.topl.bridge.shared.implicits._
+  import xyz.stratalab.bridge.shared.implicits._
 
   def make[F[_]: Async](
       keyPair: KeyPair,

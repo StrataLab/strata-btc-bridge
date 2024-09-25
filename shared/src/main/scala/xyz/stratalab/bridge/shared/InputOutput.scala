@@ -1,4 +1,4 @@
-package co.topl.bridge.shared
+package xyz.stratalab.bridge.shared
 
 /** This class is used to create a new session for a peg-in.
   *

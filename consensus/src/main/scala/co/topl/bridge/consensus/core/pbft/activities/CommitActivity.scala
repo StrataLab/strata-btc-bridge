@@ -8,9 +8,9 @@ import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.implicits._
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey

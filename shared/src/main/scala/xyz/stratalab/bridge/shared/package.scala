@@ -1,4 +1,4 @@
-package co.topl.bridge
+package xyz.stratalab.bridge
 
 import xyz.stratalab.bridge.consensus.service.StateMachineReply
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest

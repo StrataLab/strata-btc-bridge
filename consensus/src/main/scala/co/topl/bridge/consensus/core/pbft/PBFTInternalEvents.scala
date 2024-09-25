@@ -3,7 +3,7 @@ package co.topl.bridge.consensus.core.pbft
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ClientId
 
 private[core] sealed abstract class PBFTInternalEvent(
     val requestIdentifier: RequestIdentifier

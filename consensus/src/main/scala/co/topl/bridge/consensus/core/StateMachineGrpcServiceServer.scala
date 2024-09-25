@@ -16,12 +16,12 @@ import xyz.stratalab.bridge.consensus.service.SessionNotFoundRes
 import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
 import co.topl.bridge.consensus.shared.PeginSessionInfo
 import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.MintingStatusOperation
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.MintingStatusOperation
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaId
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
@@ -94,7 +94,7 @@ object StateMachineGrpcServiceServer {
         mintingStatusAux[IO](request).map(MintingStatusReply(_))
 
       def executeRequest(
-          request: co.topl.bridge.shared.StateMachineRequest,
+          request: xyz.stratalab.bridge.shared.StateMachineRequest,
           ctx: Metadata
       ): IO[Empty] = {
         Option(
@@ -129,7 +129,7 @@ object StateMachineGrpcServiceServer {
                       replicaId.id
                     ).executeRequest(request, ctx)
                 else {
-                  import co.topl.bridge.shared.implicits._
+                  import xyz.stratalab.bridge.shared.implicits._
                   val prePrepareRequest = PrePrepareRequest(
                     viewNumber = currentView,
                     sequenceNumber = currentSequence,

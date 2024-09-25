@@ -1,4 +1,4 @@
-package co.topl.bridge.shared
+package xyz.stratalab.bridge.shared
 
 import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
@@ -8,18 +8,18 @@ import xyz.stratalab.bridge.consensus.service.ResponseServiceFs2Grpc
 import xyz.stratalab.bridge.consensus.service.StateMachineReply
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result.SessionNotFound
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result.StartSession
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.BridgeError
-import co.topl.bridge.shared.BridgeResponse
-import co.topl.bridge.shared.ConsensusClientMessageId
-import co.topl.bridge.shared.InvalidInput
-import co.topl.bridge.shared.SessionNotFoundError
-import co.topl.bridge.shared.StartPeginSessionResponse
+import xyz.stratalab.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.BridgeError
+import xyz.stratalab.bridge.shared.BridgeResponse
+import xyz.stratalab.bridge.shared.ConsensusClientMessageId
+import xyz.stratalab.bridge.shared.InvalidInput
+import xyz.stratalab.bridge.shared.SessionNotFoundError
+import xyz.stratalab.bridge.shared.StartPeginSessionResponse
 import io.grpc.Metadata
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
-import co.topl.bridge.shared.UnknownError
+import xyz.stratalab.bridge.shared.UnknownError
 
 import java.security.PublicKey
 import java.util.concurrent.ConcurrentHashMap
@@ -49,7 +49,7 @@ object ResponseGrpcServiceServer {
             ctx: Metadata
         ): F[Empty] = {
 
-          import co.topl.bridge.shared.implicits._
+          import xyz.stratalab.bridge.shared.implicits._
           for {
             _ <- trace"Received response from replica ${request.replicaNumber}"
             publicKey = replicaKeysMap(request.replicaNumber)

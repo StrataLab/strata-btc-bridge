@@ -5,11 +5,11 @@ import cats.effect.kernel.Resource
 import cats.effect.kernel.Sync
 import co.topl.bridge.consensus.core.PublicApiClientGrpc
 import co.topl.bridge.consensus.core.PublicApiClientGrpcImpl
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.ClientCount
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.ClientCount
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaId
 import com.typesafe.config.Config
 import io.grpc.ManagedChannelBuilder
 import org.typelevel.log4cats.Logger

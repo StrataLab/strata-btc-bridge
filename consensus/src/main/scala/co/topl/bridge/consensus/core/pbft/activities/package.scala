@@ -1,17 +1,17 @@
 package co.topl.bridge.consensus.core.pbft
 import cats.effect.kernel.Async
 import cats.implicits._
-import co.topl.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
 
 import java.security.PublicKey
 import cats.effect.kernel.Sync
-import co.topl.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaCount
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ClientId
 
-import co.topl.bridge.shared.implicits._
+import xyz.stratalab.bridge.shared.implicits._
 import java.security.MessageDigest
 import co.topl.brambl.utils.Encoding
 

@@ -58,25 +58,25 @@ import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForE
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForRedemption
 import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.BridgeError
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaId
-import co.topl.bridge.shared.StartSessionOperation
-import co.topl.bridge.shared.StateMachineRequest
-import co.topl.bridge.shared.StateMachineRequest.Operation.ConfirmClaimTx
-import co.topl.bridge.shared.StateMachineRequest.Operation.ConfirmDepositBTC
-import co.topl.bridge.shared.StateMachineRequest.Operation.ConfirmTBTCMint
-import co.topl.bridge.shared.StateMachineRequest.Operation.PostClaimTx
-import co.topl.bridge.shared.StateMachineRequest.Operation.PostDepositBTC
-import co.topl.bridge.shared.StateMachineRequest.Operation.PostRedemptionTx
-import co.topl.bridge.shared.StateMachineRequest.Operation.PostTBTCMint
-import co.topl.bridge.shared.StateMachineRequest.Operation.StartSession
-import co.topl.bridge.shared.StateMachineRequest.Operation.TimeoutDepositBTC
-import co.topl.bridge.shared.StateMachineRequest.Operation.TimeoutTBTCMint
-import co.topl.bridge.shared.StateMachineRequest.Operation.UndoClaimTx
-import co.topl.bridge.shared.StateMachineRequest.Operation.UndoDepositBTC
-import co.topl.bridge.shared.StateMachineRequest.Operation.UndoTBTCMint
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.BridgeError
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.StartSessionOperation
+import xyz.stratalab.bridge.shared.StateMachineRequest
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.ConfirmClaimTx
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.ConfirmDepositBTC
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.ConfirmTBTCMint
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.PostClaimTx
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.PostDepositBTC
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.PostRedemptionTx
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.PostTBTCMint
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.StartSession
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.TimeoutDepositBTC
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.TimeoutTBTCMint
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.UndoClaimTx
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.UndoDepositBTC
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.UndoTBTCMint
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
@@ -93,7 +93,7 @@ import co.topl.bridge.consensus.core.pbft.ViewManager
 trait BridgeStateMachineExecutionManager[F[_]] {
 
   def executeRequest(
-      request: co.topl.bridge.shared.StateMachineRequest
+      request: xyz.stratalab.bridge.shared.StateMachineRequest
   ): F[Unit]
 
 }
@@ -382,7 +382,7 @@ object BridgeStateMachineExecutionManagerImpl {
         }
 
         private def executeRequestAux(
-            request: co.topl.bridge.shared.StateMachineRequest
+            request: xyz.stratalab.bridge.shared.StateMachineRequest
         ) =
           (request.operation match {
             case StateMachineRequest.Operation.Empty =>
@@ -548,11 +548,11 @@ object BridgeStateMachineExecutionManagerImpl {
           )
 
         private def executeRequestF(
-            request: co.topl.bridge.shared.StateMachineRequest,
+            request: xyz.stratalab.bridge.shared.StateMachineRequest,
             keyPair: JKeyPair,
             pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
         ) = {
-          import co.topl.bridge.shared.implicits._
+          import xyz.stratalab.bridge.shared.implicits._
           import cats.implicits._
           for {
             currentSequence <- viewManager.currentView
@@ -582,7 +582,7 @@ object BridgeStateMachineExecutionManagerImpl {
         }
 
         def executeRequest(
-            request: co.topl.bridge.shared.StateMachineRequest
+            request: xyz.stratalab.bridge.shared.StateMachineRequest
         ): F[Unit] = {
           executeRequestF(
             request,

@@ -1,4 +1,4 @@
-package co.topl.bridge.shared
+package xyz.stratalab.bridge.shared
 
 object BridgeContants {
   val START_PEGIN_SESSION_PATH = "start-session-pegin"

@@ -1,10 +1,10 @@
 package co.topl.bridge.consensus.core
 
 import cats.effect.kernel.Async
-import co.topl.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.Empty
 import xyz.stratalab.bridge.consensus.service.ResponseServiceFs2Grpc
 import xyz.stratalab.bridge.consensus.service.StateMachineReply
-import co.topl.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
 import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
 import io.grpc.Metadata
@@ -12,7 +12,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 
 import java.security.KeyPair
-import co.topl.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.ReplicaId
 
 trait PublicApiClientGrpc[F[_]] {
 
@@ -35,7 +35,7 @@ object PublicApiClientGrpcImpl {
     } yield new PublicApiClientGrpc[F] {
       import cats.implicits._
 
-      import co.topl.bridge.shared.implicits._
+      import xyz.stratalab.bridge.shared.implicits._
 
       private def prepareRequest(
           timestamp: Long,

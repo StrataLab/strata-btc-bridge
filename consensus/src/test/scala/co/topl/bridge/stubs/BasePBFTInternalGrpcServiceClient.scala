@@ -5,7 +5,7 @@ import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.Empty
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
 import xyz.stratalab.bridge.consensus.pbft.NewViewRequest

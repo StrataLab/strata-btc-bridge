@@ -9,10 +9,10 @@ import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecuti
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaId
-import co.topl.bridge.shared.StateMachineRequest
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.StateMachineRequest
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
 
@@ -39,7 +39,7 @@ case object Completed extends RequestState
 
 object RequestStateMachineTransitionRelation {
 
-  import co.topl.bridge.shared.implicits._
+  import xyz.stratalab.bridge.shared.implicits._
   import cats.implicits._
 
   private def prepare[F[_]: Async](

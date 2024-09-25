@@ -10,7 +10,7 @@ import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaCount
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey

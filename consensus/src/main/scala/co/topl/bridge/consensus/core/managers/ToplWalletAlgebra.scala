@@ -21,9 +21,9 @@ import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.shared.Lvl
 import co.topl.bridge.consensus.core.Template
 import co.topl.genus.services.Txo
-import co.topl.bridge.shared.InvalidHash
-import co.topl.bridge.shared.InvalidInput
-import co.topl.bridge.shared.InvalidKey
+import xyz.stratalab.bridge.shared.InvalidHash
+import xyz.stratalab.bridge.shared.InvalidInput
+import xyz.stratalab.bridge.shared.InvalidKey
 import co.topl.bridge.consensus.core.StrataNetworkIdentifiers
 import com.google.protobuf.ByteString
 import io.circe.Json

@@ -6,7 +6,7 @@ import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.stateDigest
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
-import co.topl.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.stubs.BaseLogger
 import co.topl.bridge.stubs.BaseStorageApi
 import com.google.protobuf.ByteString
@@ -203,7 +203,7 @@ class PBFTInternalGrpcServiceServerSpec
   ) { serverAndLogChecker =>
     val (server, _, warningChecker) = serverAndLogChecker
 
-    import co.topl.bridge.shared.implicits._
+    import xyz.stratalab.bridge.shared.implicits._
     val checkpointRequest = CheckpointRequest(
       sequenceNumber = -1L,
       digest = ByteString.copyFrom(stateDigest(Map.empty)),
@@ -236,7 +236,7 @@ class PBFTInternalGrpcServiceServerSpec
   ) { serverAndLogChecker =>
     val (server, _, warningChecker) = serverAndLogChecker
 
-    import co.topl.bridge.shared.implicits._
+    import xyz.stratalab.bridge.shared.implicits._
     val checkpointRequest = CheckpointRequest(
       sequenceNumber = 100L,
       digest = ByteString.copyFrom(stateDigest(Map.empty)),

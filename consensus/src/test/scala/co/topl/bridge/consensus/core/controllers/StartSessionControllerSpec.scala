@@ -20,9 +20,9 @@ import co.topl.bridge.consensus.core.StrataPrivatenet
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebraImpl
 import co.topl.bridge.consensus.core.managers.WalletManagementUtils
 import co.topl.bridge.consensus.core.utils.KeyGenerationUtils
-import co.topl.bridge.shared.StartSessionOperation
-import co.topl.bridge.shared.InvalidHash
-import co.topl.bridge.shared.InvalidKey
+import xyz.stratalab.bridge.shared.StartSessionOperation
+import xyz.stratalab.bridge.shared.InvalidHash
+import xyz.stratalab.bridge.shared.InvalidKey
 import munit.CatsEffectSuite
 
 import java.nio.file.Files

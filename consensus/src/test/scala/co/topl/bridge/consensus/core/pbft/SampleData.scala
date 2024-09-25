@@ -9,8 +9,8 @@ import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.shared.Lvl
 import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaId
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import java.util.concurrent.ConcurrentHashMap

@@ -12,8 +12,8 @@ import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.ReplicaCount
 import io.grpc.Metadata
 import io.grpc.ServerServiceDefinition
 import org.typelevel.log4cats.Logger

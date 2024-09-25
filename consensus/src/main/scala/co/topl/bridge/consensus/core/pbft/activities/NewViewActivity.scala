@@ -7,9 +7,9 @@ import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.implicits._
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey

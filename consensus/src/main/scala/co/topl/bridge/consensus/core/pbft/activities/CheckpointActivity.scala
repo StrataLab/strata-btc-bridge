@@ -8,9 +8,9 @@ import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
 import co.topl.bridge.consensus.core.stateDigest
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.implicits._
+import xyz.stratalab.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey

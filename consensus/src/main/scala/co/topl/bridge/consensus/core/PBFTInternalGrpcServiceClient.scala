@@ -5,8 +5,8 @@ import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.ReplicaNode
+import xyz.stratalab.bridge.shared.Empty
+import xyz.stratalab.bridge.shared.ReplicaNode
 import fs2.grpc.syntax.all._
 import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata

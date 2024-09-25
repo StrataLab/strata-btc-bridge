@@ -17,9 +17,9 @@ import co.topl.bridge.consensus.subsystems.monitor.FSMTransitionTo
 import co.topl.bridge.consensus.subsystems.monitor.MWaitingForBTCDeposit
 import co.topl.bridge.consensus.subsystems.monitor.MonitorTransitionRelation
 import co.topl.bridge.consensus.subsystems.monitor.PeginStateMachineState
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.StateMachineServiceGrpcClient
-import co.topl.bridge.shared.SessionId
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
+import xyz.stratalab.bridge.shared.SessionId
 import org.typelevel.log4cats.Logger
 
 import java.util.Map.Entry

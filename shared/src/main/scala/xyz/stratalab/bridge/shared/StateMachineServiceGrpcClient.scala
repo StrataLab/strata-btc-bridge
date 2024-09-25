@@ -1,18 +1,18 @@
-package co.topl.bridge.shared
+package xyz.stratalab.bridge.shared
 
 import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
 import cats.effect.kernel.Sync
-import co.topl.bridge.shared.MintingStatusOperation
-import co.topl.bridge.shared.StartSessionOperation
-import co.topl.bridge.shared.StateMachineRequest
+import xyz.stratalab.bridge.shared.MintingStatusOperation
+import xyz.stratalab.bridge.shared.StartSessionOperation
+import xyz.stratalab.bridge.shared.StateMachineRequest
 import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
-import co.topl.bridge.shared.BridgeCryptoUtils
-import co.topl.bridge.shared.BridgeError
-import co.topl.bridge.shared.BridgeResponse
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaNode
-import co.topl.bridge.shared.TimeoutError
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.shared.BridgeError
+import xyz.stratalab.bridge.shared.BridgeResponse
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaNode
+import xyz.stratalab.bridge.shared.TimeoutError
 import com.google.protobuf.ByteString
 import fs2.grpc.syntax.all._
 import io.grpc.ManagedChannelBuilder
@@ -24,18 +24,18 @@ import java.security.KeyPair
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 import cats.effect.std.Mutex
-import co.topl.bridge.shared.PostDepositBTCOperation
-import co.topl.bridge.shared.TimeoutDepositBTCOperation
-import co.topl.bridge.shared.UndoDepositBTCOperation
-import co.topl.bridge.shared.ConfirmDepositBTCOperation
-import co.topl.bridge.shared.PostTBTCMintOperation
-import co.topl.bridge.shared.TimeoutTBTCMintOperation
-import co.topl.bridge.shared.UndoTBTCMintOperation
-import co.topl.bridge.shared.ConfirmTBTCMintOperation
-import co.topl.bridge.shared.PostRedemptionTxOperation
-import co.topl.bridge.shared.PostClaimTxOperation
-import co.topl.bridge.shared.ConfirmClaimTxOperation
-import co.topl.bridge.shared.UndoClaimTxOperation
+import xyz.stratalab.bridge.shared.PostDepositBTCOperation
+import xyz.stratalab.bridge.shared.TimeoutDepositBTCOperation
+import xyz.stratalab.bridge.shared.UndoDepositBTCOperation
+import xyz.stratalab.bridge.shared.ConfirmDepositBTCOperation
+import xyz.stratalab.bridge.shared.PostTBTCMintOperation
+import xyz.stratalab.bridge.shared.TimeoutTBTCMintOperation
+import xyz.stratalab.bridge.shared.UndoTBTCMintOperation
+import xyz.stratalab.bridge.shared.ConfirmTBTCMintOperation
+import xyz.stratalab.bridge.shared.PostRedemptionTxOperation
+import xyz.stratalab.bridge.shared.PostClaimTxOperation
+import xyz.stratalab.bridge.shared.ConfirmClaimTxOperation
+import xyz.stratalab.bridge.shared.UndoClaimTxOperation
 import xyz.stratalab.bridge.consensus.service.MintingStatusReply
 
 trait StateMachineServiceGrpcClient[F[_]] {
@@ -128,7 +128,7 @@ trait StateMachineServiceGrpcClient[F[_]] {
 object StateMachineServiceGrpcClientImpl {
 
   import cats.implicits._
-  import co.topl.bridge.shared.implicits._
+  import xyz.stratalab.bridge.shared.implicits._
   import scala.concurrent.duration._
 
   def makeContainer[F[_]: Async: Logger](

@@ -13,7 +13,7 @@ import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.subsystems.monitor.BlockchainEvent
-import co.topl.bridge.shared.StateMachineRequest
+import xyz.stratalab.bridge.shared.StateMachineRequest
 import com.google.common.io.BaseEncoding
 import com.google.protobuf.ByteString
 

@@ -3,7 +3,7 @@ package co.topl.bridge.consensus.core.pbft
 import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
 import cats.effect.std.Queue
-import co.topl.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ClientId
 
 import scala.concurrent.duration.Duration
 

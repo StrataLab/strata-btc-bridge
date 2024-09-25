@@ -48,10 +48,10 @@ import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.consensus.subsystems.monitor.MonitorStateMachine
 import co.topl.bridge.consensus.subsystems.monitor.SessionEvent
 import co.topl.bridge.consensus.subsystems.monitor.SessionManagerImpl
-import co.topl.bridge.shared.ClientId
-import co.topl.bridge.shared.ReplicaCount
-import co.topl.bridge.shared.ReplicaId
-import co.topl.bridge.shared.StateMachineServiceGrpcClient
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.shared.ReplicaId
+import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import io.grpc.Metadata
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
