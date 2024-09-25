@@ -14,6 +14,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import scala.concurrent.duration._
 import scala.util.Try
+import xyz.stratalab.bridge.publicapi.Main
+import xyz.stratalab.bridge.consensus.core.Main
 
 class BridgeIntegrationSpec
     extends CatsEffectSuite
@@ -81,7 +83,7 @@ class BridgeIntegrationSpec
           _ <- IO.asyncForIO.both(
             IO.asyncForIO
               .start(
-                consensus.core.Main.run(
+                topl.bridge.consensus.core.Main.run(
                   List(
                     "--config-file",
                     "../consensus/src/main/resources/application.conf",
@@ -115,7 +117,7 @@ class BridgeIntegrationSpec
           )
           _ <- IO.asyncForIO
             .start(
-              publicapi.Main.run(
+              topl.bridge.publicapi.Main.run(
                 List(
                   "--config-file",
                   "../public-api/src/main/resources/application.conf"
