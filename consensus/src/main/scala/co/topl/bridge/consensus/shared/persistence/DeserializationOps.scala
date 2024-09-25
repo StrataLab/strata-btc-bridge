@@ -4,45 +4,45 @@ import co.topl.bridge.consensus.shared.AssetToken
 import co.topl.bridge.consensus.shared.GroupToken
 import co.topl.bridge.consensus.shared.Lvl
 import co.topl.bridge.consensus.shared.SeriesToken
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   AssetToken => AssetTokenCurrency
 }
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   GroupToken => GroupTokenCurrency
 }
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   Lvl => LvlCurrency
 }
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   SeriesToken => SeriesTokenCurrency
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.BtcFundsWithdrawn
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.Empty
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.BtcFundsWithdrawn
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.Empty
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BifrostFundsDeposited => BifrostFundsDepositedEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BifrostFundsWithdrawn => BifrostFundsWithdrawnEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BtcFundsDeposited => BtcFundsDepositedEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   NewBTCBlock => NewBTCBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   NewStrataBlock => NewStrataBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedBTCBlock => SkippedBTCBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedStrataBlock => SkippedStrataBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{
   BifrostCurrencyUnit => BifrostCurrencyUnitPb
 }
-import co.topl.bridge.consensus.protobuf.{BlockchainEvent => BlockchainEventPb}
+import xyz.stratalab.bridge.consensus.protobuf.{BlockchainEvent => BlockchainEventPb}
 import org.bitcoins.core.currency.Satoshis
 import quivr.models.Int128
 import scodec.bits.ByteVector

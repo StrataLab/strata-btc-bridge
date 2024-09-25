@@ -3,8 +3,8 @@ import scala.sys.process.Process
 
 inThisBuild(
   List(
-    organization := "co.topl",
-    homepage := Some(url("https://github.com/Topl/topl-btc-bridge")),
+    organization := "xyz.stratalab",
+    homepage := Some(url("https://github.com/StrataLab/strata-btc-bridge")),
     licenses := Seq("MPL2.0" -> url("https://www.mozilla.org/en-US/MPL/2.0/")),
     scalaVersion := "2.13.12"
   )
@@ -89,10 +89,10 @@ def fallbackVersion(d: java.util.Date): String =
   s"HEAD-${sbtdynver.DynVer timestamp d}"
 
 lazy val mavenPublishSettings = List(
-  organization := "co.topl",
+  organization := "xyz.stratalab",
   version := dynverGitDescribeOutput.value
     .mkVersion(versionFmt, fallbackVersion(dynverCurrentDate.value)),
-  homepage := Some(url("https://github.com/Topl/topl-btc-bridge")),
+  homepage := Some(url("https://github.com/StrataLab/strata-btc-bridge")),
   licenses := List("MPL2.0" -> url("https://www.mozilla.org/en-US/MPL/2.0/")),
   ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org",
   sonatypeRepository := "https://s01.oss.sonatype.org/service/local",
@@ -100,13 +100,13 @@ lazy val mavenPublishSettings = List(
     Developer(
       "mundacho",
       "Edmundo Lopez Bobeda",
-      "e.lopez@topl.me",
+      "el@stratalab.xyz",
       url("https://github.com/mundacho")
     ),
     Developer(
       "DiademShoukralla",
       "Diadem Shoukralla",
-      "d.dhoukralla@topl.me",
+      "ds@stratalab.xyz",
       url("https://github.com/DiademShoukralla")
     )
   )
@@ -123,11 +123,11 @@ lazy val shared = (project in file("shared"))
   )
   .settings(
     commonSettings,
-    name := "topl-btc-bridge-shared",
+    name := "strata-btc-bridge-shared",
     scalapbCodeGeneratorOptions += CodeGeneratorOption.FlatPackage,
     libraryDependencies ++=
-      Dependencies.toplBtcBridge.shared ++
-        Dependencies.toplBtcBridge.test
+      Dependencies.strataBtcBridge.shared ++
+        Dependencies.strataBtcBridge.test
   )
   .enablePlugins(Fs2Grpc)
 
@@ -139,8 +139,8 @@ lazy val consensus = (project in file("consensus"))
     commonSettings,
     name := "strata-btc-bridge-consensus",
     libraryDependencies ++=
-      Dependencies.toplBtcBridge.consensus ++
-        Dependencies.toplBtcBridge.test
+      Dependencies.strataBtcBridge.consensus ++
+        Dependencies.strataBtcBridge.test
   )
   .enablePlugins(DockerPlugin, JavaAppPackaging)
   .dependsOn(shared)
@@ -154,8 +154,8 @@ lazy val publicApi =
       commonSettings,
       name := "strata-btc-bridge-public-api",
       libraryDependencies ++=
-        Dependencies.toplBtcBridge.publicApi ++
-          Dependencies.toplBtcBridge.test
+        Dependencies.strataBtcBridge.publicApi ++
+          Dependencies.strataBtcBridge.test
     )
     .enablePlugins(DockerPlugin, JavaAppPackaging)
     .dependsOn(shared)
@@ -192,31 +192,31 @@ buildClient := {
   )
 }
 
-lazy val toplBtcCli = (project in file("topl-btc-cli"))
+lazy val strataBtcCli = (project in file("strata-btc-cli"))
   .settings(mavenPublishSettings)
   .settings(
     commonSettings,
-    name := "topl-btc-cli",
+    name := "strata-btc-cli",
     libraryDependencies ++=
-      Dependencies.toplBtcBridge.consensus ++
-        Dependencies.toplBtcBridge.test
+      Dependencies.strataBtcBridge.consensus ++
+        Dependencies.strataBtcBridge.test
   )
   .enablePlugins(JavaAppPackaging)
   .dependsOn(shared)
 
 lazy val integration = (project in file("integration"))
-  .dependsOn(consensus, publicApi, toplBtcCli) // your current subproject
+  .dependsOn(consensus, publicApi, strataBtcCli) // your current subproject
   .settings(
     publish / skip := true,
     commonSettings,
-    libraryDependencies ++= Dependencies.toplBtcBridge.consensus ++ Dependencies.toplBtcBridge.publicApi ++ Dependencies.toplBtcBridge.shared ++ Dependencies.toplBtcBridge.test
+    libraryDependencies ++= Dependencies.strataBtcBridge.consensus ++ Dependencies.strataBtcBridge.publicApi ++ Dependencies.strataBtcBridge.shared ++ Dependencies.strataBtcBridge.test
   )
 
 lazy val root = project
   .in(file("."))
   .settings(
-    organization := "co.topl",
-    name := "topl-btc-bridge-umbrella"
+    organization := "xyz.stratalab",
+    name := "strata-btc-bridge-umbrella"
   )
   .settings(noPublish)
-  .aggregate(consensus, publicApi, toplBtcCli)
+  .aggregate(consensus, publicApi, strataBtcCli)

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package co.topl.bridge.consensus.protobuf;
+package xyz.stratalab.bridge.consensus.protobuf;
 
 message Lvl {
   bytes amount = 1;
@@ -40,11 +40,11 @@ message SkippedBTCBlock {
   uint32 height = 1;
 }
 
-message SkippedToplBlock {
+message SkippedStrataBlock {
   uint64 height = 1;
 }
 
-message NewToplBlock {
+message NewStrataBlock {
   uint64 height = 1;
 }
 
@@ -62,7 +62,7 @@ message BTCFundsWithdrawn {
 }
 
 message BifrostFundsDeposited {
-  uint64 currentToplBlockHeight = 1;
+  uint64 currentStrataBlockHeight = 1;
   string address = 2;
   string utxoTxId = 3;
   uint32 utxoIndex = 4;
@@ -70,7 +70,7 @@ message BifrostFundsDeposited {
 }
 
 message BifrostFundsWithdrawn {
-  uint64 currentToplBlockHeight = 1;
+  uint64 currentStrataBlockHeight = 1;
   string txId = 2;
   uint32 txIndex = 3;
   string secret = 4;
@@ -81,8 +81,8 @@ message BlockchainEvent {
   oneof event {
     NewBTCBlock newBTCBlock = 1;
     SkippedBTCBlock skippedBTCBlock = 2;
-    SkippedToplBlock skippedToplBlock = 3;
-    NewToplBlock newToplBlock = 4;
+    SkippedStrataBlock skippedStrataBlock = 3;
+    NewStrataBlock newStrataBlock = 4;
     BTCFundsDeposited btcFundsDeposited = 5;
     BTCFundsWithdrawn btcFundsWithdrawn = 6;
     BifrostFundsDeposited bifrostFundsDeposited = 7;

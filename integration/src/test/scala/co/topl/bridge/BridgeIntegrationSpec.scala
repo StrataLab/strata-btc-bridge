@@ -60,9 +60,9 @@ class BridgeIntegrationSpec
   } yield (bridgeNetwork, networkName)
 
   lazy val toplWalletDb =
-    Option(System.getenv("TOPL_WALLET_DB")).getOrElse("topl-wallet.db")
+    Option(System.getenv("TOPL_WALLET_DB")).getOrElse("strata-wallet.db")
   lazy val toplWalletJson =
-    Option(System.getenv("TOPL_WALLET_JSON")).getOrElse("topl-wallet.json")
+    Option(System.getenv("TOPL_WALLET_JSON")).getOrElse("strata-wallet.json")
 
   val startServer: AnyFixture[Unit] =
     new FutureFixture[Unit]("server setup") {
@@ -89,17 +89,17 @@ class BridgeIntegrationSpec
                     "src/test/resources/wallet.json",
                     "--btc-peg-in-seed-file",
                     "src/test/resources/pegin-wallet.json",
-                    "--topl-wallet-seed-file",
+                    "--strata-wallet-seed-file",
                     toplWalletJson,
-                    "--topl-wallet-db",
+                    "--strata-wallet-db",
                     toplWalletDb,
                     "--btc-url",
                     "http://localhost",
                     "--btc-blocks-to-recover",
                     "50",
-                    "--topl-confirmation-threshold",
+                    "--strata-confirmation-threshold",
                     "5",
-                    "--topl-blocks-to-recover",
+                    "--strata-blocks-to-recover",
                     "15",
                     "--abtc-group-id",
                     groupId,

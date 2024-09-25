@@ -41,7 +41,7 @@ trait SampleData {
 
   implicit val replicaId: ReplicaId = new ReplicaId(1)
 
-  val toplWalletFile = "src/test/resources/topl-wallet.json"
+  val toplWalletFile = "src/test/resources/strata-wallet.json"
 
   val testStrataPassword = "test"
 

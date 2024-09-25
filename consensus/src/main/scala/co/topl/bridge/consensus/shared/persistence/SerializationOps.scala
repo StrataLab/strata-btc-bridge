@@ -5,66 +5,66 @@ import co.topl.bridge.consensus.shared.BifrostCurrencyUnit
 import co.topl.bridge.consensus.shared.GroupToken
 import co.topl.bridge.consensus.shared.Lvl
 import co.topl.bridge.consensus.shared.SeriesToken
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   AssetToken => AssetTokenCurrency
 }
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   GroupToken => GroupTokenCurrency
 }
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   Lvl => LvlCurrency
 }
-import co.topl.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
   SeriesToken => SeriesTokenCurrency
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BifrostFundsDeposited => BifrostFundsDepositedEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BifrostFundsWithdrawn => BifrostFundsWithdrawnEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BtcFundsDeposited => BtcFundsDepositedEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   BtcFundsWithdrawn => BtcFundsWithdrawnEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   NewBTCBlock => NewBTCBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   NewStrataBlock => NewStrataBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedBTCBlock => SkippedBTCBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedStrataBlock => SkippedStrataBlockEvent
 }
-import co.topl.bridge.consensus.protobuf.{AssetToken => AssetTokenPb}
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{AssetToken => AssetTokenPb}
+import xyz.stratalab.bridge.consensus.protobuf.{
   BTCFundsDeposited => BTCFundsDepositedPb
 }
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{
   BTCFundsWithdrawn => BTCFundsWithdrawnPb
 }
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{
   BifrostCurrencyUnit => BifrostCurrencyUnitPb
 }
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{
   BifrostFundsDeposited => BifrostFundsDepositedPb
 }
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{
   BifrostFundsWithdrawn => BifrostFundsWithdrawnPb
 }
-import co.topl.bridge.consensus.protobuf.{BlockchainEvent => BlockchainEventPb}
-import co.topl.bridge.consensus.protobuf.{GroupToken => GroupTokenPb}
-import co.topl.bridge.consensus.protobuf.{Lvl => LvlPb}
-import co.topl.bridge.consensus.protobuf.{NewBTCBlock => NewBTCBlockPb}
-import co.topl.bridge.consensus.protobuf.{NewStrataBlock => NewStrataBlockPb}
-import co.topl.bridge.consensus.protobuf.{SeriesToken => SeriesTokenPb}
-import co.topl.bridge.consensus.protobuf.{SkippedBTCBlock => SkippedBTCBlockPb}
-import co.topl.bridge.consensus.protobuf.{
+import xyz.stratalab.bridge.consensus.protobuf.{BlockchainEvent => BlockchainEventPb}
+import xyz.stratalab.bridge.consensus.protobuf.{GroupToken => GroupTokenPb}
+import xyz.stratalab.bridge.consensus.protobuf.{Lvl => LvlPb}
+import xyz.stratalab.bridge.consensus.protobuf.{NewBTCBlock => NewBTCBlockPb}
+import xyz.stratalab.bridge.consensus.protobuf.{NewStrataBlock => NewStrataBlockPb}
+import xyz.stratalab.bridge.consensus.protobuf.{SeriesToken => SeriesTokenPb}
+import xyz.stratalab.bridge.consensus.protobuf.{SkippedBTCBlock => SkippedBTCBlockPb}
+import xyz.stratalab.bridge.consensus.protobuf.{
   SkippedStrataBlock => SkippedStrataBlockPb
 }
 import com.google.protobuf.ByteString

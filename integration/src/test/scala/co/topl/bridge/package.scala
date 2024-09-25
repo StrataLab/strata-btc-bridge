@@ -455,7 +455,7 @@ package object bridge extends ProcessOps {
   def templateFromSha(sha256: String, min: Long, max: Long) =
     s"""threshold(1, sha256($sha256) and height($min, $max))"""
 
-  val secretMap = Map(1 -> "topl-secret", 2 -> "topl-secret01")
+  val secretMap = Map(1 -> "strata-secret", 2 -> "strata-secret01")
 
   val bifrostHostMap =
       Map(1 -> "localhost", 2 -> "localhost")

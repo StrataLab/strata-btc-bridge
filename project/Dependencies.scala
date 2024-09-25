@@ -30,17 +30,17 @@ object Dependencies {
     "org.bouncycastle" % "bcpkix-jdk15on" % "1.68"
   )
 
-  lazy val toplOrg = "co.topl"
+  lazy val strataOrg = "co.topl"
 
-  lazy val bramblVersion = "2.0.0-beta8"
+  lazy val strataVersion = "2.0.0-beta8"
 
-  val bramblSdk = toplOrg %% "brambl-sdk" % bramblVersion
+  val strataSdk = strataOrg %% "brambl-sdk" % strataVersion
 
-  val bramblCrypto = toplOrg %% "crypto" % bramblVersion
+  val strataCrypto = strataOrg %% "crypto" % strataVersion
 
-  val bramblServiceKit = toplOrg %% "service-kit" % bramblVersion
+  val strataServiceKit = strataOrg %% "service-kit" % strataVersion
 
-  val brambl: Seq[ModuleID] = Seq(bramblSdk, bramblCrypto, bramblServiceKit)
+  val strata: Seq[ModuleID] = Seq(strataSdk, strataCrypto, strataServiceKit)
 
   lazy val bitcoinsVersion = "1.9.9"
 
@@ -114,10 +114,10 @@ object Dependencies {
     "com.typesafe" % "config" % "1.4.3"
   )
 
-  object toplBtcBridge {
+  object strataBtcBridge {
 
     lazy val consensus: Seq[ModuleID] =
-      brambl ++
+      strata ++
         scopt ++
         cats ++
         log4cats ++
@@ -158,10 +158,10 @@ object Dependencies {
         .map(_ % Test)
   }
 
-  object toplBtcCli {
+  object strataBtcCli {
 
     lazy val main: Seq[ModuleID] =
-      brambl ++
+      strata ++
         scopt ++
         cats ++
         log4cats ++

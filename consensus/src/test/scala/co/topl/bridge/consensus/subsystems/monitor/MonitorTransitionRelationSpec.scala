@@ -167,7 +167,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
               1L,
               "bifrostTxId",
               0,
-              "topl-secret",
+              "strata-secret",
               AssetToken("groupId", "seriesId", 100L)
             )
           )(transitionToEffect[IO](_, _))
@@ -197,7 +197,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             1L,
             "bifrostTxId",
             0,
-            "topl-secret",
+            "strata-secret",
             AssetToken("groupId", "seriesId", 100L)
           )
         )(transitionToEffect[IO](_, _))
@@ -256,7 +256,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             1L,
             "bifrostTxIdDifferent",
             0,
-            "topl-secret",
+            "strata-secret",
             AssetToken("groupId", "seriesId", 100L)
           )
         )(transitionToEffect[IO](_, _))
@@ -279,7 +279,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
               1L,
               "bifrostTxId",
               1,
-              "topl-secret",
+              "strata-secret",
               AssetToken("groupId", "seriesId", 100L)
             )
           )(transitionToEffect[IO](_, _))
@@ -510,7 +510,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
               1L,
               "bifrostTxId",
               0,
-              "topl-secret",
+              "strata-secret",
               AssetToken("groupId", "seriesId", 100L)
             )
           )(transitionToEffect[IO](_, _))
