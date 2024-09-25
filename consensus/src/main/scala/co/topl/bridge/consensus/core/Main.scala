@@ -21,7 +21,7 @@ import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebraImpl
 import co.topl.bridge.consensus.core.modules.AppModule
 import co.topl.bridge.consensus.core.utils.KeyGenerationUtils
-import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.consensus.shared.persistence.StorageApiImpl

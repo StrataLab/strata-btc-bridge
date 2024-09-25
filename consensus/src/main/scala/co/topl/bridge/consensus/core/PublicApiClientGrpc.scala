@@ -2,8 +2,8 @@ package co.topl.bridge.consensus.core
 
 import cats.effect.kernel.Async
 import co.topl.bridge.shared.Empty
-import co.topl.bridge.consensus.service.ResponseServiceFs2Grpc
-import co.topl.bridge.consensus.service.StateMachineReply
+import xyz.stratalab.bridge.consensus.service.ResponseServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.service.StateMachineReply
 import co.topl.bridge.shared.BridgeCryptoUtils
 import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel

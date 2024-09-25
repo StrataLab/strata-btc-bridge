@@ -4,7 +4,7 @@ import cats.effect.kernel.Ref
 import cats.effect.kernel.Sync
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
 import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
-import co.topl.bridge.consensus.service.StateMachineReply.Result
+import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import co.topl.bridge.shared.ClientId
 import fs2.grpc.syntax.all._
 import io.grpc.ManagedChannelBuilder

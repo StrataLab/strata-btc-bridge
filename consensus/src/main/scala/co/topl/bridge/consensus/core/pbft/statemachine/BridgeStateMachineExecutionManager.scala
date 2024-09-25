@@ -39,9 +39,9 @@ import co.topl.bridge.consensus.core.pbft.statemachine.UndoDepositBTCEvt
 import co.topl.bridge.consensus.core.pbft.statemachine.UndoTBTCMintEvt
 import co.topl.bridge.consensus.core.stateDigest
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.service.InvalidInputRes
-import co.topl.bridge.consensus.service.StartSessionRes
-import co.topl.bridge.consensus.service.StateMachineReply.Result
+import xyz.stratalab.bridge.consensus.service.InvalidInputRes
+import xyz.stratalab.bridge.consensus.service.StartSessionRes
+import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import co.topl.bridge.consensus.shared.AssetToken
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.shared.Lvl

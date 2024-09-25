@@ -36,8 +36,8 @@ import co.topl.bridge.consensus.core.pbft.PBFTRequestPreProcessorImpl
 import co.topl.bridge.consensus.core.pbft.RequestStateManagerImpl
 import co.topl.bridge.consensus.core.pbft.RequestTimerManagerImpl
 import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManagerImpl
-import co.topl.bridge.consensus.service.StateMachineReply.Result
-import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
+import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
 import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime

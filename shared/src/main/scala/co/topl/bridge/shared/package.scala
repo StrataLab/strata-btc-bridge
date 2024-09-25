@@ -1,6 +1,6 @@
 package co.topl.bridge
 
-import co.topl.bridge.consensus.service.StateMachineReply
+import xyz.stratalab.bridge.consensus.service.StateMachineReply
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest

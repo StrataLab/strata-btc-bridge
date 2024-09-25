@@ -6,7 +6,7 @@ import cats.effect.kernel.Sync
 import co.topl.bridge.shared.MintingStatusOperation
 import co.topl.bridge.shared.StartSessionOperation
 import co.topl.bridge.shared.StateMachineRequest
-import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.BridgeError
 import co.topl.bridge.shared.BridgeResponse
@@ -36,7 +36,7 @@ import co.topl.bridge.shared.PostRedemptionTxOperation
 import co.topl.bridge.shared.PostClaimTxOperation
 import co.topl.bridge.shared.ConfirmClaimTxOperation
 import co.topl.bridge.shared.UndoClaimTxOperation
-import co.topl.bridge.consensus.service.MintingStatusReply
+import xyz.stratalab.bridge.consensus.service.MintingStatusReply
 
 trait StateMachineServiceGrpcClient[F[_]] {
 

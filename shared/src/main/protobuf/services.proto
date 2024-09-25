@@ -3,7 +3,7 @@ syntax = "proto3";
 
 import "shared.proto";
 
-package co.topl.bridge.consensus.service;
+package xyz.stratalab.bridge.consensus.service;
 
 service StateMachineService {
   rpc ExecuteRequest(co.topl.bridge.shared.StateMachineRequest) returns (co.topl.bridge.shared.Empty);

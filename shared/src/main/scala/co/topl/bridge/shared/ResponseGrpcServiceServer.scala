@@ -4,10 +4,10 @@ import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
 import cats.effect.kernel.Sync
 import cats.implicits._
-import co.topl.bridge.consensus.service.ResponseServiceFs2Grpc
-import co.topl.bridge.consensus.service.StateMachineReply
-import co.topl.bridge.consensus.service.StateMachineReply.Result.SessionNotFound
-import co.topl.bridge.consensus.service.StateMachineReply.Result.StartSession
+import xyz.stratalab.bridge.consensus.service.ResponseServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.service.StateMachineReply
+import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result.SessionNotFound
+import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result.StartSession
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.BridgeError
