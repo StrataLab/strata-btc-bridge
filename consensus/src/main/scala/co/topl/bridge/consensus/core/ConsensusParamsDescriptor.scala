@@ -11,7 +11,7 @@ trait ConsensusParamsDescriptor {
 
   import ParamParser._
 
-  val builder = OParser.builder[ToplBTCBridgeConsensusParamConfig]
+  val builder = OParser.builder[StrataBTCBridgeConsensusParamConfig]
 
   val parser = {
     import builder._
@@ -34,7 +34,7 @@ trait ConsensusParamsDescriptor {
         .text(
           "Network name: Possible values: mainnet, testnet, regtest. (mandatory)"
         ),
-      opt[ToplNetworkIdentifiers]("topl-network")
+      opt[StrataNetworkIdentifiers]("topl-network")
         .action((x, c) => c.copy(toplNetwork = x))
         .text(
           "Network name: Possible values: mainnet, testnet, private. (mandatory)"
@@ -86,9 +86,9 @@ trait ConsensusParamsDescriptor {
         ),
       opt[String]("topl-host")
         .action((x, c) => c.copy(toplHost = x))
-        .text("The host of the Topl node. (mandatory)")
+        .text("The host of the Strata node. (mandatory)")
         .validate(x =>
-          if (x.trim().isEmpty) failure("Topl node host may not be empty")
+          if (x.trim().isEmpty) failure("Strata node host may not be empty")
           else success
         ),
       opt[String]("btc-url")
@@ -116,7 +116,7 @@ trait ConsensusParamsDescriptor {
         ),
       opt[Int]("topl-port")
         .action((x, c) => c.copy(toplPort = x))
-        .text("Port for Topl node. (mandatory)")
+        .text("Port for Strata node. (mandatory)")
         .validate(x =>
           if (x >= 0 && x <= 65536) success
           else failure("Port must be between 0 and 65536")
@@ -169,7 +169,7 @@ trait ConsensusParamsDescriptor {
       opt[Int]("topl-confirmation-threshold")
         .action((x, c) => c.copy(toplConfirmationThreshold = x))
         .text(
-          "The number of confirmations required for a peg-in transaction in the Topl network. (mandatory)"
+          "The number of confirmations required for a peg-in transaction in the Strata network. (mandatory)"
         )
         .validate( // check that it is a positive number
           x =>

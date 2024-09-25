@@ -195,7 +195,7 @@ object Main extends IOApp with PublicApiParamsDescriptor {
     OParser.parse(
       parser,
       args,
-      ToplBTCBridgePublicApiParamConfig()
+      StrataBTCBridgePublicApiParamConfig()
     ) match {
       case Some(configuration) =>
         val conf = ConfigFactory.parseFile(configuration.configurationFile)

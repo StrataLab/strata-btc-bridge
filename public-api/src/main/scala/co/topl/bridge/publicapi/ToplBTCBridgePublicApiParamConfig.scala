@@ -2,6 +2,6 @@ package co.topl.bridge.publicapi
 
 import java.io.File
 
-case class ToplBTCBridgePublicApiParamConfig(
+case class StrataBTCBridgePublicApiParamConfig(
     configurationFile: File = new File("application.conf")
 )

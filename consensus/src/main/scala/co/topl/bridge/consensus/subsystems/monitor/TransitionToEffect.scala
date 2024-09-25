@@ -4,8 +4,8 @@ import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataConfirmationThreshold
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.subsystems.monitor.MConfirmingBTCDeposit
 import co.topl.bridge.consensus.subsystems.monitor.MMintingTBTC
 import co.topl.bridge.consensus.subsystems.monitor.MWaitingForBTCDeposit
@@ -41,10 +41,10 @@ trait TransitionToEffect {
   )(implicit btcConfirmationThreshold: BTCConfirmationThreshold) =
     currentHeight - startHeight > btcConfirmationThreshold.underlying
 
-  def isAboveConfirmationThresholdTopl(
+  def isAboveConfirmationThresholdStrata(
       currentHeight: Long,
       startHeight: Long
-  )(implicit toplConfirmationThreshold: ToplConfirmationThreshold) =
+  )(implicit toplConfirmationThreshold: StrataConfirmationThreshold) =
     currentHeight - startHeight > toplConfirmationThreshold.underlying
 
   def transitionToEffect[F[_]: Async: Logger](
@@ -54,18 +54,18 @@ trait TransitionToEffect {
       clientId: ClientId,
       session: SessionId,
       consensusClient: StateMachineServiceGrpcClient[F],
-      toplWaitExpirationTime: ToplWaitExpirationTime,
+      toplWaitExpirationTime: StrataWaitExpirationTime,
       btcRetryThreshold: BTCRetryThreshold,
-      toplConfirmationThreshold: ToplConfirmationThreshold,
+      toplConfirmationThreshold: StrataConfirmationThreshold,
       btcConfirmationThreshold: BTCConfirmationThreshold
   ) =
     (blockchainEvent match {
-      case SkippedToplBlock(height) =>
-        error"Error the processor skipped Topl block $height"
+      case SkippedStrataBlock(height) =>
+        error"Error the processor skipped Strata block $height"
       case SkippedBTCBlock(height) =>
         error"Error the processor skipped BTC block $height"
-      case NewToplBlock(height) =>
-        debug"New Topl block $height"
+      case NewStrataBlock(height) =>
+        debug"New Strata block $height"
       case NewBTCBlock(height) =>
         debug"New BTC block $height"
       case _ =>
@@ -143,7 +143,7 @@ trait TransitionToEffect {
                 .postTBTCMint(
                   PostTBTCMintOperation(
                     session.id,
-                    be.currentToplBlockHeight,
+                    be.currentStrataBlockHeight,
                     be.utxoTxId,
                     be.utxoIndex,
                     ByteString.copyFrom(be.amount.amount.value.toByteArray)
@@ -180,10 +180,10 @@ trait TransitionToEffect {
             .void
         case (
               cs: MConfirmingTBTCMint,
-              be: NewToplBlock
+              be: NewStrataBlock
             ) =>
           if (
-            isAboveConfirmationThresholdTopl(
+            isAboveConfirmationThresholdStrata(
               be.height,
               cs.depositTBTCBlockHeight
             )
@@ -246,7 +246,7 @@ trait TransitionToEffect {
             .void
         case (
               _: MWaitingForRedemption,
-              ev: NewToplBlock
+              ev: NewStrataBlock
             ) =>
           Async[F]
             .start(

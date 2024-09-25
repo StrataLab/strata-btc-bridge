@@ -20,9 +20,9 @@ package object shared {
 
   class BTCWaitExpirationTime(val underlying: Int) extends AnyVal
 
-  class ToplWaitExpirationTime(val underlying: Int) extends AnyVal
+  class StrataWaitExpirationTime(val underlying: Int) extends AnyVal
 
-  class ToplConfirmationThreshold(val underlying: Int) extends AnyVal
+  class StrataConfirmationThreshold(val underlying: Int) extends AnyVal
 
   sealed trait SessionInfo
 

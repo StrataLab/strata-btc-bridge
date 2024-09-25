@@ -13,7 +13,7 @@ trait FailedPeginNoMintModule {
 
     assertIO(
       for {
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         _ <- IO.sleep(1.second)
         newAddress <- getNewAddress
         txIdAndBTCAmount <- extractGetTxIdAndAmount

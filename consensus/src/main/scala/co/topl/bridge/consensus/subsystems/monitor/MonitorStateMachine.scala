@@ -10,8 +10,8 @@ import co.topl.bridge.consensus.shared.PeginSessionInfo
 import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataConfirmationThreshold
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.subsystems.monitor.EndTransition
 import co.topl.bridge.consensus.subsystems.monitor.FSMTransitionTo
 import co.topl.bridge.consensus.subsystems.monitor.MWaitingForBTCDeposit
@@ -41,16 +41,16 @@ object MonitorStateMachine {
 
   def make[F[_]: Async: Logger](
       currentBitcoinNetworkHeight: Ref[F, Int],
-      currentToplNetworkHeight: Ref[F, Long],
+      currentStrataNetworkHeight: Ref[F, Long],
       map: ConcurrentHashMap[String, PeginStateMachineState]
   )(implicit
       clientId: ClientId,
       consensusClient: StateMachineServiceGrpcClient[F],
       btcWaitExpirationTime: BTCWaitExpirationTime,
-      toplWaitExpirationTime: ToplWaitExpirationTime,
+      toplWaitExpirationTime: StrataWaitExpirationTime,
       btcRetryThreshold: BTCRetryThreshold,
       btcConfirmationThreshold: BTCConfirmationThreshold,
-      toplConfirmationThreshold: ToplConfirmationThreshold,
+      toplConfirmationThreshold: StrataConfirmationThreshold,
       groupIdIdentifier: GroupId,
       seriesIdIdentifier: SeriesId
   ) = new MonitorStateMachineAlgebra[F] {
@@ -76,19 +76,19 @@ object MonitorStateMachine {
         case _ => fs2.Stream.empty
       }
 
-    private def updateToplHeight(
+    private def updateStrataHeight(
         blockchainEvent: BlockchainEvent
     ): fs2.Stream[F, F[Unit]] =
       blockchainEvent match {
-        case NewToplBlock(height) =>
+        case NewStrataBlock(height) =>
           fs2.Stream(
             for {
-              x <- currentToplNetworkHeight.get
+              x <- currentStrataNetworkHeight.get
               _ <- trace"current topl height is $x"
               _ <- trace"Updating topl height to $height"
               _ <-
                 if (height > x)
-                  currentToplNetworkHeight.set(height)
+                  currentStrataNetworkHeight.set(height)
                 else Sync[F].unit
             } yield ()
           )
@@ -100,7 +100,7 @@ object MonitorStateMachine {
         blockchainEvent: BlockchainEvent
     ): fs2.Stream[F, F[Unit]] = {
       import scala.jdk.CollectionConverters._
-      updateToplHeight(blockchainEvent) ++
+      updateStrataHeight(blockchainEvent) ++
         updateBTCHeight(blockchainEvent) ++ (for {
           entry <- fs2.Stream[F, Entry[String, PeginStateMachineState]](
             map.entrySet().asScala.toList: _*
@@ -155,8 +155,8 @@ object MonitorStateMachine {
             debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewBTCBlock].height}" >> value
           else if (blockchainEvent.isInstanceOf[SkippedBTCBlock])
             debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[SkippedBTCBlock].height}" >> value
-          else if (blockchainEvent.isInstanceOf[NewToplBlock])
-            debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewToplBlock].height}" >> value
+          else if (blockchainEvent.isInstanceOf[NewStrataBlock])
+            debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewStrataBlock].height}" >> value
           else
             debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()}" >> value
         }

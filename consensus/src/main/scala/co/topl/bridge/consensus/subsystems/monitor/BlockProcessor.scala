@@ -10,7 +10,7 @@ import scala.util.Try
 
 object BlockProcessor {
 
-  private def extractFromToplTx(proof: Attestation): String = {
+  private def extractFromStrataTx(proof: Attestation): String = {
     // The following is possible because we know the exact structure of the attestation
     val attestation = proof.getPredicate
     val preimage = attestation.responses.head.getAnd.left.getDigest.preimage
@@ -21,14 +21,14 @@ object BlockProcessor {
 
   def process[F[_]](
       initialBTCHeight: Int,
-      initialToplHeight: Long
+      initialStrataHeight: Long
   ): Either[BitcoinBlockSync, BifrostMonitor.BifrostBlockSync] => fs2.Stream[
     F,
     BlockchainEvent
   ] = {
     var btcHeight = initialBTCHeight
     var toplHeight =
-      initialToplHeight
+      initialStrataHeight
     var btcAscending = false
     var toplAscending = false
     def processAux[F[_]](
@@ -100,7 +100,7 @@ object BlockProcessor {
                   b.height,
                   Encoding.encodeToBase58(input.address.id.value.toByteArray()),
                   input.address.index,
-                  Try(extractFromToplTx(input.attestation))
+                  Try(extractFromStrataTx(input.attestation))
                     .getOrElse(""), // TODO: Make this safer
                   toCurrencyUnit(input.value.value)
                 )
@@ -126,14 +126,14 @@ object BlockProcessor {
         val transactions =
           if (b.height == (toplHeight + 1)) { // going up as expected, include all transaction
             toplAscending = true
-            fs2.Stream(NewToplBlock(b.height)) ++ allTransactions
+            fs2.Stream(NewStrataBlock(b.height)) ++ allTransactions
           } else if (b.height == (toplHeight - 1)) { // going down by one, we ommit transactions
             toplAscending = false
-            fs2.Stream(NewToplBlock(b.height))
+            fs2.Stream(NewStrataBlock(b.height))
           } else if (b.height > (toplHeight + 1)) { // we went up by more than one
             toplAscending = true
             fs2.Stream(
-              SkippedToplBlock(b.height)
+              SkippedStrataBlock(b.height)
             )
           } else if (b.height < (toplHeight - 1)) { // we went down by more than one, we ommit transactions
             toplAscending = false
@@ -144,12 +144,12 @@ object BlockProcessor {
               // if we are ascending, it means the current block was just unapplied
               // we don't pass the transactions that we have already seen
               toplAscending = false
-              fs2.Stream(NewToplBlock(b.height))
+              fs2.Stream(NewStrataBlock(b.height))
             } else {
               // if we are descending, it means the current block was just applied
               // we need to pass all transactions
               toplAscending = true
-              fs2.Stream(NewToplBlock(b.height)) ++ allTransactions
+              fs2.Stream(NewStrataBlock(b.height)) ++ allTransactions
             }
           }
         toplHeight = b.height

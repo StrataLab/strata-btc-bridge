@@ -11,9 +11,9 @@ import co.topl.bridge.consensus.subsystems.monitor.{
   BTCFundsWithdrawn,
   BTCFundsDeposited,
   BifrostFundsWithdrawn,
-  SkippedToplBlock,
+  SkippedStrataBlock,
   SkippedBTCBlock,
-  NewToplBlock,
+  NewStrataBlock,
   NewBTCBlock
 }
 import co.topl.bridge.consensus.shared.persistence.{SerializationOps, DeserializationOps}
@@ -38,13 +38,13 @@ class SerializationDeserializationSpec
     assertEquals(fromProtobuf(toProtobuf(event)), event)
   }
 
-  test("Serialization and Deserialization of SkippedToplBlock") {
-    val event = SkippedToplBlock(1)
+  test("Serialization and Deserialization of SkippedStrataBlock") {
+    val event = SkippedStrataBlock(1)
     assertEquals(fromProtobuf(toProtobuf(event)), event)
   }
 
-  test("Serialization and Deserialization of NewToplBlock") {
-    val event = NewToplBlock(1)
+  test("Serialization and Deserialization of NewStrataBlock") {
+    val event = NewStrataBlock(1)
     assertEquals(fromProtobuf(toProtobuf(event)), event)
   }
 

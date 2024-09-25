@@ -6,7 +6,7 @@ import co.topl.brambl.models.SeriesId
 import co.topl.brambl.models.GroupId
 import java.io.File
 
-case class ToplBTCBridgeConsensusParamConfig(
+case class StrataBTCBridgeConsensusParamConfig(
     btcWaitExpirationTime: Int =
       100, // the number of blocks to wait before the user can reclaim their funds
     btcConfirmationThreshold: Int =
@@ -32,7 +32,7 @@ case class ToplBTCBridgeConsensusParamConfig(
     zmqPort: Int = 28332,
     btcPassword: String = "password",
     btcNetwork: BitcoinNetworkIdentifiers = RegTest,
-    toplNetwork: ToplNetworkIdentifiers = ToplPrivatenet,
+    toplNetwork: StrataNetworkIdentifiers = StrataPrivatenet,
     toplHost: String = "localhost",
     toplPort: Int = 9084,
     btcRetryThreshold: Int = 6,

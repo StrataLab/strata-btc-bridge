@@ -5,8 +5,8 @@ import co.topl.brambl.models.SeriesId
 import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.shared.AssetToken
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataConfirmationThreshold
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.subsystems.monitor.EndTransition
 import co.topl.bridge.consensus.subsystems.monitor.FSMTransition
 import co.topl.bridge.consensus.subsystems.monitor.FSMTransitionTo
@@ -25,8 +25,8 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
       t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
   )(implicit
       btcWaitExpirationTime: BTCWaitExpirationTime,
-      toplWaitExpirationTime: ToplWaitExpirationTime,
-      toplConfirmationThreshold: ToplConfirmationThreshold,
+      toplWaitExpirationTime: StrataWaitExpirationTime,
+      toplConfirmationThreshold: StrataConfirmationThreshold,
       groupId: GroupId,
       seriesId: SeriesId
   ): Option[FSMTransition] =
@@ -64,7 +64,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
               currentState,
               MConfirmingTBTCMint(
                 cs.startBTCBlockHeight,
-                be.currentToplBlockHeight,
+                be.currentStrataBlockHeight,
                 cs.currentWalletIdx,
                 cs.scriptAsm,
                 cs.redeemAddress,
@@ -94,10 +94,10 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
         else None
       case (
             cs: MConfirmingTBTCMint,
-            be: NewToplBlock
+            be: NewStrataBlock
           ) =>
         if (
-          isAboveConfirmationThresholdTopl(be.height, cs.depositTBTCBlockHeight)
+          isAboveConfirmationThresholdStrata(be.height, cs.depositTBTCBlockHeight)
         ) {
           import co.topl.brambl.syntax._
           Some(
@@ -146,7 +146,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
           None
       case (
             cs: MWaitingForRedemption,
-            ev: NewToplBlock
+            ev: NewStrataBlock
           ) =>
         if (
           toplWaitExpirationTime.underlying < (ev.height - cs.currentTolpBlockHeight)
@@ -187,10 +187,10 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
         } else None
       case (
             cs: MConfirmingRedemption,
-            ev: NewToplBlock
+            ev: NewStrataBlock
           ) =>
         if (
-          isAboveConfirmationThresholdTopl(ev.height, cs.currentTolpBlockHeight)
+          isAboveConfirmationThresholdStrata(ev.height, cs.currentTolpBlockHeight)
         )
           Some(
             FSMTransitionTo(

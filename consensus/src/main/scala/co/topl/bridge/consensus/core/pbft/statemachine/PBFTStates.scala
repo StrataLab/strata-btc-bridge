@@ -22,7 +22,7 @@ sealed trait PBFTState {
   * @param escrowAddress
   *   the escrow address (on BTC)
   * @param redeemAddress
-  *   the redeem address (on the Topl Network)
+  *   the redeem address (on the Strata Network)
   * @param claimAddress
   *   the claim address (on the BTC), this is the address where the BTC will be
   *   sent to after redemption is confirmed
@@ -59,7 +59,7 @@ case class PSWaitingForBTCDeposit(
   * @param escrowAddress
   *   the escrow address (on BTC)
   * @param redeemAddress
-  *   the redeem address (on the Topl Network)
+  *   the redeem address (on the Strata Network)
   * @param claimAddress
   *   the claim address (on the BTC), this is the address where the BTC will be
   *   sent to after redemption is confirmed
@@ -107,7 +107,7 @@ case class PSConfirmingBTCDeposit(
   * @param scriptAsm
   *   the script asm of the escrow address
   * @param redeemAddress
-  *   the redeem address (on the Topl Network) where the TBTC will be sent to
+  *   the redeem address (on the Strata Network) where the TBTC will be sent to
   * @param claimAddress
   *   the claim address (on the BTC), this is the address where the BTC will be
   *   sent to after redemption is confirmed
@@ -150,7 +150,7 @@ case class PSMintingTBTC(
   * @param scriptAsm
   *   The script asm of the escrow address
   * @param redeemAddress
-  *   The redeem address (on the Topl Network) where the TBTC will be sent to
+  *   The redeem address (on the Strata Network) where the TBTC will be sent to
   * @param claimAddress
   *   The claim address (on the BTC), this is the address where the BTC will be
   *   sent to after redemption is confirmed
@@ -213,7 +213,7 @@ case class PSWaitingForRedemption(
   * @param scriptAsm
   *   The script asm of the escrow address
   * @param redeemAddress
-  *   The redeem address (on the Topl Network) where the TBTC will be sent to
+  *   The redeem address (on the Strata Network) where the TBTC will be sent to
   * @param claimAddress
   *   The claim address (on the BTC), this is the address where the BTC will be
   *   sent to after redemption is confirmed

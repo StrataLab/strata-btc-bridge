@@ -14,10 +14,10 @@ trait FailedMintingReorgModule {
 
     assertIO(
       for {
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         bridgeNetworkAndName <- computeBridgeNetworkName
         _ <- pwd
-        _ <- initToplWallet(2)
+        _ <- initStrataWallet(2)
         _ <- addFellowship(2)
         _ <- addSecret(2)
         newAddress <- getNewAddress
@@ -49,7 +49,7 @@ trait FailedMintingReorgModule {
           nbTries <- mutableRef.updateAndGet(_ + 1)
           _ <-
             if (nbTries < 5)
-              mintToplBlockDocker(1, 1)
+              mintStrataBlockDocker(1, 1)
             else IO.unit
           _ <- IO.sleep(1.second)
         } yield status)
@@ -57,7 +57,7 @@ trait FailedMintingReorgModule {
             _.mintingStatus == "PeginSessionMintingTBTCConfirmation"
           )
         _ <- info"Session ${startSessionResponse.sessionID} went to PeginSessionMintingTBTCConfirmation"	
-        _ <- List.fill(10)(mintToplBlockDocker(2, 1)).sequence
+        _ <- List.fill(10)(mintStrataBlockDocker(2, 1)).sequence
         _ <- connectBridge(bridgeNetworkAndName._2, "bifrost02")
         _ <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)

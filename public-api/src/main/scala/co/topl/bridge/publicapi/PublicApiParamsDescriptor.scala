@@ -5,7 +5,7 @@ import java.io.File
 
 trait PublicApiParamsDescriptor {
 
-  val builder = OParser.builder[ToplBTCBridgePublicApiParamConfig]
+  val builder = OParser.builder[StrataBTCBridgePublicApiParamConfig]
 
   val parser = {
     import builder._

@@ -31,13 +31,13 @@ import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
   NewBTCBlock => NewBTCBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  NewToplBlock => NewToplBlockEvent
+  NewStrataBlock => NewStrataBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedBTCBlock => SkippedBTCBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  SkippedToplBlock => SkippedToplBlockEvent
+  SkippedStrataBlock => SkippedStrataBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.{
   BifrostCurrencyUnit => BifrostCurrencyUnitPb
@@ -52,9 +52,9 @@ import co.topl.bridge.consensus.subsystems.monitor.{
   BTCFundsWithdrawn,
   BTCFundsDeposited,
   BifrostFundsWithdrawn,
-  SkippedToplBlock,
+  SkippedStrataBlock,
   SkippedBTCBlock,
-  NewToplBlock,
+  NewStrataBlock,
   NewBTCBlock
 }
 
@@ -101,19 +101,19 @@ trait DeserializationOps {
         SkippedBTCBlock(value.height)
       case BifrostFundsDepositedEvent(value) =>
         BifrostFundsDeposited(
-          value.currentToplBlockHeight,
+          value.currentStrataBlockHeight,
           value.address,
           value.utxoTxId,
           value.utxoIndex,
           fromProtobuf(value.amount)
         )
-      case NewToplBlockEvent(value) =>
-        NewToplBlock(value.height)
-      case SkippedToplBlockEvent(value) =>
-        SkippedToplBlock(value.height)
+      case NewStrataBlockEvent(value) =>
+        NewStrataBlock(value.height)
+      case SkippedStrataBlockEvent(value) =>
+        SkippedStrataBlock(value.height)
       case BifrostFundsWithdrawnEvent(value) =>
         BifrostFundsWithdrawn(
-          value.currentToplBlockHeight,
+          value.currentStrataBlockHeight,
           value.txId,
           value.txIndex,
           value.secret,

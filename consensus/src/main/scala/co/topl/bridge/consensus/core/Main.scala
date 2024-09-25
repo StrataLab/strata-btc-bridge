@@ -16,7 +16,7 @@ import co.topl.brambl.monitoring.BitcoinMonitor
 import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.ConsensusParamsDescriptor
 import co.topl.bridge.consensus.core.ServerConfig
-import co.topl.bridge.consensus.core.ToplBTCBridgeConsensusParamConfig
+import co.topl.bridge.consensus.core.StrataBTCBridgeConsensusParamConfig
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebraImpl
 import co.topl.bridge.consensus.core.modules.AppModule
@@ -81,7 +81,7 @@ object Main
     OParser.parse(
       parser,
       args,
-      ToplBTCBridgeConsensusParamConfig(
+      StrataBTCBridgeConsensusParamConfig(
         toplHost = Option(System.getenv("TOPL_HOST")).getOrElse("localhost"),
         toplWalletDb = System.getenv("TOPL_WALLET_DB"),
         zmqHost = Option(System.getenv("ZMQ_HOST")).getOrElse("localhost"),
@@ -113,7 +113,7 @@ object Main
   }
 
   private def loadKeyPegin(
-      params: ToplBTCBridgeConsensusParamConfig
+      params: StrataBTCBridgeConsensusParamConfig
   ): IO[BIP39KeyManager] =
     KeyGenerationUtils.loadKeyManager[IO](
       params.btcNetwork,
@@ -122,7 +122,7 @@ object Main
     )
 
   private def loadKeyWallet(
-      params: ToplBTCBridgeConsensusParamConfig
+      params: StrataBTCBridgeConsensusParamConfig
   ): IO[BIP39KeyManager] =
     KeyGenerationUtils.loadKeyManager[IO](
       params.btcNetwork,
@@ -193,13 +193,13 @@ object Main
         ClientId,
         (PublicApiClientGrpc[IO], PublicKey)
       ],
-      params: ToplBTCBridgeConsensusParamConfig,
+      params: StrataBTCBridgeConsensusParamConfig,
       queue: Queue[IO, SessionEvent],
       walletManager: BTCWalletAlgebra[IO],
       pegInWalletManager: BTCWalletAlgebra[IO],
       currentBitcoinNetworkHeight: Ref[IO, Int],
       currentSequenceRef: Ref[IO, Long],
-      currentToplHeight: Ref[IO, Long],
+      currentStrataHeight: Ref[IO, Long],
       currentState: Ref[IO, SystemGlobalState]
   )(implicit
       clientId: ClientId,
@@ -219,7 +219,7 @@ object Main
     implicit val pbftProtocolClientImpl =
       new PublicApiClientGrpcMap[IO](publicApiClientGrpcMap)
     for {
-      currentToplHeightVal <- currentToplHeight.get
+      currentStrataHeightVal <- currentStrataHeight.get
       currentBitcoinNetworkHeightVal <- currentBitcoinNetworkHeight.get
       res <- createApp(
         replicaKeysMap,
@@ -232,11 +232,11 @@ object Main
         logger,
         currentBitcoinNetworkHeight,
         currentSequenceRef,
-        currentToplHeight,
+        currentStrataHeight,
         currentState
       )
     } yield (
-      currentToplHeightVal,
+      currentStrataHeightVal,
       currentBitcoinNetworkHeightVal,
       res._1,
       res._2,
@@ -248,13 +248,13 @@ object Main
 
   def startResources(
       privateKeyFile: String,
-      params: ToplBTCBridgeConsensusParamConfig,
+      params: StrataBTCBridgeConsensusParamConfig,
       queue: Queue[IO, SessionEvent],
       walletManager: BTCWalletAlgebra[IO],
       pegInWalletManager: BTCWalletAlgebra[IO],
       currentBitcoinNetworkHeight: Ref[IO, Int],
       currentSequenceRef: Ref[IO, Long],
-      currentToplHeight: Ref[IO, Long],
+      currentStrataHeight: Ref[IO, Long],
       currentState: Ref[IO, SystemGlobalState]
   )(implicit
       conf: Config,
@@ -321,11 +321,11 @@ object Main
         pegInWalletManager,
         currentBitcoinNetworkHeight,
         currentSequenceRef,
-        currentToplHeight,
+        currentStrataHeight,
         currentState
       ).toResource
       (
-        currentToplHeightVal,
+        currentStrataHeightVal,
         currentBitcoinNetworkHeightVal,
         grpcServiceResource,
         init,
@@ -364,16 +364,16 @@ object Main
           messageResponseMap
         )
       grpcService <- grpcServiceResource
-      _ <- getAndSetCurrentToplHeight(
-        currentToplHeight,
+      _ <- getAndSetCurrentStrataHeight(
+        currentStrataHeight,
         bifrostQueryAlgebra
       ).toResource
       _ <- getAndSetCurrentBitcoinHeight(
         currentBitcoinNetworkHeight,
         bitcoindInstance
       ).toResource
-      _ <- getAndSetCurrentToplHeight( // we do this again in case the BTC height took too much time to get
-        currentToplHeight,
+      _ <- getAndSetCurrentStrataHeight( // we do this again in case the BTC height took too much time to get
+        currentStrataHeight,
         bifrostQueryAlgebra
       ).toResource
       replicaGrpcListener <- NettyServerBuilder
@@ -420,7 +420,7 @@ object Main
             )
             .flatMap(
               BlockProcessor
-                .process(currentBitcoinNetworkHeightVal, currentToplHeightVal)
+                .process(currentBitcoinNetworkHeightVal, currentStrataHeightVal)
             )
             .observe(_.foreach(evt => storageApi.insertBlockchainEvent(evt)))
             .flatMap(
@@ -437,8 +437,8 @@ object Main
     } yield ()
   }
 
-  def getAndSetCurrentToplHeight[F[_]: Async: Logger](
-      currentToplHeight: Ref[F, Long],
+  def getAndSetCurrentStrataHeight[F[_]: Async: Logger](
+      currentStrataHeight: Ref[F, Long],
       bqa: BifrostQueryAlgebra[F]
   ) = {
     import cats.implicits._
@@ -448,7 +448,7 @@ object Main
       height <- someTip
         .map({ tip =>
           val (_, header, _, _) = tip
-          currentToplHeight.set(header.height) >>
+          currentStrataHeight.set(header.height) >>
             info"Obtained and set topl height: ${header.height}" >>
             header.height.pure[F]
         })
@@ -477,7 +477,7 @@ object Main
     } yield height).iterateUntil(_ != 0)
   }
 
-  def runWithArgs(params: ToplBTCBridgeConsensusParamConfig): IO[ExitCode] = {
+  def runWithArgs(params: StrataBTCBridgeConsensusParamConfig): IO[ExitCode] = {
     implicit val defaultFromFellowship = new Fellowship("self")
     implicit val defaultFromTemplate = new Template("default")
     val credentials = BitcoindAuthCredentials.PasswordBased(
@@ -519,7 +519,7 @@ object Main
       globalState <- Ref[IO].of(
         SystemGlobalState(Some("Setting up wallet..."), None)
       )
-      currentToplHeight <- Ref[IO].of(0L)
+      currentStrataHeight <- Ref[IO].of(0L)
       queue <- Queue.unbounded[IO, SessionEvent]
       currentBitcoinNetworkHeight <- Ref[IO].of(0)
       currentSequenceRef <- Ref[IO].of(0L)
@@ -531,7 +531,7 @@ object Main
         pegInWalletManager,
         currentBitcoinNetworkHeight,
         currentSequenceRef,
-        currentToplHeight,
+        currentStrataHeight,
         globalState
       ).useForever
     } yield {

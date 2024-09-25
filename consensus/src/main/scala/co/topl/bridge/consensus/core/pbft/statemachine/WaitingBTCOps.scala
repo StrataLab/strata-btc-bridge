@@ -12,7 +12,7 @@ import co.topl.brambl.wallet.WalletApi
 import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.shared.Lvl
 import co.topl.bridge.consensus.core.Template
-import co.topl.bridge.consensus.core.managers.ToplWalletAlgebra
+import co.topl.bridge.consensus.core.managers.StrataWalletAlgebra
 import co.topl.bridge.consensus.core.managers.TransactionAlgebra
 import co.topl.bridge.consensus.core.managers.WalletApiHelpers
 import co.topl.genus.services.Txo
@@ -20,12 +20,12 @@ import io.grpc.ManagedChannel
 import org.typelevel.log4cats.Logger
 import quivr.models.Int128
 import quivr.models.KeyPair
-import co.topl.bridge.consensus.core.ToplKeypair
+import co.topl.bridge.consensus.core.StrataKeypair
 
 object WaitingBTCOps {
 
   import WalletApiHelpers._
-  import ToplWalletAlgebra._
+  import StrataWalletAlgebra._
   import TransactionAlgebra._
 
   private def getGroupTokeUtxo(txos: Seq[Txo]) = {
@@ -115,7 +115,7 @@ object WaitingBTCOps {
       redeemAddress: String,
       amount: Int128
   )(implicit
-      toplKeypair: ToplKeypair,
+      toplKeypair: StrataKeypair,
       walletApi: WalletApi[F],
       walletStateApi: WalletStateAlgebra[F],
       transactionBuilderApi: TransactionBuilderApi[F],

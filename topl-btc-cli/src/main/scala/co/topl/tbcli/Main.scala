@@ -7,7 +7,7 @@ import cats.effect.IOApp
 object Main extends IOApp with TBCLIParamsDescriptor {
 
   override def run(args: List[String]): IO[ExitCode] = {
-    // OParser.parse(parser, args, ToplBTCCLIParamConfig()) match {
+    // OParser.parse(parser, args, StrataBTCCLIParamConfig()) match {
     //   case Some(config) =>
     //     config.command match {
     //       case Some(command) =>
@@ -24,7 +24,7 @@ object Main extends IOApp with TBCLIParamsDescriptor {
 
   // def processCommand(
   //     network: BitcoinNetworkIdentifiers,
-  //     command: ToplBTCCLICommand
+  //     command: StrataBTCCLICommand
   // ): IO[ExitCode] = command match {
   //   case e: InitSession =>
   //     for {

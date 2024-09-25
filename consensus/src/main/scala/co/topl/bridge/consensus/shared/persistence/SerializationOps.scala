@@ -33,13 +33,13 @@ import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
   NewBTCBlock => NewBTCBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  NewToplBlock => NewToplBlockEvent
+  NewStrataBlock => NewStrataBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedBTCBlock => SkippedBTCBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  SkippedToplBlock => SkippedToplBlockEvent
+  SkippedStrataBlock => SkippedStrataBlockEvent
 }
 import co.topl.bridge.consensus.protobuf.{AssetToken => AssetTokenPb}
 import co.topl.bridge.consensus.protobuf.{
@@ -61,11 +61,11 @@ import co.topl.bridge.consensus.protobuf.{BlockchainEvent => BlockchainEventPb}
 import co.topl.bridge.consensus.protobuf.{GroupToken => GroupTokenPb}
 import co.topl.bridge.consensus.protobuf.{Lvl => LvlPb}
 import co.topl.bridge.consensus.protobuf.{NewBTCBlock => NewBTCBlockPb}
-import co.topl.bridge.consensus.protobuf.{NewToplBlock => NewToplBlockPb}
+import co.topl.bridge.consensus.protobuf.{NewStrataBlock => NewStrataBlockPb}
 import co.topl.bridge.consensus.protobuf.{SeriesToken => SeriesTokenPb}
 import co.topl.bridge.consensus.protobuf.{SkippedBTCBlock => SkippedBTCBlockPb}
 import co.topl.bridge.consensus.protobuf.{
-  SkippedToplBlock => SkippedToplBlockPb
+  SkippedStrataBlock => SkippedStrataBlockPb
 }
 import com.google.protobuf.ByteString
 import co.topl.bridge.consensus.subsystems.monitor.{
@@ -74,9 +74,9 @@ import co.topl.bridge.consensus.subsystems.monitor.{
   BTCFundsWithdrawn,
   BTCFundsDeposited,
   BifrostFundsWithdrawn,
-  SkippedToplBlock,
+  SkippedStrataBlock,
   SkippedBTCBlock,
-  NewToplBlock,
+  NewStrataBlock,
   NewBTCBlock
 }
 
@@ -131,13 +131,13 @@ trait SerializationOps {
         BlockchainEventPb(
           SkippedBTCBlockEvent(SkippedBTCBlockPb(height))
         )
-      case SkippedToplBlock(height) =>
+      case SkippedStrataBlock(height) =>
         BlockchainEventPb(
-          SkippedToplBlockEvent(SkippedToplBlockPb(height))
+          SkippedStrataBlockEvent(SkippedStrataBlockPb(height))
         )
-      case NewToplBlock(height) =>
+      case NewStrataBlock(height) =>
         BlockchainEventPb(
-          NewToplBlockEvent(NewToplBlockPb(height))
+          NewStrataBlockEvent(NewStrataBlockPb(height))
         )
       case BTCFundsDeposited(
             fundsDepositedHeight,
@@ -158,7 +158,7 @@ trait SerializationOps {
           )
         )
       case BifrostFundsDeposited(
-            currentToplBlockHeight,
+            currentStrataBlockHeight,
             address,
             utxoTxId,
             utxoIndex,
@@ -167,7 +167,7 @@ trait SerializationOps {
         BlockchainEventPb(
           BifrostFundsDepositedEvent(
             BifrostFundsDepositedPb(
-              currentToplBlockHeight,
+              currentStrataBlockHeight,
               address,
               utxoTxId,
               utxoIndex,

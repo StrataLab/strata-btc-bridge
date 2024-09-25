@@ -9,7 +9,7 @@ import co.topl.bridge.shared.ReplicaId
 trait InitUtils {
 
   def printParams[F[_]: Sync: Logger](
-      params: ToplBTCBridgeConsensusParamConfig
+      params: StrataBTCBridgeConsensusParamConfig
   ) = {
     import org.typelevel.log4cats.syntax._
     import cats.implicits._

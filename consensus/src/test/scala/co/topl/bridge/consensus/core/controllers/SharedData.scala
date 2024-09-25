@@ -1,9 +1,9 @@
 package co.topl.bridge.consensus.core.controllers
 
-import co.topl.bridge.consensus.core.ToplPrivatenet
+import co.topl.bridge.consensus.core.StrataPrivatenet
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
 import co.topl.brambl.models.SeriesId
@@ -44,7 +44,7 @@ trait SharedData {
 
   val testPassword = "password"
 
-  val testToplPassword = "test"
+  val testStrataPassword = "test"
 
   val testTx =
     "02000000000101d0e18d3e7353fc08411019d71d04eb6b508e41d96084dd835d94058e3ca6d908000000000000000000016879070000000000160014"
@@ -52,16 +52,16 @@ trait SharedData {
   implicit val btcWaitExpirationTime: BTCWaitExpirationTime =
     new BTCWaitExpirationTime(100)
 
-  implicit val toplWaitExpirationTime: ToplWaitExpirationTime =
-    new ToplWaitExpirationTime(2000)
+  implicit val toplWaitExpirationTime: StrataWaitExpirationTime =
+    new StrataWaitExpirationTime(2000)
 
   implicit val btcConfirmationThreshold: BTCConfirmationThreshold = new BTCConfirmationThreshold(6)
 
-  implicit val toplConfirmationThreshold: ToplConfirmationThreshold = new ToplConfirmationThreshold(6)
+  implicit val toplConfirmationThreshold: StrataConfirmationThreshold = new StrataConfirmationThreshold(6)
 
   implicit val btcRetryThreshold: BTCRetryThreshold = new BTCRetryThreshold(6)
 
-  val testToplNetworkId = ToplPrivatenet
+  val testStrataNetworkId = StrataPrivatenet
 
   implicit val groupId: GroupId = GroupId(
     ByteString.copyFrom(

@@ -6,8 +6,8 @@ import co.topl.brambl.models.SeriesId
 import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataConfirmationThreshold
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.subsystems.monitor.FSMTransition
 import co.topl.bridge.consensus.subsystems.monitor.PeginStateMachineState
 import org.typelevel.log4cats.Logger
@@ -26,9 +26,9 @@ object MonitorTransitionRelation
   )(implicit
       btcRetryThreshold: BTCRetryThreshold,
       btcWaitExpirationTime: BTCWaitExpirationTime,
-      toplWaitExpirationTime: ToplWaitExpirationTime,
+      toplWaitExpirationTime: StrataWaitExpirationTime,
       btcConfirmationThreshold: BTCConfirmationThreshold,
-      toplConfirmationThreshold: ToplConfirmationThreshold,
+      toplConfirmationThreshold: StrataConfirmationThreshold,
       groupId: GroupId,
       seriesId: SeriesId
   ): Option[FSMTransition] =

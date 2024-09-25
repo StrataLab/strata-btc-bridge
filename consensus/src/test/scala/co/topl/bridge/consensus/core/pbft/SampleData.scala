@@ -8,7 +8,7 @@ import co.topl.bridge.consensus.core.CheckpointInterval
 import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.shared.Lvl
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
 import com.google.protobuf.ByteString
@@ -43,7 +43,7 @@ trait SampleData {
 
   val toplWalletFile = "src/test/resources/topl-wallet.json"
 
-  val testToplPassword = "test"
+  val testStrataPassword = "test"
 
   val btcUser = "user"
   val btcPassword = "password"
@@ -52,8 +52,8 @@ trait SampleData {
 
   val btcUrl = "http://localhost:18332"
 
-  implicit val toplWaitExpirationTime: ToplWaitExpirationTime =
-    new ToplWaitExpirationTime(1000)
+  implicit val toplWaitExpirationTime: StrataWaitExpirationTime =
+    new StrataWaitExpirationTime(1000)
 
   implicit val btcWaitExpirationTime: BTCWaitExpirationTime =
     new BTCWaitExpirationTime(100)

@@ -17,7 +17,7 @@ import co.topl.brambl.wallet.WalletApi
 import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
 import co.topl.bridge.consensus.core.CurrentBTCHeightRef
-import co.topl.bridge.consensus.core.CurrentToplHeightRef
+import co.topl.bridge.consensus.core.CurrentStrataHeightRef
 import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.LastReplyMap
@@ -25,7 +25,7 @@ import co.topl.bridge.consensus.core.PeginWalletManager
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.SystemGlobalState
 import co.topl.bridge.consensus.core.Template
-import co.topl.bridge.consensus.core.ToplBTCBridgeConsensusParamConfig
+import co.topl.bridge.consensus.core.StrataBTCBridgeConsensusParamConfig
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.channelResource
 import co.topl.bridge.consensus.core.managers.BTCWalletAlgebra
@@ -42,8 +42,8 @@ import co.topl.bridge.consensus.shared.BTCConfirmationThreshold
 import co.topl.bridge.consensus.shared.BTCRetryThreshold
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.shared.Lvl
-import co.topl.bridge.consensus.shared.ToplConfirmationThreshold
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataConfirmationThreshold
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.consensus.subsystems.monitor.MonitorStateMachine
 import co.topl.bridge.consensus.subsystems.monitor.SessionEvent
@@ -77,14 +77,14 @@ trait AppModule extends WalletStateResource {
       replicaKeysMap: Map[Int, PublicKey],
       replicaKeyPair: JKeyPair,
       idReplicaClientMap: Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
-      params: ToplBTCBridgeConsensusParamConfig,
+      params: StrataBTCBridgeConsensusParamConfig,
       queue: Queue[IO, SessionEvent],
       walletManager: BTCWalletAlgebra[IO],
       pegInWalletManager: BTCWalletAlgebra[IO],
       logger: Logger[IO],
       currentBitcoinNetworkHeight: Ref[IO, Int],
       currentSequenceRef: Ref[IO, Long],
-      currentToplHeight: Ref[IO, Long],
+      currentStrataHeight: Ref[IO, Long],
       currentState: Ref[IO, SystemGlobalState]
   )(implicit
       pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
@@ -132,13 +132,13 @@ trait AppModule extends WalletStateResource {
     implicit val btcWaitExpirationTime = new BTCWaitExpirationTime(
       params.btcWaitExpirationTime
     )
-    implicit val toplWaitExpirationTime = new ToplWaitExpirationTime(
+    implicit val toplWaitExpirationTime = new StrataWaitExpirationTime(
       params.toplWaitExpirationTime
     )
     implicit val btcConfirmationThreshold = new BTCConfirmationThreshold(
       params.btcConfirmationThreshold
     )
-    implicit val toplConfirmationThreshold = new ToplConfirmationThreshold(
+    implicit val toplConfirmationThreshold = new StrataConfirmationThreshold(
       params.toplConfirmationThreshold
     )
     implicit val checkpointInterval = new CheckpointInterval(
@@ -160,8 +160,8 @@ trait AppModule extends WalletStateResource {
     )
     implicit val currentBTCHeightRef =
       new CurrentBTCHeightRef[IO](currentBitcoinNetworkHeight)
-    implicit val currentToplHeightRef = new CurrentToplHeightRef[IO](
-      currentToplHeight
+    implicit val currentStrataHeightRef = new CurrentStrataHeightRef[IO](
+      currentStrataHeight
     )
     implicit val watermarkRef = new WatermarkRef[IO](
       Ref.unsafe[IO, (Long, Long)]((0, 0))
@@ -213,7 +213,7 @@ trait AppModule extends WalletStateResource {
       val peginStateMachine = MonitorStateMachine
         .make[IO](
           currentBitcoinNetworkHeight,
-          currentToplHeight,
+          currentStrataHeight,
           new ConcurrentHashMap()
         )
       (

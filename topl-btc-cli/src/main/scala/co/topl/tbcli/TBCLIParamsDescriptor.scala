@@ -6,18 +6,18 @@ package co.topl.tbcli
 trait TBCLIParamsDescriptor {
   // import co.topl.bridge.ParamParser._
 
-  // val builder = OParser.builder[ToplBTCCLIParamConfig]
+  // val builder = OParser.builder[StrataBTCCLIParamConfig]
 
   // val parser = {
   //   import builder._
   //   import monocle.Optional
-  //   val someCommand = Optional[ToplBTCCLIParamConfig, ToplBTCCLICommand] {
+  //   val someCommand = Optional[StrataBTCCLIParamConfig, StrataBTCCLICommand] {
   //     _.command
   //   } { command =>
   //     _.copy(command = Some(command))
   //   }
   //   import monocle.macros.GenPrism
-  //   val initSession = GenPrism[ToplBTCCLICommand, InitSession]
+  //   val initSession = GenPrism[StrataBTCCLICommand, InitSession]
   //   import monocle.macros.GenLens
   //   val initSessionLens = someCommand.andThen(initSession)
   //   OParser.sequence(

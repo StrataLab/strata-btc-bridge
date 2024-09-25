@@ -10,13 +10,13 @@ import co.topl.brambl.wallet.WalletApi
 import co.topl.bridge.consensus.shared.BTCWaitExpirationTime
 import co.topl.bridge.consensus.core.BitcoinNetworkIdentifiers
 import co.topl.bridge.consensus.core.BridgeWalletManager
-import co.topl.bridge.consensus.core.CurrentToplHeightRef
+import co.topl.bridge.consensus.core.CurrentStrataHeightRef
 import co.topl.bridge.consensus.shared.PeginSessionState
 import co.topl.bridge.consensus.core.PeginWalletManager
-import co.topl.bridge.consensus.core.ToplKeypair
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.core.StrataKeypair
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.shared.PeginSessionInfo
-import co.topl.bridge.consensus.core.managers.ToplWalletAlgebra
+import co.topl.bridge.consensus.core.managers.StrataWalletAlgebra
 import co.topl.bridge.consensus.core.utils.BitcoinUtils
 import co.topl.bridge.shared.StartSessionOperation
 import co.topl.bridge.shared.BridgeError
@@ -117,21 +117,21 @@ object StartSessionController {
       sessionId: String,
       req: StartSessionOperation,
       )(implicit
-      toplKeypair: ToplKeypair,
+      toplKeypair: StrataKeypair,
       btcNetwork: BitcoinNetworkIdentifiers,
-      currentToplHeight: CurrentToplHeightRef[F],
+      currentStrataHeight: CurrentStrataHeightRef[F],
       pegInWalletManager: PeginWalletManager[F],
       bridgeWalletManager: BridgeWalletManager[F],
       fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
       templateStorageAlgebra: TemplateStorageAlgebra[F],
-      toplWaitExpirationTime: ToplWaitExpirationTime,
+      toplWaitExpirationTime: StrataWaitExpirationTime,
       btcWaitExpirationTime: BTCWaitExpirationTime,
       tba: TransactionBuilderApi[F],
       walletApi: WalletApi[F],
       wsa: WalletStateAlgebra[F]
   ): F[Either[BridgeError, (PeginSessionInfo, StartPeginSessionResponse)]] = {
     import cats.implicits._
-    import ToplWalletAlgebra._
+    import StrataWalletAlgebra._
 
     import org.typelevel.log4cats.syntax._
 
@@ -142,19 +142,19 @@ object StartSessionController {
       (btcBridgeCurrentWalletIdx, btcBridgePKey) = bridgeIdxAndnewKey
       mintTemplateName <- Sync[F].delay(UUID.randomUUID().toString)
       fromFellowship = mintTemplateName
-      minToplHeight <- currentToplHeight.underlying.get
+      minStrataHeight <- currentStrataHeight.underlying.get
       _ <-
-        if (minToplHeight == 0)
-          Sync[F].raiseError(new IllegalStateException("Topl height is 0"))
+        if (minStrataHeight == 0)
+          Sync[F].raiseError(new IllegalStateException("Strata height is 0"))
         else Sync[F].unit
-      maxToplHeight = minToplHeight + toplWaitExpirationTime.underlying
+      maxStrataHeight = minStrataHeight + toplWaitExpirationTime.underlying
       someRedeemAdressAndKey <- setupBridgeWalletForMinting(
         fromFellowship,
         mintTemplateName,
         toplKeypair.underlying,
         req.sha256,
-        minToplHeight,
-        maxToplHeight
+        minStrataHeight,
+        maxStrataHeight
       )
       someRedeemAdress = someRedeemAdressAndKey.map(_._1)
       _ = assert(
@@ -173,8 +173,8 @@ object StartSessionController {
         btcWaitExpirationTime,
         btcNetwork,
         someRedeemAdress.get,
-        minToplHeight,
-        maxToplHeight
+        minStrataHeight,
+        maxStrataHeight
       )
       (address, sessionInfo) = addressAndsessionInfo
     } yield (
@@ -185,8 +185,8 @@ object StartSessionController {
         address,
         BitcoinUtils
           .createDescriptor(btcPeginBridgePKey.hex, req.pkey, req.sha256),
-        minToplHeight,
-        maxToplHeight
+        minStrataHeight,
+        maxStrataHeight
       )
     ).asRight[BridgeError]).handleErrorWith {
       case e: BridgeError =>

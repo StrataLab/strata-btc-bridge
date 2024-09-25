@@ -2,15 +2,15 @@ package co.topl.tbcli
 // import co.topl.bridge.BitcoinNetworkIdentifiers
 // import co.topl.bridge.RegTest
 
-sealed abstract class ToplBTCCLICommand
+sealed abstract class StrataBTCCLICommand
 
 case class InitSession(
     seedFile: String = "",
     password: String = "",
     secret: String = ""
-) extends ToplBTCCLICommand
+) extends StrataBTCCLICommand
 
-// case class ToplBTCCLIParamConfig(
+// case class StrataBTCCLIParamConfig(
 //     btcNetwork: BitcoinNetworkIdentifiers = RegTest,
-//     command: Option[ToplBTCCLICommand] = None
+//     command: Option[StrataBTCCLICommand] = None
 // )

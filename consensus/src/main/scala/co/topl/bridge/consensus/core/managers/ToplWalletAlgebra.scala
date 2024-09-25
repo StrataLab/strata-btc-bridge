@@ -24,13 +24,13 @@ import co.topl.genus.services.Txo
 import co.topl.bridge.shared.InvalidHash
 import co.topl.bridge.shared.InvalidInput
 import co.topl.bridge.shared.InvalidKey
-import co.topl.bridge.consensus.core.ToplNetworkIdentifiers
+import co.topl.bridge.consensus.core.StrataNetworkIdentifiers
 import com.google.protobuf.ByteString
 import io.circe.Json
 import quivr.models.KeyPair
 import quivr.models.VerificationKey
 
-object ToplWalletAlgebra {
+object StrataWalletAlgebra {
   import WalletApiHelpers._
   import AssetMintingOps._
 
@@ -225,7 +225,7 @@ object ToplWalletAlgebra {
   }
 
   def setupBridgeWallet[F[_]: Sync](
-      networkId: ToplNetworkIdentifiers,
+      networkId: StrataNetworkIdentifiers,
       keypair: KeyPair,
       userBaseKey: String,
       fellowshipName: String,

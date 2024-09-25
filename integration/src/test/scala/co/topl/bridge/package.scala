@@ -98,13 +98,13 @@ package object bridge extends ProcessOps {
         }
     } yield output
 
-  def mintToplBlock(node: Int, nbBlocks: Int)(implicit l: Logger[IO]) =
+  def mintStrataBlock(node: Int, nbBlocks: Int)(implicit l: Logger[IO]) =
     withLogging(mintBlockP(node, nbBlocks))
 
-  def mintToplBlockDocker(node: Int, nbBlocks: Int)(implicit l: Logger[IO]) =
+  def mintStrataBlockDocker(node: Int, nbBlocks: Int)(implicit l: Logger[IO]) =
     withLogging(mintBlockDockerP(node, nbBlocks))
 
-  def initToplWallet(id: Int)(implicit l: Logger[IO]) =
+  def initStrataWallet(id: Int)(implicit l: Logger[IO]) =
     withLogging(initUserWalletP(id))
 
   def pwd(implicit l: Logger[IO]) =

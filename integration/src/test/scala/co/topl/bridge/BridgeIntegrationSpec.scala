@@ -172,7 +172,7 @@ class BridgeIntegrationSpec
           _ <- initUserBitcoinWallet
           newAddress <- getNewAddress
           _ <- generateToAddress(1, 101, newAddress)
-          _ <- mintToplBlock(1, 1)
+          _ <- mintStrataBlock(1, 1)
         } yield ()).unsafeToFuture()
       }
 

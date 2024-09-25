@@ -17,13 +17,13 @@ import co.topl.bridge.consensus.core.BitcoinNetworkIdentifiers
 import co.topl.bridge.consensus.core.BridgeWalletManager
 import co.topl.bridge.consensus.core.CheckpointInterval
 import co.topl.bridge.consensus.core.CurrentBTCHeightRef
-import co.topl.bridge.consensus.core.CurrentToplHeightRef
+import co.topl.bridge.consensus.core.CurrentStrataHeightRef
 import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PeginWalletManager
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.Template
-import co.topl.bridge.consensus.core.ToplKeypair
+import co.topl.bridge.consensus.core.StrataKeypair
 import co.topl.bridge.consensus.core.controllers.StartSessionController
 import co.topl.bridge.consensus.core.managers.WalletManagementUtils
 import co.topl.bridge.consensus.core.pbft.statemachine.ConfirmDepositBTCEvt
@@ -56,7 +56,7 @@ import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForC
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForClaimBTCConfirmation
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForEscrowBTCConfirmation
 import co.topl.bridge.consensus.shared.PeginSessionState.PeginSessionWaitingForRedemption
-import co.topl.bridge.consensus.shared.ToplWaitExpirationTime
+import co.topl.bridge.consensus.shared.StrataWaitExpirationTime
 import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.BridgeError
@@ -123,10 +123,10 @@ object BridgeStateMachineExecutionManagerImpl {
       bridgeWalletManager: BridgeWalletManager[F],
       fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
       templateStorageAlgebra: TemplateStorageAlgebra[F],
-      toplWaitExpirationTime: ToplWaitExpirationTime,
+      toplWaitExpirationTime: StrataWaitExpirationTime,
       btcWaitExpirationTime: BTCWaitExpirationTime,
       tba: TransactionBuilderApi[F],
-      currentToplHeight: CurrentToplHeightRef[F],
+      currentStrataHeight: CurrentStrataHeightRef[F],
       walletApi: WalletApi[F],
       wsa: WalletStateAlgebra[F],
       groupIdIdentifier: GroupId,
@@ -148,7 +148,7 @@ object BridgeStateMachineExecutionManagerImpl {
       state <- Ref.of[F, Map[String, PBFTState]](Map.empty)
     } yield {
       implicit val iViewManager = viewManager
-      implicit val toplKeypair = new ToplKeypair(tKeyPair)
+      implicit val toplKeypair = new StrataKeypair(tKeyPair)
       new BridgeStateMachineExecutionManager[F] {
 
         private def startSession(

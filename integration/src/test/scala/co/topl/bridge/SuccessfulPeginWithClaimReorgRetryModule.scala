@@ -14,12 +14,12 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
 
     assertIO(
       for {
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         bridgeNetwork <- computeBridgeNetworkName
         ipBitcoin02 <- extractIpBtc(2, bridgeNetwork._1)
         ipBitcoin01 <- extractIpBtc(1, bridgeNetwork._1)
         _ <- pwd
-        _ <- initToplWallet(2)
+        _ <- initStrataWallet(2)
         _ <- addFellowship(2)
         _ <- addSecret(2)
         newAddress <- getNewAddress
@@ -51,7 +51,7 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
               status.mintingStatus == "PeginSessionStateMintingTBTC" ||
               status.mintingStatus == "PeginSessionMintingTBTCConfirmation"
             )
-              mintToplBlock(1, 2)
+              mintStrataBlock(1, 2)
             else IO.unit
           _ <- IO.sleep(1.second)
         } yield status)
@@ -70,11 +70,11 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
           "fundRedeemTxProved.pbuf"
         )
         _ <- broadcastFundRedeemAddressTx("fundRedeemTxProved.pbuf")
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         _ <- IO.sleep(1.second)
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         _ <- IO.sleep(1.second)
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         _ <- IO.sleep(1.second)
         utxo <- getCurrentUtxosFromAddress(
           2,
@@ -101,10 +101,10 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
         )
         // broadcast
         _ <- broadcastFundRedeemAddressTx("redeemTxProved.pbuf")
-        _ <- mintToplBlock(1, 1)
+        _ <- mintStrataBlock(1, 1)
         _ <- getCurrentUtxosFromAddress(2, currentAddress)
           .iterateUntil(_.contains("Asset"))
-        _ <- mintToplBlock(1, 7)
+        _ <- mintStrataBlock(1, 7)
         _ <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)
           _ <- info"Current minting status: ${status.mintingStatus}"
