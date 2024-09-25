@@ -464,8 +464,8 @@ package object bridge extends ProcessOps {
       Map(1 -> 9084, 2 -> 9086)
 
   val shaSecretMap = Map(
-    1 -> "ee15b31e49931db6551ed8a82f1422ce5a5a8debabe8e81a724c88f79996d0df",
-    2 -> "b46478c2553d2972c4a79172f7b468b422c6c516a980340acf83508d478504c3"
+    1 -> "60cd434b2fd6d22cec4cf3c9b16d3f57de4bf4d0bd0da1b16659a76ec7736610",
+    2 -> "2d537c332fe62c45bfe38aea3ea7239163d49fa67b7c46031749eb982b2f6024"
   )
 
   // brambl-cli templates add --walletdb user-wallet.db --template-name redeemBridge --lock-template
