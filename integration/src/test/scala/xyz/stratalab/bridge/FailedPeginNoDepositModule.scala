@@ -1,10 +1,10 @@
-package co.topl.bridge
+package xyz.stratalab.bridge
 
 import cats.effect.IO
 import org.typelevel.log4cats.syntax._
 
 import scala.concurrent.duration._
-import co.topl.bridge.checkMintingStatus
+import xyz.stratalab.bridge.checkMintingStatus
 
 trait FailedPeginNoDepositModule {
 

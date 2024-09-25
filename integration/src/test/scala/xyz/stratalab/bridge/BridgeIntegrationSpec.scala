@@ -1,4 +1,4 @@
-package co.topl.bridge
+package xyz.stratalab.bridge
 
 import cats.effect.ExitCode
 import cats.effect.IO
@@ -14,8 +14,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import scala.concurrent.duration._
 import scala.util.Try
-import xyz.stratalab.bridge.publicapi.Main
-import xyz.stratalab.bridge.consensus.core.Main
 
 class BridgeIntegrationSpec
     extends CatsEffectSuite
@@ -62,9 +60,9 @@ class BridgeIntegrationSpec
   } yield (bridgeNetwork, networkName)
 
   lazy val toplWalletDb =
-    Option(System.getenv("TOPL_WALLET_DB")).getOrElse("strata-wallet.db")
+    Option(System.getenv("STRATA_WALLET_DB")).getOrElse("strata-wallet.db")
   lazy val toplWalletJson =
-    Option(System.getenv("TOPL_WALLET_JSON")).getOrElse("strata-wallet.json")
+    Option(System.getenv("STRATA_WALLET_JSON")).getOrElse("strata-wallet.json")
 
   val startServer: AnyFixture[Unit] =
     new FutureFixture[Unit]("server setup") {
@@ -83,7 +81,7 @@ class BridgeIntegrationSpec
           _ <- IO.asyncForIO.both(
             IO.asyncForIO
               .start(
-                topl.bridge.consensus.core.Main.run(
+                consensus.core.Main.run(
                   List(
                     "--config-file",
                     "../consensus/src/main/resources/application.conf",
@@ -117,7 +115,7 @@ class BridgeIntegrationSpec
           )
           _ <- IO.asyncForIO
             .start(
-              topl.bridge.publicapi.Main.run(
+              publicapi.Main.run(
                 List(
                   "--config-file",
                   "../public-api/src/main/resources/application.conf"

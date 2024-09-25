@@ -1,4 +1,4 @@
-package co.topl.bridge
+package xyz.stratalab.bridge
 
 import cats.effect.IO
 import fs2.io.process

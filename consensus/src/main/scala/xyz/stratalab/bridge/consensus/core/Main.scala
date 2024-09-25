@@ -82,8 +82,8 @@ object Main
       parser,
       args,
       StrataBTCBridgeConsensusParamConfig(
-        toplHost = Option(System.getenv("TOPL_HOST")).getOrElse("localhost"),
-        toplWalletDb = System.getenv("TOPL_WALLET_DB"),
+        toplHost = Option(System.getenv("STRATA_HOST")).getOrElse("localhost"),
+        toplWalletDb = System.getenv("STRATA_WALLET_DB"),
         zmqHost = Option(System.getenv("ZMQ_HOST")).getOrElse("localhost"),
         zmqPort =
           Option(System.getenv("ZMQ_PORT")).map(_.toInt).getOrElse(28332),

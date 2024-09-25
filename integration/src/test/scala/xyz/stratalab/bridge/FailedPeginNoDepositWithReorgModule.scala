@@ -1,4 +1,4 @@
-package co.topl.bridge
+package xyz.stratalab.bridge
 
 import cats.effect.IO
 import org.typelevel.log4cats.syntax._

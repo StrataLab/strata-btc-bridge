@@ -1,4 +1,4 @@
-package co.topl
+package xyz.stratalab
 
 import cats.effect.IO
 import cats.effect.kernel.Resource
@@ -26,7 +26,7 @@ import fs2.io.file.Files
 
 package object bridge extends ProcessOps {
 
-  import co.topl.bridge.implicits._
+  import xyz.stratalab.bridge.implicits._
 
   val DOCKER_CMD = "docker"
 
@@ -262,7 +262,7 @@ package object bridge extends ProcessOps {
               method = Method.POST,
               Uri
                 .fromString(
-                  "http://127.0.0.1:5000/api/" + BridgeContants.TOPL_MINTING_STATUS
+                  "http://127.0.0.1:5000/api/" + BridgeContants.STRATA_MINTING_STATUS
                 )
                 .toOption
                 .get
@@ -291,7 +291,7 @@ package object bridge extends ProcessOps {
             method = Method.POST,
             Uri
               .fromString(
-                "http://127.0.0.1:5000/api/" + BridgeContants.TOPL_MINTING_STATUS
+                "http://127.0.0.1:5000/api/" + BridgeContants.STRATA_MINTING_STATUS
               )
               .toOption
               .get
