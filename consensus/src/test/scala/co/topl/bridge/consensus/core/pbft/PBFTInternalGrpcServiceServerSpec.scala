@@ -2,38 +2,21 @@ package co.topl.bridge.consensus.core.pbft
 
 import cats.effect.IO
 import cats.effect.kernel.Ref
-import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.cli.mockbase.BaseTransactionBuilderApi
-import co.topl.brambl.cli.mockbase.BaseWalletStateAlgebra
-import co.topl.brambl.dataApi.FellowshipStorageAlgebra
-import co.topl.brambl.dataApi.GenusQueryAlgebra
-import co.topl.brambl.dataApi.TemplateStorageAlgebra
-import co.topl.brambl.dataApi.WalletStateAlgebra
-import co.topl.brambl.monitoring.BitcoinMonitor
-import co.topl.bridge.consensus.core.BridgeWalletManager
-import co.topl.bridge.consensus.core.PeginWalletManager
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.consensus.core.channelResource
+import co.topl.bridge.consensus.core.stateDigest
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
-import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import co.topl.bridge.stubs.BaseBTCWalletAlgebra
-import co.topl.bridge.stubs.BaseFellowshipStorageAlgebra
-import co.topl.bridge.stubs.BaseGenusQueryAlgebra
+import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.stubs.BaseLogger
-import co.topl.bridge.stubs.BasePBFTInternalGrpcServiceClient
-import co.topl.bridge.stubs.BaseSessionManagerAlgebra
 import co.topl.bridge.stubs.BaseStorageApi
-import co.topl.bridge.stubs.BaseTemplateStorageAlgebra
 import com.google.protobuf.ByteString
+import fs2.io.process
 import io.grpc.Metadata
 import munit.CatsEffectSuite
-import org.bitcoins.rpc.config.BitcoindAuthCredentials
-import org.typelevel.log4cats.Logger
-import java.security.Security
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import fs2.io.process
-import co.topl.bridge.shared.BridgeCryptoUtils
+import org.typelevel.log4cats.Logger
+
+import java.security.Security
 
 class PBFTInternalGrpcServiceServerSpec
     extends CatsEffectSuite
@@ -165,39 +148,9 @@ class PBFTInternalGrpcServiceServerSpec
             )
           )
       }
-      val btcWalletAlgebraStub = new BaseBTCWalletAlgebra()
-      implicit val peginWalletManager =
-        new PeginWalletManager[IO](btcWalletAlgebraStub)
-      implicit val bridgeWalletManager =
-        new BridgeWalletManager[IO](btcWalletAlgebraStub)
-      implicit val tba: TransactionBuilderApi[IO] =
-        new BaseTransactionBuilderApi()
-      implicit val wsa: WalletStateAlgebra[IO] = new BaseWalletStateAlgebra()
-      implicit val utxoAlgebra: GenusQueryAlgebra[IO] =
-        new BaseGenusQueryAlgebra()
-      implicit val sessionManager: SessionManagerAlgebra[IO] =
-        new BaseSessionManagerAlgebra()
-      implicit val toplChannelResource = channelResource[IO](
-        toplHost,
-        toplPort,
-        toplSecureConnection
-      )
-      val credentials = BitcoindAuthCredentials.PasswordBased(
-        btcUser,
-        btcPassword
-      )
-      implicit val bitcoindInstance = BitcoinMonitor.Bitcoind.remoteConnection(
-        btcNetwork,
-        btcUrl,
-        credentials
-      )
-      implicit val fellowshipStorageAlgebra: FellowshipStorageAlgebra[IO] =
-        new BaseFellowshipStorageAlgebra()
       implicit val publicApiClientGrpcMap = new PublicApiClientGrpcMap[IO](
         Map.empty
       )
-      implicit val templateStorageAlgebra: TemplateStorageAlgebra[IO] =
-        new BaseTemplateStorageAlgebra()
       import cats.implicits._
 
       (for {
@@ -213,9 +166,10 @@ class PBFTInternalGrpcServiceServerSpec
               loggedWarning.update(_ :+ message)
           }
         for {
-          serverUnderTest <- createSimpleInternalServer(
-            new BasePBFTInternalGrpcServiceClient()
-          )
+          replicaKeyPair <- BridgeCryptoUtils
+            .getKeyPair[IO](privateKeyFile)
+            .use(IO.pure).toResource
+          serverUnderTest <- createSimpleInternalServer(replicaKeyPair)
         } yield {
           (serverUnderTest, loggedError, loggedWarning)
         }
@@ -251,8 +205,8 @@ class PBFTInternalGrpcServiceServerSpec
 
     import co.topl.bridge.shared.implicits._
     val checkpointRequest = CheckpointRequest(
-      sequenceNumber = 0L,
-      digest = ByteString.copyFrom(createStateDigest(sessionState)),
+      sequenceNumber = -1L,
+      digest = ByteString.copyFrom(stateDigest(Map.empty)),
       replicaId = 1
     )
     assertIO(
@@ -285,7 +239,7 @@ class PBFTInternalGrpcServiceServerSpec
     import co.topl.bridge.shared.implicits._
     val checkpointRequest = CheckpointRequest(
       sequenceNumber = 100L,
-      digest = ByteString.copyFrom(createStateDigest(sessionState)),
+      digest = ByteString.copyFrom(stateDigest(Map.empty)),
       replicaId = 1
     )
     assertIO(

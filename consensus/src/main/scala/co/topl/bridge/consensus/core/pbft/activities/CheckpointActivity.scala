@@ -1,13 +1,11 @@
-package co.topl.bridge.consensus.core.pbft
+package co.topl.bridge.consensus.core.pbft.activities
 import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.KWatermark
-import co.topl.bridge.consensus.core.StableCheckpointRef
-import co.topl.bridge.consensus.core.StateSnapshotRef
-import co.topl.bridge.consensus.core.UnstableCheckpointsRef
 import co.topl.bridge.consensus.core.WatermarkRef
-import co.topl.bridge.consensus.core.pbft.PBFTState
+import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
+import co.topl.bridge.consensus.core.stateDigest
 import co.topl.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.Empty
@@ -16,6 +14,9 @@ import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
+import co.topl.bridge.consensus.core.pbft.CheckpointManager
+import co.topl.bridge.consensus.core.pbft.CheckpointIdentifier
+import co.topl.bridge.consensus.core.pbft.StableCheckpoint
 
 object CheckpointActivity {
 
@@ -24,11 +25,11 @@ object CheckpointActivity {
   private case object MessageTooOld extends CheckpointProblem
   private case object LogAlreadyExists extends CheckpointProblem
 
-  private def checkLowWatermark[F[_]: Async](request: CheckpointRequest)(
-      implicit lastStableCheckpointRef: StableCheckpointRef[F]
-  ) = {
+  private def checkLowWatermark[F[_]: Async](
+      request: CheckpointRequest
+  )(implicit checkpointManager: CheckpointManager[F]) = {
     for {
-      lastStableCheckpoint <- lastStableCheckpointRef.underlying.get
+      lastStableCheckpoint <- checkpointManager.latestStableCheckpoint
       _ <-
         if (request.sequenceNumber < lastStableCheckpoint.sequenceNumber)
           Async[F].raiseError(MessageTooOld)
@@ -70,45 +71,36 @@ object CheckpointActivity {
       request: CheckpointRequest
   )(implicit
       replicaCount: ReplicaCount,
-      latestStateSnapshotRef: StateSnapshotRef[F],
-      unstableCheckpointsRef: UnstableCheckpointsRef[F]
+      checkpointManager: CheckpointManager[F]
   ): F[(Boolean, Map[Int, CheckpointRequest], Map[String, PBFTState])] = {
     for {
-      unstableCheckpoints <- unstableCheckpointsRef.underlying.get
-      someCheckpointVotes = unstableCheckpoints.get(
-        request.sequenceNumber -> Encoding.encodeToHex(
-          request.digest.toByteArray()
+      unstableCheckpoint <- checkpointManager.unstableCheckpoint(
+        CheckpointIdentifier(
+          request.sequenceNumber,
+          Encoding.encodeToHex(
+            request.digest.toByteArray()
+          )
         )
       )
-      newVotes <- someCheckpointVotes match {
+      newVotes <- unstableCheckpoint match {
         case None =>
-          unstableCheckpointsRef.underlying.set(
-            unstableCheckpoints + ((request.sequenceNumber -> Encoding
-              .encodeToHex(
-                request.digest.toByteArray()
-              )) -> Map(request.replicaId -> request))
-          ) >>
-            Map(
-              request.replicaId -> request
-            ).pure[F]
-        case Some(checkpointVotes) =>
-          unstableCheckpointsRef.underlying.set(
-            unstableCheckpoints + ((request.sequenceNumber -> Encoding
-              .encodeToHex(
-                request.digest.toByteArray()
-              )) -> (checkpointVotes + (request.replicaId -> request)))
-          ) >>
-            (checkpointVotes + (request.replicaId -> request)).pure[F]
+          checkpointManager.createUnstableCheckpoint(request)
+        case Some(_) =>
+          checkpointManager.updateUnstableCheckpoint(request)
       }
-      seqAndState <- latestStateSnapshotRef.state.get
-      (sequenceNumber, stateSnapshotDigest, state) = seqAndState
+      someStateSnapshot <- checkpointManager.stateSnapshot(
+        request.sequenceNumber
+      )
     } yield {
       val haveNewStableState = newVotes.size > replicaCount.maxFailures &&
-        sequenceNumber == request.sequenceNumber &&
-        stateSnapshotDigest == Encoding.encodeToHex(
-          request.digest.toByteArray()
-        )
-      (haveNewStableState, newVotes, state)
+        someStateSnapshot
+          .map(snapshot =>
+            snapshot.digest == Encoding.encodeToHex(
+              request.digest.toByteArray()
+            )
+          )
+          .getOrElse(false)
+      (haveNewStableState, newVotes, someStateSnapshot.get.state)
     }
   }
 
@@ -118,17 +110,16 @@ object CheckpointActivity {
       state: Map[String, PBFTState]
   )(implicit
       storageApi: StorageApi[F],
-      unstableCheckpointsRef: UnstableCheckpointsRef[F],
+      checkpointManager: CheckpointManager[F],
       kWatermark: KWatermark,
-      watermarkRef: WatermarkRef[F],
-      lastStableCheckpointRef: StableCheckpointRef[F]
+      watermarkRef: WatermarkRef[F]
   ): F[Unit] = {
     for {
-      _ <- lastStableCheckpointRef.underlying.update(x =>
-        x.copy(
-          sequenceNumber = request.sequenceNumber,
-          certificates = certificates,
-          state = state
+      _ <- checkpointManager.setLatestStableCheckpoint(
+        StableCheckpoint(
+          request.sequenceNumber,
+          certificates,
+          state
         )
       )
       lowAndHigh <- watermarkRef.lowAndHigh.get
@@ -139,24 +130,21 @@ object CheckpointActivity {
           request.sequenceNumber + kWatermark.underlying
         )
       )
-      _ <- unstableCheckpointsRef.underlying.update(x =>
-        x.filter(_._1._1 < request.sequenceNumber)
-      )
       _ <- storageApi.cleanLog(request.sequenceNumber)
     } yield ()
   }
 
   private def checkIfStable[F[_]: Async](
       request: CheckpointRequest
-  )(implicit lastStableCheckpointRef: StableCheckpointRef[F]) = {
+  )(implicit checkpointManager: CheckpointManager[F]) = {
     import cats.implicits._
     for {
-      lastStableCheckpoint <- lastStableCheckpointRef.underlying.get
+      lastStableCheckpoint <- checkpointManager.latestStableCheckpoint
     } yield (
       lastStableCheckpoint,
       lastStableCheckpoint.sequenceNumber == request.sequenceNumber &&
         Encoding.encodeToHex(
-          createStateDigestAux(lastStableCheckpoint.state)
+          stateDigest(lastStableCheckpoint.state)
         ) == Encoding.encodeToHex(request.digest.toByteArray())
     )
   }
@@ -164,13 +152,11 @@ object CheckpointActivity {
   private def performCheckpoint[F[_]: Async](
       request: CheckpointRequest
   )(implicit
+      checkpointManager: CheckpointManager[F],
       watermarkRef: WatermarkRef[F],
       kWatermark: KWatermark,
       replicaCount: ReplicaCount,
-      storageApi: StorageApi[F],
-      latestStateSnapshotRef: StateSnapshotRef[F],
-      unstableCheckpointsRef: UnstableCheckpointsRef[F],
-      lastStableCheckpointRef: StableCheckpointRef[F]
+      storageApi: StorageApi[F]
   ): F[Unit] = {
     for {
       _ <- storageApi.insertCheckpointMessage(request)
@@ -178,13 +164,7 @@ object CheckpointActivity {
       (lastStableCheckpoint, isStable) = lastStableCheckpointAndisStable
       _ <-
         if (isStable)
-          lastStableCheckpointRef.underlying.set(
-            lastStableCheckpoint.copy(
-              certificates = lastStableCheckpoint.certificates + (
-                request.replicaId -> request
-              )
-            )
-          )
+          checkpointManager.updateLatestStableCheckpoint(request)
         else {
           for {
             triplet <- handleUnstableCheckpoint(request)
@@ -208,8 +188,8 @@ object CheckpointActivity {
       replicaKeysMap: Map[Int, PublicKey],
       request: CheckpointRequest
   )(implicit
+      checkpointManager: CheckpointManager[F],
       storageApi: StorageApi[F],
-      lastStableCheckpointRef: StableCheckpointRef[F]
   ): F[Unit] = {
     for {
       _ <- checkSignature(replicaKeysMap, request)
@@ -217,7 +197,6 @@ object CheckpointActivity {
       _ <- checkExistingLog(request)
     } yield ()
   }
-
 
   def apply[F[_]: Async: Logger](
       replicaKeysMap: Map[Int, PublicKey],
@@ -227,9 +206,7 @@ object CheckpointActivity {
       kWatermark: KWatermark,
       replicaCount: ReplicaCount,
       storageApi: StorageApi[F],
-      latestStateSnapshotRef: StateSnapshotRef[F],
-      unstableCheckpointsRef: UnstableCheckpointsRef[F],
-      lastStableCheckpointRef: StableCheckpointRef[F]
+      checkpointManager: CheckpointManager[F]
   ): F[Empty] = {
     import org.typelevel.log4cats.syntax._
     (for {

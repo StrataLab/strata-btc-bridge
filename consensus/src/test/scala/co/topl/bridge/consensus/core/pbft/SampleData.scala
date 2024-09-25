@@ -19,7 +19,6 @@ import co.topl.bridge.consensus.core.Fellowship
 import co.topl.bridge.consensus.core.Template
 import org.bitcoins.core.currency.CurrencyUnit
 import org.bitcoins.core.config.RegTest
-import co.topl.bridge.consensus.core.SessionState
 
 trait SampleData {
 
@@ -31,7 +30,6 @@ trait SampleData {
   val toplPort = 9084
   val toplSecureConnection = false
 
-  implicit val sessionState = new SessionState(new ConcurrentHashMap())
 
   implicit val replicaCount: ReplicaCount = new ReplicaCount(7)
 

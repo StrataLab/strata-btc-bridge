@@ -7,9 +7,13 @@ import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.shared.Empty
 import co.topl.consensus.core.PBFTInternalGrpcServiceClient
+import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import co.topl.bridge.consensus.pbft.NewViewRequest
 
 class BasePBFTInternalGrpcServiceClient
     extends PBFTInternalGrpcServiceClient[IO] {
+
+  override def newView(request: NewViewRequest): IO[Empty] = ???
 
   override def prePrepare(request: PrePrepareRequest): IO[Empty] = ???
 
@@ -18,5 +22,7 @@ class BasePBFTInternalGrpcServiceClient
   override def commit(request: CommitRequest): IO[Empty] = ???
 
   override def checkpoint(request: CheckpointRequest): IO[Empty] = ???
+
+  override def viewChange(request: ViewChangeRequest): IO[Empty] = ???
 
 }

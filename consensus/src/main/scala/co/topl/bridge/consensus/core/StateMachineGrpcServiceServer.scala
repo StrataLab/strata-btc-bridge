@@ -3,11 +3,10 @@ package co.topl.bridge.consensus.core
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.kernel.Sync
-import co.topl.bridge.consensus.core.CurrentViewRef
 import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
-import co.topl.bridge.consensus.shared.PeginSessionInfo
-import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
+import co.topl.bridge.consensus.core.pbft.RequestIdentifier
+import co.topl.bridge.consensus.core.pbft.RequestTimerManager
 import co.topl.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.service.MintingStatusReply
@@ -15,22 +14,24 @@ import co.topl.bridge.consensus.service.MintingStatusReply.{Result => MSReply}
 import co.topl.bridge.consensus.service.MintingStatusRes
 import co.topl.bridge.consensus.service.SessionNotFoundRes
 import co.topl.bridge.consensus.service.StateMachineServiceFs2Grpc
-import co.topl.bridge.shared.Empty
-import co.topl.bridge.shared.MintingStatusOperation
-import co.topl.consensus.core.PBFTInternalGrpcServiceClient
+import co.topl.bridge.consensus.shared.PeginSessionInfo
+import co.topl.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ClientId
+import co.topl.bridge.shared.Empty
+import co.topl.bridge.shared.MintingStatusOperation
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.ReplicaId
+import co.topl.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
 import org.typelevel.log4cats.Logger
 
 import java.security.MessageDigest
 import java.security.{KeyPair => JKeyPair}
+import co.topl.bridge.consensus.core.pbft.ViewManager
 
 object StateMachineGrpcServiceServer {
-
 
   def stateMachineGrpcServiceServer(
       keyPair: JKeyPair,
@@ -39,9 +40,10 @@ object StateMachineGrpcServiceServer {
       currentSequenceRef: Ref[IO, Long]
   )(implicit
       lastReplyMap: LastReplyMap,
+      requestTimerManager: RequestTimerManager[IO],
       sessionManager: SessionManagerAlgebra[IO],
       publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
-      currentViewRef: CurrentViewRef[IO],
+      viewManager: ViewManager[IO],
       replicaId: ReplicaId,
       replicaCount: ReplicaCount,
       logger: Logger[IO]
@@ -102,7 +104,7 @@ object StateMachineGrpcServiceServer {
         ) match {
           case Some(result) => // we had a cached response
             for {
-              viewNumber <- currentViewRef.underlying.get
+              viewNumber <- viewManager.currentView
               _ <- debug"Request.clientNumber: ${request.clientNumber}"
               _ <- publicApiClientGrpcMap
                 .underlying(ClientId(request.clientNumber))
@@ -111,15 +113,21 @@ object StateMachineGrpcServiceServer {
             } yield Empty()
           case None =>
             for {
-              currentView <- currentViewRef.underlying.get
+              currentView <- viewManager.currentView
               currentSequence <- currentSequenceRef.updateAndGet(_ + 1)
               currentPrimary = currentView % replicaCount.value
               _ <-
                 if (currentPrimary != replicaId.id)
                   // we are not the primary, forward the request
-                  idReplicaClientMap(
-                    replicaId.id
-                  ).executeRequest(request, ctx)
+                  requestTimerManager.startTimer(
+                    RequestIdentifier(
+                      ClientId(request.clientNumber),
+                      request.timestamp
+                    )
+                  ) >>
+                    idReplicaClientMap(
+                      replicaId.id
+                    ).executeRequest(request, ctx)
                 else {
                   import co.topl.bridge.shared.implicits._
                   val prePrepareRequest = PrePrepareRequest(

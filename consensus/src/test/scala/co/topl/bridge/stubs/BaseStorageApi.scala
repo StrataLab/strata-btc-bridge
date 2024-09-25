@@ -11,6 +11,11 @@ import co.topl.bridge.consensus.subsystems.monitor.BlockchainEvent
 
 class BaseStorageApi extends StorageApi[IO] {
 
+  override def getPrePrepareMessagesFromSeqNumber(
+      viewNumber: Long,
+      sequenceNumber: Long
+  ): IO[Seq[PrePrepareRequest]] = ???
+
   override def cleanLog(sequenceNumber: Long): IO[Unit] = ???
 
   override def getPrePrepareMessage(

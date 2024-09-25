@@ -1,4 +1,4 @@
-package co.topl.bridge.consensus.core.pbft
+package co.topl.bridge.consensus.core.pbft.statemachine
 
 import org.bitcoins.core.currency.Satoshis
 

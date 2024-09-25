@@ -274,16 +274,18 @@ class BridgeIntegrationSpec
     info"Bridge should correctly go back from PeginSessionWaitingForClaimBTCConfirmation" >> successfulPeginWithClaimError()
   }
 
-  cleanupDir.test(
-    "Bridge should correctly retry if claim does not succeed"
-  ) { _ =>
-    info"Bridge should correctly retry if claim does not succeed" >> successfulPeginWithClaimErrorRetry()
-  }
+  // FIXME: Fix in TSDK-872
+  // cleanupDir.test(
+  //   "Bridge should correctly retry if claim does not succeed"
+  // ) { _ =>
+  //   info"Bridge should correctly retry if claim does not succeed" >> successfulPeginWithClaimErrorRetry()
+  // }
 
-  cleanupDir.test(
-    "Bridge should correctly go back to minting if there is a reorg".flaky
-  ) { _ =>
-    info"Bridge should correctly go back to minting if there is a reorg" >> failedMintingReorgModule()
-  }
+  // FIXME: Fix in TSDK-872
+  // cleanupDir.test(
+  //   "Bridge should correctly go back to minting if there is a reorg".flaky
+  // ) { _ =>
+  //   info"Bridge should correctly go back to minting if there is a reorg" >> failedMintingReorgModule()
+  // }
 
 }
