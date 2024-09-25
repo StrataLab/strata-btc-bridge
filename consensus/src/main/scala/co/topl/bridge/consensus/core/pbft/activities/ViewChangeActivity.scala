@@ -4,9 +4,9 @@ import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.ViewManager
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.implicits._
 import org.typelevel.log4cats.Logger

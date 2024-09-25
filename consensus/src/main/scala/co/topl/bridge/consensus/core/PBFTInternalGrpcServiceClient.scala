@@ -1,10 +1,10 @@
 package co.topl.consensus.core
 
 import cats.effect.kernel.Async
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.ReplicaNode
 import fs2.grpc.syntax.all._
@@ -12,9 +12,9 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
-import co.topl.bridge.consensus.pbft.NewViewRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
 
 trait PBFTInternalGrpcServiceClient[F[_]] {
 

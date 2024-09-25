@@ -1,8 +1,8 @@
 package co.topl.bridge.consensus.core.pbft
 
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.shared.ClientId
 
 private[core] sealed abstract class PBFTInternalEvent(

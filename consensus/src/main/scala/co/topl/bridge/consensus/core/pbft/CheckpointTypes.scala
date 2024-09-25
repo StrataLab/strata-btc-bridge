@@ -1,6 +1,6 @@
 package co.topl.bridge.consensus.core.pbft
 
-import co.topl.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
 
 private[pbft] case class StableCheckpoint(

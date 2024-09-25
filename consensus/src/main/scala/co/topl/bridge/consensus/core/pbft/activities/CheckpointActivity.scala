@@ -6,7 +6,7 @@ import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.pbft.statemachine.PBFTState
 import co.topl.bridge.consensus.core.stateDigest
-import co.topl.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.ReplicaCount

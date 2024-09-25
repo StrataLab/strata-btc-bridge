@@ -7,7 +7,7 @@ import java.security.PublicKey
 import cats.effect.kernel.Sync
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.consensus.shared.persistence.StorageApi
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.shared.ClientId
 

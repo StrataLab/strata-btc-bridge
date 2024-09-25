@@ -1,12 +1,12 @@
 package co.topl.bridge
 
 import co.topl.bridge.consensus.service.StateMachineReply
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
-import co.topl.bridge.consensus.pbft.NewViewRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
 
 package object shared {
 

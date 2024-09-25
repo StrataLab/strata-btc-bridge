@@ -7,8 +7,8 @@ import co.topl.bridge.consensus.core.LastReplyMap
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import co.topl.bridge.consensus.core.pbft.RequestTimerManager
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.service.MintingStatusReply
 import co.topl.bridge.consensus.service.MintingStatusReply.{Result => MSReply}
 import co.topl.bridge.consensus.service.MintingStatusRes

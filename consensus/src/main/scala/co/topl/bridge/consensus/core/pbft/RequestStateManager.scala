@@ -6,9 +6,9 @@ import cats.effect.kernel.Ref
 import cats.effect.kernel.Resource
 import cats.effect.std.Queue
 import co.topl.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ClientId
 import co.topl.bridge.shared.ReplicaId

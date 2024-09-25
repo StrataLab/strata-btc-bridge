@@ -6,11 +6,11 @@ import cats.implicits._
 import co.topl.bridge.consensus.core.KWatermark
 import co.topl.bridge.consensus.core.WatermarkRef
 import co.topl.bridge.consensus.core.pbft.activities.CheckpointActivity
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.Empty
 import co.topl.bridge.shared.ReplicaCount
@@ -19,8 +19,8 @@ import io.grpc.ServerServiceDefinition
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
-import co.topl.bridge.consensus.pbft.NewViewRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
 
 object PBFTInternalGrpcServiceServer {
 

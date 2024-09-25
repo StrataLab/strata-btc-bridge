@@ -2,10 +2,10 @@ package co.topl.bridge.consensus.core.pbft
 
 import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
-import co.topl.bridge.consensus.pbft.NewViewRequest
-import co.topl.bridge.consensus.pbft.Pm
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
+import xyz.stratalab.bridge.consensus.pbft.Pm
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ReplicaCount

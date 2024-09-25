@@ -3,10 +3,10 @@ package co.topl.bridge.consensus.core.pbft.activities
 import cats.effect.kernel.Async
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.ViewManager
-import co.topl.bridge.consensus.pbft.NewViewRequest
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.shared.ReplicaCount
 import co.topl.bridge.shared.implicits._

@@ -8,10 +8,10 @@ import co.topl.bridge.consensus.shared.PeginSessionState
 import co.topl.bridge.consensus.shared.PeginSessionInfo
 import co.topl.bridge.consensus.shared.SessionInfo
 import co.topl.bridge.consensus.shared.MiscUtils
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.subsystems.monitor.BlockchainEvent
 import co.topl.bridge.shared.StateMachineRequest
 import com.google.common.io.BaseEncoding

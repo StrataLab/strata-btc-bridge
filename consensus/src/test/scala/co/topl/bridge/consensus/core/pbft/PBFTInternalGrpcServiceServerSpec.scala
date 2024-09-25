@@ -4,8 +4,8 @@ import cats.effect.IO
 import cats.effect.kernel.Ref
 import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.stateDigest
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
 import co.topl.bridge.shared.BridgeCryptoUtils
 import co.topl.bridge.stubs.BaseLogger
 import co.topl.bridge.stubs.BaseStorageApi

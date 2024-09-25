@@ -5,7 +5,7 @@ import co.topl.brambl.utils.Encoding
 import co.topl.bridge.consensus.core.pbft.PBFTInternalEvent
 import co.topl.bridge.consensus.core.pbft.Prepared
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.ClientId
 import co.topl.bridge.shared.ReplicaCount

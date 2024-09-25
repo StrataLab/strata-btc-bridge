@@ -3,7 +3,7 @@ package co.topl.bridge.consensus.core.pbft
 import cats.effect.kernel.Async
 import cats.effect.kernel.Ref
 import co.topl.brambl.utils.Encoding
-import co.topl.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 
 private[pbft] case class CheckpointIdentifier(
     sequenceNumber: Long,

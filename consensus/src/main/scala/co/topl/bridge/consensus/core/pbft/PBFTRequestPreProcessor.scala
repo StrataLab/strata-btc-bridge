@@ -6,15 +6,15 @@ import co.topl.bridge.consensus.core.PublicApiClientGrpcMap
 import co.topl.bridge.consensus.core.pbft.activities.CommitActivity
 import co.topl.bridge.consensus.core.pbft.activities.PrePrepareActivity
 import co.topl.bridge.consensus.core.pbft.activities.PrepareActivity
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.ReplicaCount
 import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
-import co.topl.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
 import co.topl.bridge.consensus.core.pbft.activities.ViewChangeActivity
 
 trait PBFTRequestPreProcessor[F[_]] {

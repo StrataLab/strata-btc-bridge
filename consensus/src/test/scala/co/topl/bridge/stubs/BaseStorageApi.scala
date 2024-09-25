@@ -1,10 +1,10 @@
 package co.topl.bridge.stubs
 
 import cats.effect.IO
-import co.topl.bridge.consensus.pbft.CheckpointRequest
-import co.topl.bridge.consensus.pbft.CommitRequest
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
-import co.topl.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
+import xyz.stratalab.bridge.consensus.pbft.CommitRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
 import co.topl.bridge.consensus.shared.SessionInfo
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.consensus.subsystems.monitor.BlockchainEvent

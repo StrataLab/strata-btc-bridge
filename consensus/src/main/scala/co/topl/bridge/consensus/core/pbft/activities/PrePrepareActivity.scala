@@ -9,7 +9,7 @@ import co.topl.bridge.consensus.core.pbft.PrePreparedInserted
 import co.topl.bridge.consensus.core.pbft.RequestIdentifier
 import co.topl.bridge.consensus.core.pbft.RequestStateManager
 import co.topl.bridge.consensus.core.pbft.ViewManager
-import co.topl.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import co.topl.bridge.consensus.shared.persistence.StorageApi
 import co.topl.bridge.shared.ClientId
 import co.topl.bridge.shared.implicits._
