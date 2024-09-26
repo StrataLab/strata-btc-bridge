@@ -37,3 +37,5 @@ integration/consensusPublicKey.pem
 integration/redeemTxProved.pbuf
 integration/bridge.db
 integration/user-wallet.db
+
+.direnv
