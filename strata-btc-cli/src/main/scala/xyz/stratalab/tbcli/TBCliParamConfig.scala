@@ -5,9 +5,9 @@ package xyz.stratalab.tbcli
 sealed abstract class StrataBTCCLICommand
 
 case class InitSession(
-    seedFile: String = "",
-    password: String = "",
-    secret: String = ""
+  seedFile: String = "",
+  password: String = "",
+  secret:   String = ""
 ) extends StrataBTCCLICommand
 
 // case class StrataBTCCLIParamConfig(

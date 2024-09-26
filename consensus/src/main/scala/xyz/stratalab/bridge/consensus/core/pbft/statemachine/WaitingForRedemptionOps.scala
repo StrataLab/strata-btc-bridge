@@ -1,33 +1,30 @@
 package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.Async
-import xyz.stratalab.bridge.consensus.core.PeginWalletManager
-import xyz.stratalab.bridge.consensus.core.utils.BitcoinUtils
 import org.bitcoins.core.currency.CurrencyUnit
-import org.bitcoins.core.protocol.script.NonStandardScriptSignature
-import org.bitcoins.core.protocol.script.P2WSHWitnessV0
-import org.bitcoins.core.protocol.script.RawScriptPubKey
+import org.bitcoins.core.protocol.script.{NonStandardScriptSignature, P2WSHWitnessV0, RawScriptPubKey}
 import org.bitcoins.core.protocol.transaction.WitnessTransaction
-import org.bitcoins.core.script.constant.OP_0
-import org.bitcoins.core.script.constant.ScriptConstant
+import org.bitcoins.core.script.constant.{OP_0, ScriptConstant}
 import org.bitcoins.crypto._
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import scodec.bits.ByteVector
+import xyz.stratalab.bridge.consensus.core.PeginWalletManager
+import xyz.stratalab.bridge.consensus.core.utils.BitcoinUtils
 
 object WaitingForRedemptionOps {
 
   def startClaimingProcess[F[_]: Async](
-      secret: String,
-      claimAddress: String,
-      currentWalletIdx: Int,
-      inputTxId: String,
-      vout: Long,
-      scriptAsm: String,
-      amountInSatoshis: CurrencyUnit
+    secret:           String,
+    claimAddress:     String,
+    currentWalletIdx: Int,
+    inputTxId:        String,
+    vout:             Long,
+    scriptAsm:        String,
+    amountInSatoshis: CurrencyUnit
   )(implicit
-      bitcoindInstance: BitcoindRpcClient,
-      pegInWalletManager: PeginWalletManager[F],
-      feePerByte: CurrencyUnit
+    bitcoindInstance:   BitcoindRpcClient,
+    pegInWalletManager: PeginWalletManager[F],
+    feePerByte:         CurrencyUnit
   ) = {
 
     import cats.implicits._

@@ -1,6 +1,7 @@
 package xyz.stratalab.bridge.publicapi
 
 import scopt.OParser
+
 import java.io.File
 
 trait PublicApiParamsDescriptor {

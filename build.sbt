@@ -220,3 +220,6 @@ lazy val root = project
   )
   .settings(noPublish)
   .aggregate(consensus, publicApi, strataBtcCli)
+
+addCommandAlias("checkFormat", s"; scalafixAll --check; scalafmtCheckAll")
+addCommandAlias("format", s"; scalafixAll; scalafmtAll")

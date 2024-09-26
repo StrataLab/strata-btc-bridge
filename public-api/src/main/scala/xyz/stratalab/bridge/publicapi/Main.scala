@@ -1,25 +1,11 @@
 package xyz.stratalab.bridge.publicapi
 
 import cats.data.Kleisli
-import cats.effect.ExitCode
-import cats.effect.IO
-import cats.effect.IOApp
-import cats.effect.kernel.Ref
-import cats.effect.kernel.Sync
+import cats.effect.kernel.{Ref, Sync}
 import cats.effect.std.Mutex
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.shared.BridgeError
-import xyz.stratalab.bridge.shared.BridgeResponse
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
-import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClientImpl
-import xyz.stratalab.bridge.shared.ConsensusClientMessageId
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.shared.ReplicaNode
-import xyz.stratalab.bridge.shared.ResponseGrpcServiceServer
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import fs2.grpc.syntax.all._
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -31,10 +17,21 @@ import org.http4s.server.staticcontent.resourceServiceBuilder
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 import scopt.OParser
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  BridgeError,
+  BridgeResponse,
+  ClientId,
+  ConsensusClientMessageId,
+  ReplicaCount,
+  ReplicaNode,
+  ResponseGrpcServiceServer,
+  StateMachineServiceGrpcClient,
+  StateMachineServiceGrpcClientImpl
+}
 
 import java.net.InetSocketAddress
-import java.security.PublicKey
-import java.security.Security
+import java.security.{PublicKey, Security}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 
@@ -46,19 +43,17 @@ case object PeginSessionState {
   case object PeginSessionWaitingForRedemption extends PeginSessionState
   case object PeginSessionWaitingForClaim extends PeginSessionState
   case object PeginSessionMintingTBTCConfirmation extends PeginSessionState
-  case object PeginSessionWaitingForEscrowBTCConfirmation
-      extends PeginSessionState
-  case object PeginSessionWaitingForClaimBTCConfirmation
-      extends PeginSessionState
+  case object PeginSessionWaitingForEscrowBTCConfirmation extends PeginSessionState
+  case object PeginSessionWaitingForClaimBTCConfirmation extends PeginSessionState
 }
 
 object Main extends IOApp with PublicApiParamsDescriptor {
 
   def createApp(
-      consensusGrpcClients: StateMachineServiceGrpcClient[IO]
+    consensusGrpcClients: StateMachineServiceGrpcClient[IO]
   )(implicit
-      l: Logger[IO],
-      clientNumber: ClientId
+    l:            Logger[IO],
+    clientNumber: ClientId
   ) = {
     val staticAssetsService = resourceServiceBuilder[IO]("/static").toRoutes
     val router = Router.define(
@@ -89,16 +84,16 @@ object Main extends IOApp with PublicApiParamsDescriptor {
   }
 
   def setupServices(
-      clientHost: String,
-      clientPort: Int,
-      privateKeyFile: String,
-      replicaNodes: List[ReplicaNode[IO]],
-      replicaKeysMap: Map[Int, PublicKey],
-      currentViewRef: Ref[IO, Long]
+    clientHost:     String,
+    clientPort:     Int,
+    privateKeyFile: String,
+    replicaNodes:   List[ReplicaNode[IO]],
+    replicaKeysMap: Map[Int, PublicKey],
+    currentViewRef: Ref[IO, Long]
   )(implicit
-      replicaCount: ReplicaCount,
-      clientNumber: ClientId,
-      logger: Logger[IO]
+    replicaCount: ReplicaCount,
+    clientNumber: ClientId,
+    logger:       Logger[IO]
   ) = {
     val messageResponseMap =
       new ConcurrentHashMap[ConsensusClientMessageId, ConcurrentHashMap[Either[
@@ -112,7 +107,7 @@ object Main extends IOApp with PublicApiParamsDescriptor {
       ]()
     for {
       keyPair <- BridgeCryptoUtils.getKeyPair[IO](privateKeyFile)
-      mutex <- Mutex[IO].toResource
+      mutex   <- Mutex[IO].toResource
       replicaClients <- StateMachineServiceGrpcClientImpl
         .makeContainer(
           currentViewRef,
@@ -153,8 +148,8 @@ object Main extends IOApp with PublicApiParamsDescriptor {
   }
 
   private def createReplicaPublicKeyMap[F[_]: Sync](
-      conf: Config
-  )(implicit replicaCount: ReplicaCount): F[Map[Int, PublicKey]] = {
+    conf: Config
+  )(implicit replicaCount: ReplicaCount): F[Map[Int, PublicKey]] =
     (for (i <- 0 until replicaCount.value) yield {
       val publicKeyFile = conf.getString(
         s"bridge.client.consensus.replicas.$i.publicKeyFile"
@@ -163,34 +158,31 @@ object Main extends IOApp with PublicApiParamsDescriptor {
         keyPair <- BridgeCryptoUtils.getPublicKey(publicKeyFile).allocated
       } yield (i, keyPair._1)
     }).toList.sequence.map(x => Map(x: _*))
-  }
 
   private def loadReplicaNodeFromConfig[F[_]: Sync: Logger](
-      conf: Config
+    conf: Config
   ): F[List[ReplicaNode[F]]] = {
     val replicaCount = conf.getInt("bridge.client.consensus.replicaCount")
-    (for (i <- 0 until replicaCount) yield {
-      for {
-        host <- Sync[F].delay(
-          conf.getString(s"bridge.client.consensus.replicas.$i.host")
-        )
-        port <- Sync[F].delay(
-          conf.getInt(s"bridge.client.consensus.replicas.$i.port")
-        )
-        secure <- Sync[F].delay(
-          conf.getBoolean(s"bridge.client.consensus.replicas.$i.secure")
-        )
-        _ <-
-          info"bridge.client.consensus.replicas.$i.host: ${host}"
-        _ <-
-          info"bridge.client.consensus.replicas.$i.port: ${port}"
-        _ <-
-          info"bridge.client.consensus.replicas.$i.secure: ${secure}"
-      } yield ReplicaNode[F](i, host, port, secure)
-    }).toList.sequence
+    (for (i <- 0 until replicaCount) yield for {
+      host <- Sync[F].delay(
+        conf.getString(s"bridge.client.consensus.replicas.$i.host")
+      )
+      port <- Sync[F].delay(
+        conf.getInt(s"bridge.client.consensus.replicas.$i.port")
+      )
+      secure <- Sync[F].delay(
+        conf.getBoolean(s"bridge.client.consensus.replicas.$i.secure")
+      )
+      _ <-
+        info"bridge.client.consensus.replicas.$i.host: ${host}"
+      _ <-
+        info"bridge.client.consensus.replicas.$i.port: ${port}"
+      _ <-
+        info"bridge.client.consensus.replicas.$i.secure: ${secure}"
+    } yield ReplicaNode[F](i, host, port, secure)).toList.sequence
   }
 
-  override def run(args: List[String]): IO[ExitCode] = {
+  override def run(args: List[String]): IO[ExitCode] =
     // log syntax
     OParser.parse(
       parser,
@@ -207,7 +199,7 @@ object Main extends IOApp with PublicApiParamsDescriptor {
         )
         implicit val logger =
           org.typelevel.log4cats.slf4j.Slf4jLogger
-            .getLoggerFromName[IO](s"public-api-" + f"${client.id}%02d")
+            .getLoggerFromName[IO]("public-api-" + f"${client.id}%02d")
         for {
           _ <- info"Configuration parameters"
           _ <- IO(Security.addProvider(new BouncyCastleProvider()))
@@ -220,13 +212,13 @@ object Main extends IOApp with PublicApiParamsDescriptor {
           privateKeyFile <- IO(
             conf.getString("bridge.client.security.privateKeyFile")
           )
-          _ <- info"bridge.client.security.privateKeyFile: ${privateKeyFile}"
-          _ <- info"bridge.client.clientId: ${client.id}"
-          _ <- info"bridge.client.responses.host: ${clientHost}"
-          _ <- info"bridge.client.responses.port: ${clientPort}"
+          _              <- info"bridge.client.security.privateKeyFile: ${privateKeyFile}"
+          _              <- info"bridge.client.clientId: ${client.id}"
+          _              <- info"bridge.client.responses.host: ${clientHost}"
+          _              <- info"bridge.client.responses.port: ${clientPort}"
           replicaKeysMap <- createReplicaPublicKeyMap[IO](conf)
-          replicaNodes <- loadReplicaNodeFromConfig[IO](conf)
-          currentView <- Ref.of[IO, Long](0)
+          replicaNodes   <- loadReplicaNodeFromConfig[IO](conf)
+          currentView    <- Ref.of[IO, Long](0)
           _ <- setupServices(
             clientHost,
             clientPort,
@@ -238,7 +230,6 @@ object Main extends IOApp with PublicApiParamsDescriptor {
         } yield ExitCode.Success
       case None =>
         IO.consoleForIO.errorln("Invalid arguments") *>
-          IO(ExitCode.Error)
+        IO(ExitCode.Error)
     }
-  }
 }

@@ -1,33 +1,29 @@
 package xyz.stratalab.bridge.consensus.core.pbft.activities
+
 import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.core.KWatermark
-import xyz.stratalab.bridge.consensus.core.WatermarkRef
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.PBFTState
-import xyz.stratalab.bridge.consensus.core.stateDigest
+import xyz.stratalab.bridge.consensus.core.pbft.{CheckpointIdentifier, CheckpointManager, StableCheckpoint}
+import xyz.stratalab.bridge.consensus.core.{stateDigest, KWatermark, WatermarkRef}
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.shared.Empty
-import xyz.stratalab.bridge.shared.ReplicaCount
 import xyz.stratalab.bridge.shared.implicits._
-import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.shared.{Empty, ReplicaCount}
 
 import java.security.PublicKey
-import xyz.stratalab.bridge.consensus.core.pbft.CheckpointManager
-import xyz.stratalab.bridge.consensus.core.pbft.CheckpointIdentifier
-import xyz.stratalab.bridge.consensus.core.pbft.StableCheckpoint
 
 object CheckpointActivity {
 
-  private sealed trait CheckpointProblem extends Throwable
+  sealed private trait CheckpointProblem extends Throwable
   private case object InvalidSignature extends CheckpointProblem
   private case object MessageTooOld extends CheckpointProblem
   private case object LogAlreadyExists extends CheckpointProblem
 
   private def checkLowWatermark[F[_]: Async](
-      request: CheckpointRequest
-  )(implicit checkpointManager: CheckpointManager[F]) = {
+    request: CheckpointRequest
+  )(implicit checkpointManager: CheckpointManager[F]) =
     for {
       lastStableCheckpoint <- checkpointManager.latestStableCheckpoint
       _ <-
@@ -36,12 +32,10 @@ object CheckpointActivity {
         else Async[F].unit
     } yield ()
 
-  }
-
   private def checkSignature[F[_]: Async](
-      replicaKeysMap: Map[Int, PublicKey],
-      request: CheckpointRequest
-  ): F[Unit] = {
+    replicaKeysMap: Map[Int, PublicKey],
+    request:        CheckpointRequest
+  ): F[Unit] =
     for {
       reqSignCheck <- checkMessageSignature(
         request.replicaId,
@@ -54,25 +48,23 @@ object CheckpointActivity {
           InvalidSignature
         )
     } yield ()
-  }
 
   private def checkExistingLog[F[_]: Async](
-      request: CheckpointRequest
-  )(implicit storageApi: StorageApi[F]): F[Unit] = {
+    request: CheckpointRequest
+  )(implicit storageApi: StorageApi[F]): F[Unit] =
     for {
       someCheckpointMessage <- storageApi
         .getCheckpointMessage(request.sequenceNumber, request.replicaId)
       _ <- Async[F]
         .raiseWhen(someCheckpointMessage.isDefined)(LogAlreadyExists)
     } yield ()
-  }
 
   private def handleUnstableCheckpoint[F[_]: Async](
-      request: CheckpointRequest
+    request: CheckpointRequest
   )(implicit
-      replicaCount: ReplicaCount,
-      checkpointManager: CheckpointManager[F]
-  ): F[(Boolean, Map[Int, CheckpointRequest], Map[String, PBFTState])] = {
+    replicaCount:      ReplicaCount,
+    checkpointManager: CheckpointManager[F]
+  ): F[(Boolean, Map[Int, CheckpointRequest], Map[String, PBFTState])] =
     for {
       unstableCheckpoint <- checkpointManager.unstableCheckpoint(
         CheckpointIdentifier(
@@ -102,18 +94,17 @@ object CheckpointActivity {
           .getOrElse(false)
       (haveNewStableState, newVotes, someStateSnapshot.get.state)
     }
-  }
 
   private def handleNewStableCheckpoint[F[_]: Async](
-      request: CheckpointRequest,
-      certificates: Map[Int, CheckpointRequest],
-      state: Map[String, PBFTState]
+    request:      CheckpointRequest,
+    certificates: Map[Int, CheckpointRequest],
+    state:        Map[String, PBFTState]
   )(implicit
-      storageApi: StorageApi[F],
-      checkpointManager: CheckpointManager[F],
-      kWatermark: KWatermark,
-      watermarkRef: WatermarkRef[F]
-  ): F[Unit] = {
+    storageApi:        StorageApi[F],
+    checkpointManager: CheckpointManager[F],
+    kWatermark:        KWatermark,
+    watermarkRef:      WatermarkRef[F]
+  ): F[Unit] =
     for {
       _ <- checkpointManager.setLatestStableCheckpoint(
         StableCheckpoint(
@@ -132,10 +123,9 @@ object CheckpointActivity {
       )
       _ <- storageApi.cleanLog(request.sequenceNumber)
     } yield ()
-  }
 
   private def checkIfStable[F[_]: Async](
-      request: CheckpointRequest
+    request: CheckpointRequest
   )(implicit checkpointManager: CheckpointManager[F]) = {
     import cats.implicits._
     for {
@@ -143,23 +133,23 @@ object CheckpointActivity {
     } yield (
       lastStableCheckpoint,
       lastStableCheckpoint.sequenceNumber == request.sequenceNumber &&
-        Encoding.encodeToHex(
-          stateDigest(lastStableCheckpoint.state)
-        ) == Encoding.encodeToHex(request.digest.toByteArray())
+      Encoding.encodeToHex(
+        stateDigest(lastStableCheckpoint.state)
+      ) == Encoding.encodeToHex(request.digest.toByteArray())
     )
   }
 
   private def performCheckpoint[F[_]: Async](
-      request: CheckpointRequest
+    request: CheckpointRequest
   )(implicit
-      checkpointManager: CheckpointManager[F],
-      watermarkRef: WatermarkRef[F],
-      kWatermark: KWatermark,
-      replicaCount: ReplicaCount,
-      storageApi: StorageApi[F]
-  ): F[Unit] = {
+    checkpointManager: CheckpointManager[F],
+    watermarkRef:      WatermarkRef[F],
+    kWatermark:        KWatermark,
+    replicaCount:      ReplicaCount,
+    storageApi:        StorageApi[F]
+  ): F[Unit] =
     for {
-      _ <- storageApi.insertCheckpointMessage(request)
+      _                               <- storageApi.insertCheckpointMessage(request)
       lastStableCheckpointAndisStable <- checkIfStable(request)
       (lastStableCheckpoint, isStable) = lastStableCheckpointAndisStable
       _ <-
@@ -182,31 +172,29 @@ object CheckpointActivity {
           } yield ()
         }
     } yield ()
-  }
 
   def performValidation[F[_]: Async](
-      replicaKeysMap: Map[Int, PublicKey],
-      request: CheckpointRequest
+    replicaKeysMap: Map[Int, PublicKey],
+    request:        CheckpointRequest
   )(implicit
-      checkpointManager: CheckpointManager[F],
-      storageApi: StorageApi[F],
-  ): F[Unit] = {
+    checkpointManager: CheckpointManager[F],
+    storageApi:        StorageApi[F]
+  ): F[Unit] =
     for {
       _ <- checkSignature(replicaKeysMap, request)
       _ <- checkLowWatermark(request)
       _ <- checkExistingLog(request)
     } yield ()
-  }
 
   def apply[F[_]: Async: Logger](
-      replicaKeysMap: Map[Int, PublicKey],
-      request: CheckpointRequest
+    replicaKeysMap: Map[Int, PublicKey],
+    request:        CheckpointRequest
   )(implicit
-      watermarkRef: WatermarkRef[F],
-      kWatermark: KWatermark,
-      replicaCount: ReplicaCount,
-      storageApi: StorageApi[F],
-      checkpointManager: CheckpointManager[F]
+    watermarkRef:      WatermarkRef[F],
+    kWatermark:        KWatermark,
+    replicaCount:      ReplicaCount,
+    storageApi:        StorageApi[F],
+    checkpointManager: CheckpointManager[F]
   ): F[Empty] = {
     import org.typelevel.log4cats.syntax._
     (for {
@@ -223,7 +211,7 @@ object CheckpointActivity {
         case e =>
           error"Error handling checkpoint request: ${e.getMessage()}"
       }) >>
-        Async[F].pure(Empty())
+      Async[F].pure(Empty())
     )
 
   }

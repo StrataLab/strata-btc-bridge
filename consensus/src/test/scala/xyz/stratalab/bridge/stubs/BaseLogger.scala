@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.stubs
 
-import org.typelevel.log4cats.Logger
 import cats.effect.IO
+import org.typelevel.log4cats.Logger
 
 class BaseLogger extends Logger[IO] {
 

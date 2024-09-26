@@ -1,32 +1,19 @@
 package xyz.stratalab.bridge.stubs
 
 import cats.Monad
+import cats.effect.IO
 import co.topl.brambl.codecs.AddressCodecs
 import co.topl.brambl.dataApi.GenusQueryAlgebra
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.LockAddress
-import co.topl.brambl.models.SeriesId
-import co.topl.brambl.models.TransactionId
-import co.topl.brambl.models.TransactionOutputAddress
-import co.topl.brambl.models.box.Challenge
-import co.topl.brambl.models.box.FungibilityType
-import co.topl.brambl.models.box.Lock
-import co.topl.brambl.models.box.QuantityDescriptorType
-import co.topl.brambl.models.box.Value
-import co.topl.brambl.models.transaction.UnspentTransactionOutput
-import co.topl.brambl.utils.Encoding
-import co.topl.genus.services.Txo
-import co.topl.genus.services.TxoState
-import com.google.protobuf.ByteString
-import quivr.models.Int128
-import quivr.models.Proposition
+import co.topl.brambl.models.box.{Attestation, Challenge, FungibilityType, Lock, QuantityDescriptorType, Value}
+import co.topl.brambl.models.transaction.{SpentTransactionOutput, UnspentTransactionOutput}
+import co.topl.brambl.models.{Datum, GroupId, LockAddress, SeriesId, TransactionId, TransactionOutputAddress}
 import co.topl.brambl.servicekit.WalletKeyApi
-import cats.effect.IO
+import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
+import co.topl.genus.services.{Txo, TxoState}
+import com.google.protobuf.ByteString
+import quivr.models.{Int128, Proposition}
 import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
-import co.topl.brambl.models.transaction.SpentTransactionOutput
-import co.topl.brambl.models.box.Attestation
-import co.topl.brambl.models.Datum
 
 object UnitTestStubs {
 
@@ -40,6 +27,7 @@ object UnitTestStubs {
         .get
     )
   )
+
   // corresponds to the address of the lockAddress01
   val lock01 = Lock.Predicate.of(
     Seq(
@@ -68,6 +56,7 @@ object UnitTestStubs {
       )
     )
   )
+
   lazy val transactionOutputAddress01 = TransactionOutputAddress(
     lockAddress01.network,
     lockAddress01.ledger,
@@ -88,6 +77,7 @@ object UnitTestStubs {
     3,
     transactionId01
   )
+
   lazy val txo01 = Txo(
     UnspentTransactionOutput(
       lockAddress01,
@@ -96,6 +86,7 @@ object UnitTestStubs {
     co.topl.genus.services.TxoState.UNSPENT,
     transactionOutputAddress01
   )
+
   lazy val groupValue01 = Value(
     Value.Value.Group(
       Value.Group(
@@ -135,6 +126,7 @@ object UnitTestStubs {
       )
     )
   )
+
   lazy val assetValue01 = Value(
     Value.Asset(
       Some(
@@ -196,13 +188,12 @@ object UnitTestStubs {
     new GenusQueryAlgebra[F] {
 
       override def queryUtxo(
-          fromAddress: LockAddress,
-          txoState: TxoState
-      ): F[Seq[Txo]] = {
+        fromAddress: LockAddress,
+        txoState:    TxoState
+      ): F[Seq[Txo]] =
         Monad[F].pure(
           Seq(txo01, txo02, txo03, txo04)
         )
-      }
     }
 
   val walletKeyApi = WalletKeyApi.make[IO]()

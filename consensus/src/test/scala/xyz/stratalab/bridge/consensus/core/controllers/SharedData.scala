@@ -1,23 +1,25 @@
 package xyz.stratalab.bridge.consensus.core.controllers
 
-import xyz.stratalab.bridge.consensus.core.StrataPrivatenet
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.StrataWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.StrataConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
-import co.topl.brambl.models.SeriesId
-import co.topl.brambl.models.GroupId
-import com.google.protobuf.ByteString
-import co.topl.brambl.utils.Encoding
-import org.typelevel.log4cats.SelfAwareStructuredLogger
 import cats.effect.IO
+import co.topl.brambl.models.{GroupId, SeriesId}
+import co.topl.brambl.utils.Encoding
+import com.google.protobuf.ByteString
+import org.typelevel.log4cats.SelfAwareStructuredLogger
+import xyz.stratalab.bridge.consensus.core.StrataPrivatenet
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  BTCWaitExpirationTime,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
 
 trait SharedData {
 
   implicit val logger: SelfAwareStructuredLogger[IO] =
     org.typelevel.log4cats.slf4j.Slf4jLogger
       .getLoggerFromName[IO]("test-logger")
+
   val testKey =
     "0295bb5a3b80eeccb1e38ab2cbac2545e9af6c7012cdc8d53bd276754c54fc2e4a"
 
@@ -55,9 +57,11 @@ trait SharedData {
   implicit val toplWaitExpirationTime: StrataWaitExpirationTime =
     new StrataWaitExpirationTime(2000)
 
-  implicit val btcConfirmationThreshold: BTCConfirmationThreshold = new BTCConfirmationThreshold(6)
+  implicit val btcConfirmationThreshold: BTCConfirmationThreshold =
+    new BTCConfirmationThreshold(6)
 
-  implicit val toplConfirmationThreshold: StrataConfirmationThreshold = new StrataConfirmationThreshold(6)
+  implicit val toplConfirmationThreshold: StrataConfirmationThreshold =
+    new StrataConfirmationThreshold(6)
 
   implicit val btcRetryThreshold: BTCRetryThreshold = new BTCRetryThreshold(6)
 

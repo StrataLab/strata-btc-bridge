@@ -11,8 +11,7 @@ package object shared {
   case class Lvl(amount: Int128) extends BifrostCurrencyUnit
   case class SeriesToken(id: String, amount: Int128) extends BifrostCurrencyUnit
   case class GroupToken(id: String, amount: Int128) extends BifrostCurrencyUnit
-  case class AssetToken(groupId: String, seriesId: String, amount: Int128)
-      extends BifrostCurrencyUnit
+  case class AssetToken(groupId: String, seriesId: String, amount: Int128) extends BifrostCurrencyUnit
 
   class BTCConfirmationThreshold(val underlying: Int) extends AnyVal
 
@@ -26,37 +25,38 @@ package object shared {
 
   sealed trait SessionInfo
 
-  /** This class is used to store the session information for a pegin.
-    *
-    * @param btcPeginCurrentWalletIdx
-    *   The index of the pegin wallet that is currently being used.
-    * @param btcBridgeCurrentWalletIdx
-    *   The index of the bridge wallet that is currently being used.
-    * @param mintTemplateName
-    *   The name under which the mint template is stored.
-    * @param redeemAddress
-    *   The address where the pegin will be redeemed.
-    * @param escrowAddress
-    *   The address where the BTC to peg in will be deposited.
-    * @param scriptAsm
-    *   The script that is used to redeem the pegin.
-    * @param sha256
-    *   The hash of the secret that is used to redeem the pegin.
-    * @param mintingBTCState
-    *   The state of the minting process for this session.
-    */
+  /**
+   * This class is used to store the session information for a pegin.
+   *
+   * @param btcPeginCurrentWalletIdx
+   *   The index of the pegin wallet that is currently being used.
+   * @param btcBridgeCurrentWalletIdx
+   *   The index of the bridge wallet that is currently being used.
+   * @param mintTemplateName
+   *   The name under which the mint template is stored.
+   * @param redeemAddress
+   *   The address where the pegin will be redeemed.
+   * @param escrowAddress
+   *   The address where the BTC to peg in will be deposited.
+   * @param scriptAsm
+   *   The script that is used to redeem the pegin.
+   * @param sha256
+   *   The hash of the secret that is used to redeem the pegin.
+   * @param mintingBTCState
+   *   The state of the minting process for this session.
+   */
   case class PeginSessionInfo(
-      btcPeginCurrentWalletIdx: Int,
-      btcBridgeCurrentWalletIdx: Int,
-      mintTemplateName: String,
-      redeemAddress: String,
-      escrowAddress: String,
-      scriptAsm: String,
-      sha256: String,
-      minHeight: Long,
-      maxHeight: Long,
-      claimAddress: String,
-      mintingBTCState: PeginSessionState
+    btcPeginCurrentWalletIdx:  Int,
+    btcBridgeCurrentWalletIdx: Int,
+    mintTemplateName:          String,
+    redeemAddress:             String,
+    escrowAddress:             String,
+    scriptAsm:                 String,
+    sha256:                    String,
+    minHeight:                 Long,
+    maxHeight:                 Long,
+    claimAddress:              String,
+    mintingBTCState:           PeginSessionState
   ) extends SessionInfo
 
   sealed trait PeginSessionState
@@ -70,10 +70,8 @@ package object shared {
     case object PeginSessionWaitingForClaim extends PeginSessionState
     case object PeginSessionMintingTBTCConfirmation extends PeginSessionState
     case object PeginSessionConfirmingRedemption extends PeginSessionState
-    case object PeginSessionWaitingForEscrowBTCConfirmation
-        extends PeginSessionState
-    case object PeginSessionWaitingForClaimBTCConfirmation
-        extends PeginSessionState
+    case object PeginSessionWaitingForEscrowBTCConfirmation extends PeginSessionState
+    case object PeginSessionWaitingForClaimBTCConfirmation extends PeginSessionState
 
     def withName(s: String): Option[PeginSessionState] = s match {
       case "PeginSessionConfirmingRedemption" =>

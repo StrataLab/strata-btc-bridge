@@ -1,19 +1,16 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import cats.effect.IO
-import cats.effect.std.Queue
-import xyz.stratalab.bridge.consensus.shared.PeginSessionState
-import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.consensus.shared.persistence.StorageApiImpl
-import munit.CatsEffectSuite
-
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.UUID
 import cats.effect.kernel.Resource
+import cats.effect.std.Queue
+import munit.CatsEffectSuite
 import org.typelevel.log4cats.SelfAwareStructuredLogger
+import xyz.stratalab.bridge.consensus.shared.persistence.{StorageApi, StorageApiImpl}
+import xyz.stratalab.bridge.consensus.shared.{PeginSessionInfo, PeginSessionState}
 import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionEvent
-import xyz.stratalab.bridge.consensus.shared.PeginSessionInfo
+
+import java.nio.file.{Files, Paths}
+import java.util.UUID
 
 class SessionManagerSpec extends CatsEffectSuite {
 
@@ -30,6 +27,7 @@ class SessionManagerSpec extends CatsEffectSuite {
     "claimAddress",
     PeginSessionState.PeginSessionStateWaitingForBTC
   )
+
   implicit val logger: SelfAwareStructuredLogger[IO] =
     org.typelevel.log4cats.slf4j.Slf4jLogger
       .getLoggerFromName[IO]("test")
@@ -39,11 +37,9 @@ class SessionManagerSpec extends CatsEffectSuite {
   val cleanupDir = ResourceFunFixture[StorageApi[IO]](
     for {
       _ <- Resource
-        .make(IO(Files.delete(Paths.get(testdb))).handleError(_ => ()))(_ =>
-          IO(Files.delete(Paths.get(testdb)))
-        )
+        .make(IO(Files.delete(Paths.get(testdb))).handleError(_ => ()))(_ => IO(Files.delete(Paths.get(testdb))))
       storageApi <- StorageApiImpl.make[IO](testdb)
-      _ <- storageApi.initializeStorage().toResource
+      _          <- storageApi.initializeStorage().toResource
     } yield storageApi
   )
 
@@ -53,16 +49,16 @@ class SessionManagerSpec extends CatsEffectSuite {
     assertIO(
       for {
         queue <- Queue.unbounded[IO, SessionEvent]
-        sut = xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerImpl.makePermanent[IO](
-          storageApi,
-          queue
-        )
-        sessionId <- IO(UUID.randomUUID().toString)
-        _ <- sut.createNewSession(sessionId, sessionInfo)
+        sut =
+          xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerImpl
+            .makePermanent[IO](
+              storageApi,
+              queue
+            )
+        sessionId        <- IO(UUID.randomUUID().toString)
+        _                <- sut.createNewSession(sessionId, sessionInfo)
         retrievedSession <- sut.getSession(sessionId)
-      } yield {
-        retrievedSession
-      },
+      } yield retrievedSession,
       Some(sessionInfo)
     )
   }
@@ -73,16 +69,16 @@ class SessionManagerSpec extends CatsEffectSuite {
     assertIO(
       for {
         queue <- Queue.unbounded[IO, SessionEvent]
-        sut = xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerImpl.makePermanent[IO](
-          storageApi,
-          queue
-        )
+        sut =
+          xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerImpl
+            .makePermanent[IO](
+              storageApi,
+              queue
+            )
         sessionId <- IO(UUID.randomUUID().toString)
-        _ <- sut.createNewSession(sessionId, sessionInfo)
-        res <- sut.getSession(UUID.randomUUID().toString)
-      } yield {
-        res
-      },
+        _         <- sut.createNewSession(sessionId, sessionInfo)
+        res       <- sut.getSession(UUID.randomUUID().toString)
+      } yield res,
       None
     )
   }

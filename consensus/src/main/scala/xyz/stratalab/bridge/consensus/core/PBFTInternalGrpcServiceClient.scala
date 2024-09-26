@@ -1,45 +1,45 @@
 package xyz.stratalab.consensus.core
 
 import cats.effect.kernel.Async
-import xyz.stratalab.bridge.consensus.pbft.CommitRequest
-import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import xyz.stratalab.bridge.shared.Empty
-import xyz.stratalab.bridge.shared.ReplicaNode
 import fs2.grpc.syntax.all._
-import io.grpc.ManagedChannelBuilder
-import io.grpc.Metadata
+import io.grpc.{ManagedChannelBuilder, Metadata}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
-import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
-import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
-import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
+import xyz.stratalab.bridge.consensus.pbft.{
+  CheckpointRequest,
+  CommitRequest,
+  NewViewRequest,
+  PBFTInternalServiceFs2Grpc,
+  PrePrepareRequest,
+  PrepareRequest,
+  ViewChangeRequest
+}
+import xyz.stratalab.bridge.shared.{Empty, ReplicaNode}
 
 trait PBFTInternalGrpcServiceClient[F[_]] {
 
   def prePrepare(
-      request: PrePrepareRequest
+    request: PrePrepareRequest
   ): F[Empty]
 
   def prepare(
-      request: PrepareRequest
+    request: PrepareRequest
   ): F[Empty]
 
   def commit(
-      request: CommitRequest
+    request: CommitRequest
   ): F[Empty]
 
   def checkpoint(
-      request: CheckpointRequest
+    request: CheckpointRequest
   ): F[Empty]
 
   def viewChange(
-      request: ViewChangeRequest
+    request: ViewChangeRequest
   ): F[Empty]
 
   def newView(
-      request: NewViewRequest
+    request: NewViewRequest
   ): F[Empty]
 
 }
@@ -49,27 +49,25 @@ object PBFTInternalGrpcServiceClientImpl {
   import cats.implicits._
 
   def make[F[_]: Async: Logger](
-      replicaNodes: List[ReplicaNode[F]]
-  ) = {
+    replicaNodes: List[ReplicaNode[F]]
+  ) =
     for {
       idBackupMap <- (for {
         replicaNode <- replicaNodes
-      } yield {
-        for {
-          channel <-
-            (if (replicaNode.backendSecure)
-               ManagedChannelBuilder
-                 .forAddress(replicaNode.backendHost, replicaNode.backendPort)
-                 .useTransportSecurity()
-             else
-               ManagedChannelBuilder
-                 .forAddress(replicaNode.backendHost, replicaNode.backendPort)
-                 .usePlaintext()).resource[F]
-          consensusClient <- PBFTInternalServiceFs2Grpc.stubResource(
-            channel
-          )
-        } yield (replicaNode.id -> consensusClient)
-      }).sequence
+      } yield for {
+        channel <-
+          (if (replicaNode.backendSecure)
+             ManagedChannelBuilder
+               .forAddress(replicaNode.backendHost, replicaNode.backendPort)
+               .useTransportSecurity()
+           else
+             ManagedChannelBuilder
+               .forAddress(replicaNode.backendHost, replicaNode.backendPort)
+               .usePlaintext()).resource[F]
+        consensusClient <- PBFTInternalServiceFs2Grpc.stubResource(
+          channel
+        )
+      } yield (replicaNode.id -> consensusClient)).sequence
       backupMap = idBackupMap.toMap
     } yield new PBFTInternalGrpcServiceClient[F] {
 
@@ -98,18 +96,17 @@ object PBFTInternalGrpcServiceClientImpl {
         } yield Empty()
 
       override def prepare(
-          request: PrepareRequest
-      ): F[Empty] = {
+        request: PrepareRequest
+      ): F[Empty] =
         for {
           _ <- trace"Sending PrepareRequest to all replicas"
           _ <- backupMap.toList.traverse { case (_, backup) =>
             backup.prepare(request, new Metadata())
           }
         } yield Empty()
-      }
 
       override def checkpoint(
-          request: CheckpointRequest
+        request: CheckpointRequest
       ): F[Empty] = for {
         _ <- trace"Sending Checkpoint to all replicas"
         _ <- backupMap.toList.traverse { case (_, backup) =>
@@ -118,7 +115,7 @@ object PBFTInternalGrpcServiceClientImpl {
       } yield Empty()
 
       override def newView(
-          request: NewViewRequest
+        request: NewViewRequest
       ): F[Empty] = for {
         _ <- trace"Sending NewViewRequest to all replicas"
         _ <- backupMap.toList.traverse { case (_, backup) =>
@@ -127,5 +124,4 @@ object PBFTInternalGrpcServiceClientImpl {
       } yield Empty()
 
     }
-  }
 }

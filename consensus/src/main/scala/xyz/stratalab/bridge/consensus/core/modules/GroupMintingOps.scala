@@ -3,37 +3,35 @@ package xyz.stratalab.bridge.consensus.core.modules
 import cats.effect.kernel.Sync
 import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.dataApi.WalletStateAlgebra
-import co.topl.brambl.models.Event
-import co.topl.brambl.models.Indices
-import co.topl.brambl.models.LockAddress
 import co.topl.brambl.models.box.Lock
+import co.topl.brambl.models.transaction.IoTransaction
+import co.topl.brambl.models.{Event, Indices, LockAddress}
 import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
-import xyz.stratalab.bridge.consensus.core.managers.CreateTxError
 import co.topl.genus.services.Txo
 import quivr.models.KeyPair
+import xyz.stratalab.bridge.consensus.core.managers.CreateTxError
 
 import TransactionBuilderApi.implicits._
-import co.topl.brambl.models.transaction.IoTransaction
 
 object GroupMintingOps {
 
   import cats.implicits._
 
   def buildGroupTx[G[_]: Sync](
-      lvlTxos: Seq[Txo],
-      nonlvlTxos: Seq[Txo],
-      predicateFundsToUnlock: Lock.Predicate,
-      amount: Long,
-      fee: Long,
-      someNextIndices: Option[Indices],
-      keyPair: KeyPair,
-      groupPolicy: Event.GroupPolicy,
-      changeLock: Option[Lock]
+    lvlTxos:                Seq[Txo],
+    nonlvlTxos:             Seq[Txo],
+    predicateFundsToUnlock: Lock.Predicate,
+    amount:                 Long,
+    fee:                    Long,
+    someNextIndices:        Option[Indices],
+    keyPair:                KeyPair,
+    groupPolicy:            Event.GroupPolicy,
+    changeLock:             Option[Lock]
   )(implicit
-      tba: TransactionBuilderApi[G],
-      wsa: WalletStateAlgebra[G],
-      wa: WalletApi[G]
+    tba: TransactionBuilderApi[G],
+    wsa: WalletStateAlgebra[G],
+    wa:  WalletApi[G]
   ) = (if (lvlTxos.isEmpty) {
          Sync[G].raiseError(CreateTxError("No LVL txos found"))
        } else {
@@ -62,19 +60,19 @@ object GroupMintingOps {
        })
 
   private def buildGroupTransaction[G[_]: Sync](
-      txos: Seq[Txo],
-      predicateFundsToUnlock: Lock.Predicate,
-      lockForChange: Lock,
-      recipientLockAddress: LockAddress,
-      amount: Long,
-      fee: Long,
-      someNextIndices: Option[Indices],
-      keyPair: KeyPair,
-      groupPolicy: Event.GroupPolicy
+    txos:                   Seq[Txo],
+    predicateFundsToUnlock: Lock.Predicate,
+    lockForChange:          Lock,
+    recipientLockAddress:   LockAddress,
+    amount:                 Long,
+    fee:                    Long,
+    someNextIndices:        Option[Indices],
+    keyPair:                KeyPair,
+    groupPolicy:            Event.GroupPolicy
   )(implicit
-      tba: TransactionBuilderApi[G],
-      wsa: WalletStateAlgebra[G],
-      wa: WalletApi[G]
+    tba: TransactionBuilderApi[G],
+    wsa: WalletStateAlgebra[G],
+    wa:  WalletApi[G]
   ): G[IoTransaction] =
     for {
       changeAddress <- tba.lockAddress(

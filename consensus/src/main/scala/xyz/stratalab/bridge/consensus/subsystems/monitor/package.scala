@@ -2,17 +2,12 @@ package xyz.stratalab.bridge.consensus.subsystems
 
 import _root_.co.topl.brambl.models.box.Value
 import _root_.co.topl.brambl.utils.Encoding
-import _root_.xyz.stratalab.bridge.consensus.shared.AssetToken
-import _root_.xyz.stratalab.bridge.consensus.shared.GroupToken
-import _root_.xyz.stratalab.bridge.consensus.shared.Lvl
-import _root_.xyz.stratalab.bridge.consensus.shared.SeriesToken
+import _root_.xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, SeriesToken}
 
 package object monitor {
 
-
-  def isLvlSeriesGroupOrAsset(value: Value.Value): Boolean = {
+  def isLvlSeriesGroupOrAsset(value: Value.Value): Boolean =
     value.isLvl || value.isSeries || value.isGroup || value.isAsset
-  }
 
   def toCurrencyUnit(value: Value.Value) = {
     assert(isLvlSeriesGroupOrAsset(value))

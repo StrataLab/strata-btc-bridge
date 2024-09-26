@@ -1,28 +1,30 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
+
 import cats.effect.kernel.Async
 import cats.implicits._
-import xyz.stratalab.bridge.consensus.shared.BTCConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
-import xyz.stratalab.bridge.consensus.subsystems.monitor.EndTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransitionTo
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MConfirmingBTCClaim
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MWaitingForClaim
-import xyz.stratalab.bridge.consensus.subsystems.monitor.PeginStateMachineState
 import org.bitcoins.core.protocol.Bech32Address
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
+import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCRetryThreshold}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransition,
+  FSMTransitionTo,
+  MConfirmingBTCClaim,
+  MWaitingForClaim,
+  PeginStateMachineState
+}
 
 trait MonitorClaimStateTransitionRelation extends TransitionToEffect {
 
   def handleBlockchainEventClaim[F[_]: Async: Logger](
-      currentState: ClaimState,
-      blockchainEvent: BlockchainEvent
+    currentState:    ClaimState,
+    blockchainEvent: BlockchainEvent
   )(
-      t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
+    t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
   )(implicit
-      btcRetryThreshold: BTCRetryThreshold,
-      btcConfirmationThreshold: BTCConfirmationThreshold
+    btcRetryThreshold:        BTCRetryThreshold,
+    btcConfirmationThreshold: BTCConfirmationThreshold
   ): Option[FSMTransition] =
     ((currentState, blockchainEvent) match {
       case (
@@ -90,9 +92,7 @@ trait MonitorClaimStateTransitionRelation extends TransitionToEffect {
               )
             )
           case Some(startBtcBlockHeight) =>
-            if (
-              btcRetryThreshold.underlying < (ev.height - startBtcBlockHeight)
-            )
+            if (btcRetryThreshold.underlying < (ev.height - startBtcBlockHeight))
               Some(
                 FSMTransitionTo(
                   currentState,

@@ -1,12 +1,10 @@
 package xyz.stratalab.tbcli
 
-import cats.effect.ExitCode
-import cats.effect.IO
-import cats.effect.IOApp
+import cats.effect.{ExitCode, IO, IOApp}
 
 object Main extends IOApp with TBCLIParamsDescriptor {
 
-  override def run(args: List[String]): IO[ExitCode] = {
+  override def run(args: List[String]): IO[ExitCode] =
     // OParser.parse(parser, args, StrataBTCCLIParamConfig()) match {
     //   case Some(config) =>
     //     config.command match {
@@ -17,10 +15,9 @@ object Main extends IOApp with TBCLIParamsDescriptor {
     //           IO(ExitCode.Error)
     //     }
     //   case None =>
-        IO.consoleForIO.errorln("Invalid arguments") *>
-        IO(ExitCode.Error)
+    IO.consoleForIO.errorln("Invalid arguments") *>
+      IO(ExitCode.Error)
     // }
-  }
 
   // def processCommand(
   //     network: BitcoinNetworkIdentifiers,

@@ -1,32 +1,27 @@
 package xyz.stratalab.bridge.consensus.core.modules
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.Ref
+import cats.effect.kernel.{Async, Ref}
 import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.dataApi.GenusQueryAlgebra
-import co.topl.brambl.dataApi.WalletStateAlgebra
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
+import co.topl.brambl.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
+import co.topl.brambl.models.{GroupId, SeriesId}
 import co.topl.brambl.syntax._
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.core.Fellowship
-import xyz.stratalab.bridge.consensus.core.SystemGlobalState
-import xyz.stratalab.bridge.consensus.core.Template
-import xyz.stratalab.bridge.consensus.core.managers.WalletApiHelpers
 import co.topl.genus.services.Txo
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.typelevel.log4cats.Logger
 import quivr.models.Int128
+import xyz.stratalab.bridge.consensus.core.managers.WalletApiHelpers
+import xyz.stratalab.bridge.consensus.core.{Fellowship, SystemGlobalState, Template}
 
 import scala.concurrent.duration._
 
 trait InitializationModuleAlgebra[F[_]] {
 
   def setupWallet(
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      groupId: GroupId,
-      seriesId: SeriesId
+    fromFellowship: Fellowship,
+    fromTemplate:   Template,
+    groupId:        GroupId,
+    seriesId:       SeriesId
   ): F[Unit]
 
 }
@@ -34,13 +29,13 @@ trait InitializationModuleAlgebra[F[_]] {
 object InitializationModule {
 
   def make[F[_]: Async: Logger](
-      currentBitcoinNetworkHeight: Ref[F, Int],
-      currentState: Ref[F, SystemGlobalState]
+    currentBitcoinNetworkHeight: Ref[F, Int],
+    currentState:                Ref[F, SystemGlobalState]
   )(implicit
-      bitcoind: BitcoindRpcClient,
-      tba: TransactionBuilderApi[F],
-      wsa: WalletStateAlgebra[F],
-      genusQueryAlgebra: GenusQueryAlgebra[F]
+    bitcoind:          BitcoindRpcClient,
+    tba:               TransactionBuilderApi[F],
+    wsa:               WalletStateAlgebra[F],
+    genusQueryAlgebra: GenusQueryAlgebra[F]
   ) = new InitializationModuleAlgebra[F] {
 
     import WalletApiHelpers._
@@ -50,8 +45,8 @@ object InitializationModule {
     import cats.implicits._
 
     private def getTxos(
-        fromFellowship: Fellowship,
-        fromTemplate: Template
+      fromFellowship: Fellowship,
+      fromTemplate:   Template
     ): F[Seq[Txo]] = for {
       currentAddress <- getCurrentAddress[F](
         fromFellowship,
@@ -63,7 +58,7 @@ object InitializationModule {
       )
     } yield txos
 
-    private def sumLvls(txos: Seq[Txo]): Int128 = {
+    private def sumLvls(txos: Seq[Txo]): Int128 =
       txos
         .map(
           _.transactionOutput.value.value.lvl
@@ -71,15 +66,14 @@ object InitializationModule {
             .getOrElse(longAsInt128(0))
         )
         .fold(longAsInt128(0))(_ + _)
-    }
 
     private def checkForLvls(
-        fromFellowship: Fellowship,
-        fromTemplate: Template
+      fromFellowship: Fellowship,
+      fromTemplate:   Template
     ): F[Unit] = (for {
-      _ <- info"Checking for LVLs"
+      _              <- info"Checking for LVLs"
       currentAddress <- wsa.getCurrentAddress
-      txos <- getTxos(fromFellowship, fromTemplate)
+      txos           <- getTxos(fromFellowship, fromTemplate)
       hasLvls <-
         if (txos.filter(_.transactionOutput.value.value.isLvl).nonEmpty) {
           (info"Found LVLs: ${int128AsBigInt(sumLvls(txos))}" >> currentState
@@ -90,7 +84,7 @@ object InitializationModule {
                 isReady = false
               )
             ) >>
-            Async[F].pure(true))
+          Async[F].pure(true))
         } else {
           warn"No LVLs found. Please fund the bridge wallet." >> currentState
             .update(
@@ -102,7 +96,7 @@ object InitializationModule {
                 isReady = false
               )
             ) >>
-            Async[F].pure(false)
+          Async[F].pure(false)
         }
       _ <-
         if (!hasLvls)
@@ -111,15 +105,15 @@ object InitializationModule {
     } yield ()).handleErrorWith { e =>
       e.printStackTrace()
       error"Error checking LVLs: $e" >>
-        error"Retrying in 5 seconds" >>
-        Async[F].sleep(
-          5.second
-        ) >> checkForLvls(fromFellowship, fromTemplate)
+      error"Retrying in 5 seconds" >>
+      Async[F].sleep(
+        5.second
+      ) >> checkForLvls(fromFellowship, fromTemplate)
     }
 
     private def checkIfGroupTokenMinted(
-        fromFellowship: Fellowship,
-        fromTemplate: Template
+      fromFellowship: Fellowship,
+      fromTemplate:   Template
     ): F[Unit] = for {
       newTxos <- getTxos(fromFellowship, fromTemplate)
       _ <-
@@ -148,8 +142,8 @@ object InitializationModule {
     } yield ()
 
     private def checkIfSeriesTokenMinted(
-        fromFellowship: Fellowship,
-        fromTemplate: Template
+      fromFellowship: Fellowship,
+      fromTemplate:   Template
     ): F[Unit] = for {
       newTxos <- getTxos(fromFellowship, fromTemplate)
       _ <-
@@ -178,12 +172,12 @@ object InitializationModule {
     } yield ()
 
     private def checkForGroupToken(
-        fromFellowship: Fellowship,
-        fromTemplate: Template,
-        groupId: GroupId
+      fromFellowship: Fellowship,
+      fromTemplate:   Template,
+      groupId:        GroupId
     ): F[Boolean] = (
       for {
-        _ <- info"Checking for Group Tokens"
+        _    <- info"Checking for Group Tokens"
         txos <- getTxos(fromFellowship, fromTemplate)
         groupTxos = txos.filter(_.transactionOutput.value.value.isGroup)
         hasGroupToken <-
@@ -204,7 +198,7 @@ object InitializationModule {
                   isReady = false
                 )
               ) >>
-              Async[F].pure(true))
+            Async[F].pure(true))
           } else {
             info"No Group Token found. Preparing to mint tokens." >> currentState
               .update(
@@ -214,24 +208,24 @@ object InitializationModule {
                   isReady = false
                 )
               ) >>
-              Async[F].pure(false)
+            Async[F].pure(false)
           }
       } yield hasGroupToken
     )
 
     private def setBlochainHeight() = for {
       tipHeight <- Async[F].fromFuture(Async[F].delay(bitcoind.getBlockCount()))
-      _ <- info"Setting blockchain height to $tipHeight"
-      _ <- currentBitcoinNetworkHeight.set(tipHeight)
+      _         <- info"Setting blockchain height to $tipHeight"
+      _         <- currentBitcoinNetworkHeight.set(tipHeight)
     } yield ()
 
     private def checkForSeriesToken(
-        fromFellowship: Fellowship,
-        fromTemplate: Template,
-        seriesId: SeriesId
+      fromFellowship: Fellowship,
+      fromTemplate:   Template,
+      seriesId:       SeriesId
     ): F[Boolean] = (
       for {
-        _ <- info"Checking for Series Tokens"
+        _    <- info"Checking for Series Tokens"
         txos <- getTxos(fromFellowship, fromTemplate)
         seriesTxos = txos.filter(_.transactionOutput.value.value.isSeries)
         hasSeriesToken <-
@@ -250,7 +244,7 @@ object InitializationModule {
                   isReady = false
                 )
               ) >>
-              Async[F].pure(true))
+            Async[F].pure(true))
           } else {
             info"No Series Token found. Preparing to mint tokens." >> currentState
               .update(
@@ -260,17 +254,17 @@ object InitializationModule {
                   isReady = false
                 )
               ) >>
-              Async[F].pure(false)
+            Async[F].pure(false)
           }
       } yield hasSeriesToken
     )
 
     def setupWallet(
-        fromFellowship: Fellowship,
-        fromTemplate: Template,
-        groupId: GroupId,
-        seriesId: SeriesId
-    ): F[Unit] = {
+      fromFellowship: Fellowship,
+      fromTemplate:   Template,
+      groupId:        GroupId,
+      seriesId:       SeriesId
+    ): F[Unit] =
       (for {
         _ <- checkForLvls(fromFellowship, fromTemplate)
         hasGroupToken <- checkForGroupToken(
@@ -294,12 +288,11 @@ object InitializationModule {
       } yield ()).handleErrorWith { e =>
         e.printStackTrace
         error"Error setting up wallet: $e" >>
-          error"Retrying in 5 seconds" >>
-          Async[F].sleep(
-            5.second
-          ) >> setupWallet(fromFellowship, fromTemplate, groupId, seriesId)
+        error"Retrying in 5 seconds" >>
+        Async[F].sleep(
+          5.second
+        ) >> setupWallet(fromFellowship, fromTemplate, groupId, seriesId)
       }
-    }
 
   }
 }

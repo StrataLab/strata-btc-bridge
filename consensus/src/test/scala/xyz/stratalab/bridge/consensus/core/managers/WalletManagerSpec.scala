@@ -1,8 +1,8 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.effect.IO
-import xyz.stratalab.bridge.consensus.core.RegTest
 import munit.CatsEffectSuite
+import xyz.stratalab.bridge.consensus.core.RegTest
 import xyz.stratalab.bridge.consensus.core.utils.KeyGenerationUtils
 
 class WalletManagerSpec extends CatsEffectSuite {
@@ -15,7 +15,8 @@ class WalletManagerSpec extends CatsEffectSuite {
           "src/test/resources/wallet.json",
           "password"
         )
-        sut <- xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebraImpl.make[IO](km)
+        sut <- xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebraImpl
+          .make[IO](km)
         res <- sut.getCurrentPubKeyAndPrepareNext()
         (idx, pubKey) = res
         res <- sut.getCurrentPubKeyAndPrepareNext()
@@ -23,6 +24,7 @@ class WalletManagerSpec extends CatsEffectSuite {
       } yield (idx == 0) && (idx2 == 1) && (pubKey != pubKey2)
     )
   }
+
   test("BTCWalletAlgebra should get new key without incrementing the index") {
     assertIOBoolean(
       for {
@@ -31,10 +33,11 @@ class WalletManagerSpec extends CatsEffectSuite {
           "src/test/resources/wallet.json",
           "password"
         )
-        sut <- xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebraImpl.make[IO](km)
+        sut <- xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebraImpl
+          .make[IO](km)
         res <- sut.getCurrentPubKeyAndPrepareNext()
         (idx, _) = res
-        pubKey <- sut.getCurrentPubKey()
+        pubKey  <- sut.getCurrentPubKey()
         pubKey2 <- sut.getCurrentPubKey()
       } yield (pubKey == pubKey2)
     )

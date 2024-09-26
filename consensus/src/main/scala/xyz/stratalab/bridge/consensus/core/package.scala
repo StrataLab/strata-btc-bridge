@@ -1,17 +1,15 @@
 package xyz.stratalab.bridge.consensus
 
-import cats.effect.kernel.Ref
-import cats.effect.kernel.Sync
+import cats.effect.kernel.{Ref, Sync}
+import fs2.grpc.syntax.all._
+import io.grpc.ManagedChannelBuilder
+import quivr.models.KeyPair
 import xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebra
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.PBFTState
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.shared.ClientId
-import fs2.grpc.syntax.all._
-import io.grpc.ManagedChannelBuilder
-import quivr.models.KeyPair
 
-import java.security.MessageDigest
-import java.security.PublicKey
+import java.security.{MessageDigest, PublicKey}
 import java.util.concurrent.ConcurrentHashMap
 
 package object core {
@@ -20,38 +18,36 @@ package object core {
 
   class RequestTimeout(val underlying: Duration) extends AnyVal
 
-  class PeginWalletManager[F[_]](val underlying: BTCWalletAlgebra[F])
-      extends AnyVal
-  class BridgeWalletManager[F[_]](val underlying: BTCWalletAlgebra[F])
-      extends AnyVal
+  class PeginWalletManager[F[_]](val underlying: BTCWalletAlgebra[F]) extends AnyVal
+  class BridgeWalletManager[F[_]](val underlying: BTCWalletAlgebra[F]) extends AnyVal
   class CheckpointInterval(val underlying: Int) extends AnyVal
   class CurrentStrataHeightRef[F[_]](val underlying: Ref[F, Long]) extends AnyVal
   class CurrentBTCHeightRef[F[_]](val underlying: Ref[F, Int]) extends AnyVal
   class StrataKeypair(val underlying: KeyPair) extends AnyVal
 
   case class WatermarkRef[F[_]](
-      lowAndHigh: Ref[F, (Long, Long)]
+    lowAndHigh: Ref[F, (Long, Long)]
   ) extends AnyVal
 
   case class KWatermark(
-      underlying: Int
+    underlying: Int
   ) extends AnyVal
 
   class PublicApiClientGrpcMap[F[_]](
-      val underlying: Map[
-        ClientId,
-        (PublicApiClientGrpc[F], PublicKey)
-      ]
+    val underlying: Map[
+      ClientId,
+      (PublicApiClientGrpc[F], PublicKey)
+    ]
   ) extends AnyVal
 
   class LastReplyMap(
-      val underlying: ConcurrentHashMap[(ClientId, Long), Result]
+    val underlying: ConcurrentHashMap[(ClientId, Long), Result]
   ) extends AnyVal
 
   def channelResource[F[_]: Sync](
-      address: String,
-      port: Int,
-      secureConnection: Boolean
+    address:          String,
+    port:             Int,
+    secureConnection: Boolean
   ) =
     (if (secureConnection)
        ManagedChannelBuilder

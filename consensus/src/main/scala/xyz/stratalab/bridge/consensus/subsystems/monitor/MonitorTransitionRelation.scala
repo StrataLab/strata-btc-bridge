@@ -1,16 +1,16 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import cats.effect.kernel.Async
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
-import xyz.stratalab.bridge.consensus.shared.BTCConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.StrataConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.StrataWaitExpirationTime
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.PeginStateMachineState
+import co.topl.brambl.models.{GroupId, SeriesId}
 import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  BTCWaitExpirationTime,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{FSMTransition, PeginStateMachineState}
 
 object MonitorTransitionRelation
     extends TransitionToEffect
@@ -19,18 +19,18 @@ object MonitorTransitionRelation
     with MonitorMintingStateTransitionRelation {
 
   def handleBlockchainEvent[F[_]: Async: Logger](
-      currentState: PeginStateMachineState,
-      blockchainEvent: BlockchainEvent
+    currentState:    PeginStateMachineState,
+    blockchainEvent: BlockchainEvent
   )(
-      t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
+    t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
   )(implicit
-      btcRetryThreshold: BTCRetryThreshold,
-      btcWaitExpirationTime: BTCWaitExpirationTime,
-      toplWaitExpirationTime: StrataWaitExpirationTime,
-      btcConfirmationThreshold: BTCConfirmationThreshold,
-      toplConfirmationThreshold: StrataConfirmationThreshold,
-      groupId: GroupId,
-      seriesId: SeriesId
+    btcRetryThreshold:         BTCRetryThreshold,
+    btcWaitExpirationTime:     BTCWaitExpirationTime,
+    toplWaitExpirationTime:    StrataWaitExpirationTime,
+    btcConfirmationThreshold:  BTCConfirmationThreshold,
+    toplConfirmationThreshold: StrataConfirmationThreshold,
+    groupId:                   GroupId,
+    seriesId:                  SeriesId
   ): Option[FSMTransition] =
     ((currentState, blockchainEvent) match {
       case (

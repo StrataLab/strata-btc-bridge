@@ -2,34 +2,31 @@ package xyz.stratalab.bridge.consensus.core.pbft.activities
 
 import cats.effect.kernel.Async
 import cats.implicits._
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
 import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
+import xyz.stratalab.bridge.consensus.pbft.{PrePrepareRequest, PrepareRequest, ViewChangeRequest}
 import xyz.stratalab.bridge.shared.BridgeCryptoUtils
 import xyz.stratalab.bridge.shared.implicits._
-import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
 
 object ViewChangeActivity {
 
-  private sealed trait ViewChangeProblem extends Throwable
+  sealed private trait ViewChangeProblem extends Throwable
   private case object InvalidViewChangeSignature extends ViewChangeProblem
   private case object InvalidCertificates extends ViewChangeProblem
   private case object InvalidPreprepareSignature extends ViewChangeProblem
   private case object InvalidPrepareSignature extends ViewChangeProblem
-  private case object InvalidPreprepareRequestSignature
-      extends ViewChangeProblem
+  private case object InvalidPreprepareRequestSignature extends ViewChangeProblem
 
   private def validatePrePrepares[F[_]: Async](
-      prePrepare: PrePrepareRequest,
-      replicaKeysMap: Map[Int, PublicKey]
+    prePrepare:     PrePrepareRequest,
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
-  ): F[Unit] = {
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
+  ): F[Unit] =
     for {
       validPrePrepares <- checkRequestSignatures(prePrepare)
       _ <- Async[F].raiseUnless(validPrePrepares)(
@@ -43,12 +40,11 @@ object ViewChangeActivity {
         InvalidPreprepareRequestSignature
       ))
     } yield ()
-  }
 
   private def validatePrepares[F[_]: Async](
-      prepare: PrepareRequest,
-      replicaKeysMap: Map[Int, PublicKey]
-  ): F[Unit] = {
+    prepare:        PrepareRequest,
+    replicaKeysMap: Map[Int, PublicKey]
+  ): F[Unit] =
     for {
       validPrepares <- checkMessageSignature(
         prepare.replicaId,
@@ -60,15 +56,14 @@ object ViewChangeActivity {
         InvalidPrepareSignature
       )
     } yield ()
-  }
 
   private def performViewChangeValidation[F[_]: Async](
-      request: ViewChangeRequest,
-      replicaKeysMap: Map[Int, PublicKey]
+    request:        ViewChangeRequest,
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
-  ): F[Unit] = {
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
+  ): F[Unit] =
     for {
       reqSignCheck <- checkMessageSignature(
         request.replicaId,
@@ -102,14 +97,13 @@ object ViewChangeActivity {
         pm.prepares.map(validatePrepares(_, replicaKeysMap))
       }.sequence
     } yield ()
-  }
 
   def apply[F[_]: Async: Logger](
-      request: ViewChangeRequest,
-      replicaKeysMap: Map[Int, PublicKey]
+    request:        ViewChangeRequest,
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
   ): F[Unit] = {
 
     import org.typelevel.log4cats.syntax._
