@@ -9,9 +9,9 @@ metals.sbt
 logs/
 static/
 secret.yaml
-topl-wallet.json
-topl-wallet.db
-topl-mnemonic.txt
+strata-wallet.json
+strata-wallet.db
+strata-mnemonic.txt
 genesisTxProved.pbuf
 genesisTx.pbuf
 helm/

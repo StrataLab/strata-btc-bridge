@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 
-package co.topl.bridge.shared;
+package xyz.stratalab.bridge.shared;
 
 message Empty {
 
