@@ -1,7 +1,7 @@
-package co.topl.tbcli.view
+package xyz.stratalab.tbcli.view
 
 import cats.Show
-import co.topl.bridge.shared.StartPeginSessionRequest
+import xyz.stratalab.bridge.shared.StartPeginSessionRequest
 
 object OutputView {
 

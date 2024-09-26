@@ -1,4 +1,4 @@
-package co.topl.tbcli
+package xyz.stratalab.tbcli
 // import co.topl.bridge.BitcoinNetworkIdentifiers
 // import co.topl.bridge.RegTest
 

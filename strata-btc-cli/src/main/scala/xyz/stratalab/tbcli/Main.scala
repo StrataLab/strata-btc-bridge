@@ -1,4 +1,4 @@
-package co.topl.tbcli
+package xyz.stratalab.tbcli
 
 import cats.effect.ExitCode
 import cats.effect.IO
