@@ -16,12 +16,9 @@ import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.consensus.shared.utils.ConfUtils._
 import xyz.stratalab.bridge.stubs.{BasePBFTInternalGrpcServiceClient, BaseRequestStateManager, BaseRequestTimerManager}
 
-import java.security.KeyPair
-
 trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
 
   def createSimpleInternalServer(
-    replicaKeyPair: KeyPair
   )(implicit
     storageApi:             StorageApi[IO],
     publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
@@ -37,7 +34,6 @@ trait PBFTInternalGrpcServiceServerSpecAux extends SampleData {
       lowAndHigh        <- Ref.of[IO, (Long, Long)]((0L, 0L)).toResource
       viewManager <- ViewManagerImpl
         .make[IO](
-          replicaKeyPair,
           5,
           storageApi,
           checkpointManager,

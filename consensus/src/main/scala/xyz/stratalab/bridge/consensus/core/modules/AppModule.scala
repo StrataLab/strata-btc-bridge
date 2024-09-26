@@ -175,7 +175,6 @@ trait AppModule extends WalletStateResource {
         queue
       )
       viewManager <- ViewManagerImpl.make[IO](
-        replicaKeyPair,
         params.viewChangeTimeout,
         storageApi,
         checkpointManager,
@@ -192,7 +191,6 @@ trait AppModule extends WalletStateResource {
           )
       requestStateManager <- RequestStateManagerImpl
         .make[IO](
-          replicaKeyPair,
           viewManager,
           queue,
           requestTimerManager,

@@ -1,13 +1,10 @@
 package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.kernel.{Async, Ref}
-import com.google.protobuf.ByteString
 import xyz.stratalab.bridge.consensus.pbft.{NewViewRequest, Pm, PrePrepareRequest, ViewChangeRequest}
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ReplicaCount, ReplicaId}
+import xyz.stratalab.bridge.shared.{ReplicaCount, ReplicaId}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
-
-import java.security.KeyPair
 
 trait ViewManager[F[_]] {
 
@@ -29,10 +26,8 @@ trait ViewManager[F[_]] {
 object ViewManagerImpl {
 
   import cats.implicits._
-  import xyz.stratalab.bridge.shared.implicits._
 
   def make[F[_]: Async](
-    keyPair:             KeyPair,
     viewChangeTimeout:   Int,
     storageApi:          StorageApi[F],
     checkpointManager:   CheckpointManager[F],
@@ -107,15 +102,10 @@ object ViewManagerImpl {
             viewChanges = viewChangeRequests.values.toList,
             preprepares = newViewMessage.preprepares
           )
-          signedBytes <- BridgeCryptoUtils.signBytes[F](
-            keyPair.getPrivate(),
-            newViewRequest.signableBytes
-          )
+
         } yield (
           mins,
-          newViewRequest.withSignature(
-            ByteString.copyFrom(signedBytes)
-          )
+          newViewRequest
         )
 
       private def updateToLatestCheckpoint(

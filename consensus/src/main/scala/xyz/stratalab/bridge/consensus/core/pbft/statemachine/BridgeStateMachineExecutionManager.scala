@@ -385,7 +385,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case StateMachineRequest.Operation.Empty =>
               warn"Received empty message" >> Sync[F].delay(Result.Empty)
             case StartSession(sc) =>
-              startSession(
+              trace"handling StartSession" >> startSession(
                 request.clientNumber,
                 request.timestamp,
                 sc
@@ -393,7 +393,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case PostDepositBTC(
                   value
                 ) => // FIXME: add checks before executing
-              standardResponse(
+              trace"handling PostDepositBTC ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
@@ -402,7 +402,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case TimeoutDepositBTC(
                   value
                 ) => // FIXME: add checks before executing
-              state.update(_ - (value.sessionId)) >>
+              trace"handling TimeoutDepositBTC ${value.sessionId}" >> state.update(_ - (value.sessionId)) >>
               sessionManager.removeSession(
                 value.sessionId,
                 PeginSessionStateTimeout
@@ -413,7 +413,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case UndoDepositBTC(
                   value
                 ) => // FIXME: add checks before executing
-              standardResponse(
+              trace"handling UndoDepositBTC ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
@@ -424,7 +424,7 @@ object BridgeStateMachineExecutionManagerImpl {
                 ) =>
               import co.topl.brambl.syntax._
               for {
-                _ <- trace"Deposit has been confirmed"
+                _ <- trace"Deposit has been confirmed ${value.sessionId}"
                 someSessionInfo <- standardResponse(
                   request.clientNumber,
                   request.timestamp,
@@ -450,7 +450,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case PostTBTCMint(
                   value
                 ) => // FIXME: add checks before executing
-              standardResponse(
+              trace"handling PostTBTCMint ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
@@ -459,7 +459,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case TimeoutTBTCMint(
                   value
                 ) => // FIXME: Add checks before executing
-              state.update(_ - value.sessionId) >>
+              trace"handling TimeoutTBTCMint ${value.sessionId}" >> state.update(_ - value.sessionId) >>
               sessionManager.removeSession(
                 value.sessionId,
                 PeginSessionStateTimeout
@@ -470,7 +470,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case UndoTBTCMint(
                   value
                 ) => // FIXME: Add checks before executing
-              standardResponse(
+              trace"handling UndoTBTCMint ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
@@ -479,7 +479,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case ConfirmTBTCMint(
                   value
                 ) => // FIXME: Add checks before executing
-              standardResponse(
+              trace"handling ConfirmTBTCMint ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
@@ -489,6 +489,7 @@ object BridgeStateMachineExecutionManagerImpl {
                   value
                 ) => // FIXME: Add checks before executing
               for {
+                _ <- trace"handling PostRedemptionTx ${value.sessionId}"
                 someSessionInfo <- standardResponse(
                   request.clientNumber,
                   request.timestamp,
@@ -513,21 +514,21 @@ object BridgeStateMachineExecutionManagerImpl {
                 )).getOrElse(Sync[F].unit)
               } yield Result.Empty
             case PostClaimTx(value) =>
-              standardResponse(
+              trace"handling PostClaimTx ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
                 request.operation
               ) >> Sync[F].delay(Result.Empty)
             case UndoClaimTx(value) =>
-              standardResponse(
+              trace"handling UndoClaimTx ${value.sessionId}" >> standardResponse(
                 request.clientNumber,
                 request.timestamp,
                 value.sessionId,
                 request.operation
               ) >> Sync[F].delay(Result.Empty)
             case ConfirmClaimTx(value) =>
-              state.update(_ - value.sessionId) >>
+              trace"handling ConfirmClaimTx ${value.sessionId}" >> state.update(_ - value.sessionId) >>
               sessionManager.removeSession(
                 value.sessionId,
                 PeginSessionStateSuccessfulPegin

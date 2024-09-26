@@ -271,6 +271,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
       idReplicaClientMap <- createReplicaClienMap[IO](replicaNodes)
       mutex              <- Mutex[IO].toResource
       pbftProtocolClientGrpc <- PBFTInternalGrpcServiceClientImpl.make[IO](
+        replicaKeyPair,
         replicaNodes
       )
       viewReference <- Ref[IO].of(0L).toResource

@@ -2,13 +2,10 @@ package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.kernel.{Async, Outcome, Ref, Resource}
 import cats.effect.std.Queue
-import com.google.protobuf.ByteString
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
 import xyz.stratalab.bridge.consensus.pbft.{CommitRequest, PrePrepareRequest, PrepareRequest}
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientId, ReplicaId, StateMachineRequest}
+import xyz.stratalab.bridge.shared.{ClientId, ReplicaId, StateMachineRequest}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
-
-import java.security.KeyPair
 
 trait RequestStateManager[F[_]] {
 
@@ -31,67 +28,40 @@ case object Completed extends RequestState
 
 object RequestStateMachineTransitionRelation {
 
-  import xyz.stratalab.bridge.shared.implicits._
   import cats.implicits._
 
   private def prepare[F[_]: Async](
-    keyPair: KeyPair,
     request: PrePrepareRequest
   )(implicit
     replica:                ReplicaId,
-    requestTimerManager:    RequestTimerManager[F],
     pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
-  ) = {
-    val prepareRequest = PrepareRequest(
-      viewNumber = request.viewNumber,
-      sequenceNumber = request.sequenceNumber,
-      digest = request.digest,
-      replicaId = replica.id
-    )
-    for {
-      _ <- requestTimerManager.startTimer(
-        RequestIdentifier(
-          ClientId(request.payload.get.clientNumber),
-          request.payload.get.timestamp
+  ) =
+    pbftProtocolClientGrpc
+      .prepare(
+        PrepareRequest(
+          viewNumber = request.viewNumber,
+          sequenceNumber = request.sequenceNumber,
+          digest = request.digest,
+          replicaId = replica.id
         )
       )
-      signedBytes <- BridgeCryptoUtils.signBytes[F](
-        keyPair.getPrivate(),
-        prepareRequest.signableBytes
-      )
-      prepareRequestSigned = prepareRequest.withSignature(
-        ByteString.copyFrom(signedBytes)
-      )
-      _ <- pbftProtocolClientGrpc.prepare(
-        prepareRequestSigned
-      )
-    } yield ()
-  }
+      .void
 
   private def commit[F[_]: Async](
-    keyPair: KeyPair,
     request: PrepareRequest
   )(implicit
     pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
-  ) = {
-    val commitRequest = CommitRequest(
-      viewNumber = request.viewNumber,
-      sequenceNumber = request.sequenceNumber,
-      digest = request.digest,
-      replicaId = request.replicaId
-    )
-    for {
-      signedBytes <- BridgeCryptoUtils.signBytes[F](
-        keyPair.getPrivate(),
-        commitRequest.signableBytes
-      )
-      _ <- pbftProtocolClientGrpc.commit(
-        commitRequest.withSignature(
-          ByteString.copyFrom(signedBytes)
+  ) =
+    pbftProtocolClientGrpc
+      .commit(
+        CommitRequest(
+          viewNumber = request.viewNumber,
+          sequenceNumber = request.sequenceNumber,
+          digest = request.digest,
+          replicaId = request.replicaId
         )
       )
-    } yield ()
-  }
+      .void
 
   private def complete[F[_]: Async](
     smRequest: StateMachineRequest,
@@ -111,27 +81,17 @@ object RequestStateMachineTransitionRelation {
       _ <- rmOp
     } yield ()
 
-  private def viewChange[F[_]: Async](
-    keyPair: KeyPair
-  )(implicit
+  private def viewChange[F[_]: Async]()(implicit
     viewManager:            ViewManager[F],
     pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ) =
     for {
-      evt <- viewManager.createViewChangeRequest()
-      signedBytes <- BridgeCryptoUtils.signBytes[F](
-        keyPair.getPrivate(),
-        evt.signableBytes
-      )
-      evtSigned = evt.withSignature(
-        ByteString.copyFrom(signedBytes)
-      )
-      _ <- pbftProtocolClientGrpc.viewChange(evtSigned)
+      request <- viewManager.createViewChangeRequest()
+      _       <- pbftProtocolClientGrpc.viewChange(request)
     } yield ()
 
   def transition[F[_]: Async](
-    keyPair: KeyPair,
-    rmOp:    F[Unit]
+    rmOp: F[Unit]
   )(requestState: RequestState, event: PBFTInternalEvent)(implicit
     replica:                            ReplicaId,
     viewManager:                        ViewManager[F],
@@ -141,9 +101,9 @@ object RequestStateMachineTransitionRelation {
   ): (Option[RequestState], F[Unit]) =
     (requestState, event) match {
       case (PrePreparePhase, PrePreparedInserted(request)) =>
-        (Some(PreparePhase(request.payload.get)), prepare[F](keyPair, request))
+        (Some(PreparePhase(request.payload.get)), prepare[F](request))
       case (PreparePhase(smRequest), Prepared(_, request)) =>
-        (Some(CommitPhase(smRequest)), commit[F](keyPair, request))
+        (Some(CommitPhase(smRequest)), commit[F](request))
       case (CommitPhase(smRequest), Commited(_, _)) =>
         (Some(Completed), complete(smRequest, rmOp))
       case (_, PBFTTimeoutEvent(_)) =>
@@ -155,7 +115,7 @@ object RequestStateMachineTransitionRelation {
         // eventually there will not be any more changes.
         (
           Some(Completed),
-          viewChange(keyPair)
+          viewChange()
         )
       case (_, _) =>
         (None, Async[F].unit)
@@ -167,7 +127,6 @@ object RequestStateManagerImpl {
   import cats.implicits._
 
   def make[F[_]: Async](
-    keyPair:             KeyPair,
     viewManager:         ViewManager[F],
     queue:               Queue[F, PBFTInternalEvent],
     requestTimerManager: RequestTimerManager[F],
@@ -217,7 +176,6 @@ object RequestStateManagerImpl {
               val (newState, action) =
                 RequestStateMachineTransitionRelation
                   .transition[F](
-                    keyPair,
                     state.update(_ - identifier)
                   )(
                     currentState,

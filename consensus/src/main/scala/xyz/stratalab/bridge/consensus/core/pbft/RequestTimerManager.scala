@@ -2,6 +2,7 @@ package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.kernel.{Async, Ref}
 import cats.effect.std.Queue
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.shared.ClientId
 
 import scala.concurrent.duration.Duration
@@ -25,7 +26,7 @@ trait RequestTimerManager[F[_]] {
 
 object RequestTimerManagerImpl {
 
-  def make[F[_]: Async](
+  def make[F[_]: Async: Logger](
     requestTimeout: Duration,
     queue:          Queue[F, PBFTInternalEvent]
   ): F[RequestTimerManager[F]] = {
@@ -58,7 +59,12 @@ object RequestTimerManagerImpl {
         runningTimers.update(_ - timerIdentifier)
 
       override def hasExpiredTimer(): F[Boolean] =
-        expiredTimers.get.map(_.nonEmpty)
+        expiredTimers.get.flatMap { x =>
+          import org.typelevel.log4cats.syntax._
+          if (x.nonEmpty) error"Timer expired: ${x}" >> false.pure[F]
+          else
+            x.nonEmpty.pure[F]
+        }
 
       def resetAllTimers(): F[Unit] =
         for {
