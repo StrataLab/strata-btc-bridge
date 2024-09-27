@@ -15,47 +15,12 @@ import scodec.bits.ByteVector
 import xyz.stratalab.bridge.consensus.core.controllers.StartSessionController
 import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
 import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
-import xyz.stratalab.bridge.consensus.core.pbft.statemachine.{
-  ConfirmDepositBTCEvt,
-  ConfirmTBTCMintEvt,
-  PBFTEvent,
-  PBFTTransitionRelation,
-  PostClaimTxEvt,
-  PostDepositBTCEvt,
-  PostRedemptionTxEvt,
-  PostTBTCMintEvt,
-  UndoClaimTxEvt,
-  UndoDepositBTCEvt,
-  UndoTBTCMintEvt
-}
-import xyz.stratalab.bridge.consensus.core.{
-  BitcoinNetworkIdentifiers,
-  BridgeWalletManager,
-  CheckpointInterval,
-  CurrentBTCHeightRef,
-  CurrentStrataHeightRef,
-  Fellowship,
-  LastReplyMap,
-  PeginWalletManager,
-  PublicApiClientGrpcMap,
-  StrataKeypair,
-  Template,
-  stateDigest
-}
+import xyz.stratalab.bridge.consensus.core.pbft.statemachine.PBFTEvent
+import xyz.stratalab.bridge.consensus.core.{BitcoinNetworkIdentifiers, BridgeWalletManager, CheckpointInterval, CurrentBTCHeightRef, CurrentStrataHeightRef, Fellowship, PeginWalletManager, PublicApiClientGrpcMap, StrataKeypair, Template, stateDigest}
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.consensus.service.{InvalidInputRes, StartSessionRes}
-import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{
-  PeginSessionMintingTBTCConfirmation,
-  PeginSessionStateMintingTBTC,
-  PeginSessionStateSuccessfulPegin,
-  PeginSessionStateTimeout,
-  PeginSessionStateWaitingForBTC,
-  PeginSessionWaitingForClaim,
-  PeginSessionWaitingForClaimBTCConfirmation,
-  PeginSessionWaitingForEscrowBTCConfirmation,
-  PeginSessionWaitingForRedemption
-}
+import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{PeginSessionStateMintingTBTC, PeginSessionStateTimeout, PeginSessionStateWaitingForBTC, PeginSessionWaitingForClaim}
 import xyz.stratalab.bridge.consensus.shared.{
   AssetToken,
   BTCWaitExpirationTime,
@@ -66,19 +31,12 @@ import xyz.stratalab.bridge.consensus.shared.{
 }
 import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
 import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.{
-  ConfirmClaimTx,
-  ConfirmDepositBTC,
-  ConfirmTBTCMint,
   PostClaimTx,
   PostDepositBTC,
   PostRedemptionTx,
-  PostTBTCMint,
   StartSession,
   TimeoutDepositBTC,
-  TimeoutTBTCMint,
-  UndoClaimTx,
-  UndoDepositBTC,
-  UndoTBTCMint
+  TimeoutTBTCMint
 }
 import xyz.stratalab.bridge.shared.{
   BridgeCryptoUtils,
@@ -92,6 +50,7 @@ import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
+import xyz.stratalab.bridge.consensus.core.LastReplyMap
 
 trait BridgeStateMachineExecutionManager[F[_]] {
 
@@ -105,7 +64,6 @@ object BridgeStateMachineExecutionManagerImpl {
 
   import org.typelevel.log4cats.syntax._
   import cats.implicits._
-  import WaitingBTCOps._
   import WaitingForRedemptionOps._
 
   def make[F[_]: Async: Logger](
@@ -234,39 +192,6 @@ object BridgeStateMachineExecutionManagerImpl {
                 vout = value.vout,
                 amount = Satoshis.fromBytes(ByteVector(value.amount.toByteArray))
               )
-            case UndoDepositBTC(value) =>
-              UndoDepositBTCEvt(
-                sessionId = value.sessionId
-              )
-            case ConfirmDepositBTC(value) =>
-              ConfirmDepositBTCEvt(
-                sessionId = value.sessionId,
-                height = value.height
-              )
-            case PostTBTCMint(value) =>
-              import co.topl.brambl.syntax._
-              PostTBTCMintEvt(
-                sessionId = value.sessionId,
-                height = value.height,
-                utxoTxId = value.utxoTxId,
-                utxoIdx = value.utxoIndex,
-                amount = AssetToken(
-                  Encoding.encodeToBase58(groupIdIdentifier.value.toByteArray),
-                  Encoding.encodeToBase58(seriesIdIdentifier.value.toByteArray),
-                  BigInt(value.amount.toByteArray())
-                )
-              )
-            case TimeoutTBTCMint(_) =>
-              throw new Exception("Invalid operation")
-            case UndoTBTCMint(value) =>
-              UndoTBTCMintEvt(
-                sessionId = value.sessionId
-              )
-            case ConfirmTBTCMint(value) =>
-              ConfirmTBTCMintEvt(
-                sessionId = value.sessionId,
-                height = value.height
-              )
             case PostRedemptionTx(value) =>
               import co.topl.brambl.syntax._
               PostRedemptionTxEvt(
@@ -288,12 +213,6 @@ object BridgeStateMachineExecutionManagerImpl {
                 txId = value.txId,
                 vout = value.vout
               )
-            case UndoClaimTx(value) =>
-              UndoClaimTxEvt(
-                sessionId = value.sessionId
-              )
-            case ConfirmClaimTx(_) =>
-              throw new Exception("Invalid operation")
           }
 
         private def executeStateMachine(
@@ -324,14 +243,8 @@ object BridgeStateMachineExecutionManagerImpl {
         ): PeginSessionState =
           pbftState match {
             case _: PSWaitingForBTCDeposit => PeginSessionStateWaitingForBTC
-            case _: PSConfirmingBTCDeposit =>
-              PeginSessionWaitingForEscrowBTCConfirmation
             case _: PSMintingTBTC          => PeginSessionStateMintingTBTC
-            case _: PSWaitingForRedemption => PeginSessionWaitingForRedemption
-            case _: PSConfirmingTBTCMint   => PeginSessionMintingTBTCConfirmation
             case _: PSClaimingBTC          => PeginSessionWaitingForClaim
-            case _: PSConfirmingBTCClaim =>
-              PeginSessionWaitingForClaimBTCConfirmation
           }
 
         private def standardResponse(
@@ -410,52 +323,6 @@ object BridgeStateMachineExecutionManagerImpl {
                 request.clientNumber,
                 request.timestamp
               ) // FIXME: this is just a change of state at db level
-            case UndoDepositBTC(
-                  value
-                ) => // FIXME: add checks before executing
-              trace"handling UndoDepositBTC ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
-                value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
-            case ConfirmDepositBTC(
-                  value
-                ) =>
-              import co.topl.brambl.syntax._
-              for {
-                _ <- trace"Deposit has been confirmed ${value.sessionId}"
-                someSessionInfo <- standardResponse(
-                  request.clientNumber,
-                  request.timestamp,
-                  value.sessionId,
-                  request.operation
-                )
-                _ <- trace"Minting: ${BigInt(value.amount.toByteArray())}"
-                _ <- someSessionInfo
-                  .flatMap(sessionInfo =>
-                    MiscUtils.sessionInfoPeginPrism
-                      .getOption(sessionInfo)
-                      .map(peginSessionInfo =>
-                        startMintingProcess[F](
-                          defaultFromFellowship,
-                          defaultFromTemplate,
-                          peginSessionInfo.redeemAddress,
-                          BigInt(value.amount.toByteArray())
-                        )
-                      )
-                  )
-                  .getOrElse(Sync[F].unit)
-              } yield Result.Empty
-            case PostTBTCMint(
-                  value
-                ) => // FIXME: add checks before executing
-              trace"handling PostTBTCMint ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
-                value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
             case TimeoutTBTCMint(
                   value
                 ) => // FIXME: Add checks before executing
@@ -467,24 +334,6 @@ object BridgeStateMachineExecutionManagerImpl {
                 request.clientNumber,
                 request.timestamp
               ) // FIXME: this is just a change of state at db level
-            case UndoTBTCMint(
-                  value
-                ) => // FIXME: Add checks before executing
-              trace"handling UndoTBTCMint ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
-                value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
-            case ConfirmTBTCMint(
-                  value
-                ) => // FIXME: Add checks before executing
-              trace"handling ConfirmTBTCMint ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
-                value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
             case PostRedemptionTx(
                   value
                 ) => // FIXME: Add checks before executing
@@ -520,22 +369,6 @@ object BridgeStateMachineExecutionManagerImpl {
                 value.sessionId,
                 request.operation
               ) >> Sync[F].delay(Result.Empty)
-            case UndoClaimTx(value) =>
-              trace"handling UndoClaimTx ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
-                value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
-            case ConfirmClaimTx(value) =>
-              trace"handling ConfirmClaimTx ${value.sessionId}" >> state.update(_ - value.sessionId) >>
-              sessionManager.removeSession(
-                value.sessionId,
-                PeginSessionStateSuccessfulPegin
-              ) >> sendResponse(
-                request.clientNumber,
-                request.timestamp
-              ) // FIXME: this is just a change of state at db level
           }).flatMap(x =>
             Sync[F].delay(
               lastReplyMap.underlying.put(

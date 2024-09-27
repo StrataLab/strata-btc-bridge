@@ -20,23 +20,14 @@ import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   MWaitingForRedemption,
   PeginStateMachineState
 }
-import xyz.stratalab.bridge.shared.{
-  ClientId,
-  ConfirmClaimTxOperation,
-  ConfirmDepositBTCOperation,
-  ConfirmTBTCMintOperation,
-  PostClaimTxOperation,
-  PostDepositBTCOperation,
-  PostRedemptionTxOperation,
-  PostTBTCMintOperation,
-  SessionId,
-  StateMachineServiceGrpcClient,
-  TimeoutDepositBTCOperation,
-  TimeoutTBTCMintOperation,
-  UndoClaimTxOperation,
-  UndoDepositBTCOperation,
-  UndoTBTCMintOperation
-}
+import xyz.stratalab.bridge.shared.ClientId
+import xyz.stratalab.bridge.shared.SessionId
+import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
+import xyz.stratalab.bridge.shared.PostDepositBTCOperation
+import xyz.stratalab.bridge.shared.TimeoutDepositBTCOperation
+import xyz.stratalab.bridge.shared.TimeoutTBTCMintOperation
+import xyz.stratalab.bridge.shared.PostRedemptionTxOperation
+import xyz.stratalab.bridge.shared.PostClaimTxOperation
 
 trait TransitionToEffect {
 
@@ -79,23 +70,6 @@ trait TransitionToEffect {
     ((currentState, blockchainEvent) match {
       case (
             _: MWaitingForBTCDeposit,
-            ev: BTCFundsDeposited
-          ) =>
-        Async[F]
-          .start(
-            consensusClient.postDepositBTC(
-              PostDepositBTCOperation(
-                session.id,
-                ev.fundsDepositedHeight,
-                ev.txId,
-                ev.vout,
-                ByteString.copyFrom(ev.amount.satoshis.toBigInt.toByteArray)
-              )
-            )
-          )
-          .void
-      case (
-            _: MWaitingForBTCDeposit,
             ev: NewBTCBlock
           ) =>
         Async[F]
@@ -115,45 +89,50 @@ trait TransitionToEffect {
         if (isAboveConfirmationThresholdBTC(ev.height, cs.depositBTCBlockHeight)) {
           Async[F]
             .start(
-              consensusClient.confirmDepositBTC(
-                ConfirmDepositBTCOperation(
+              consensusClient.postDepositBTC(
+                PostDepositBTCOperation(
                   session.id,
-                  ByteString
-                    .copyFrom(cs.amount.satoshis.toBigInt.toByteArray),
-                  ev.height
+                  ev.height,
+                  cs.btcTxId,
+                  cs.btcVout,
+                  ByteString.copyFrom(cs.amount.satoshis.toBigInt.toByteArray)
                 )
               )
             )
             .void
         } else {
-          Async[F]
-            .start(
-              consensusClient.undoDepositBTC(
-                UndoDepositBTCOperation(
-                  session.id
-                )
-              )
-            )
-            .void
+          // Async[F]
+          //   .start(
+          //     consensusClient.undoDepositBTC(
+          //       UndoDepositBTCOperation(
+          //         session.id
+          //       )
+          //     )
+          //   )
+          //   .void
+          // FIXME: change state
+          Async[F].unit
         }
       case (
             _: MMintingTBTC,
             be: BifrostFundsDeposited
           ) =>
-        Async[F]
-          .start(
-            consensusClient
-              .postTBTCMint(
-                PostTBTCMintOperation(
-                  session.id,
-                  be.currentStrataBlockHeight,
-                  be.utxoTxId,
-                  be.utxoIndex,
-                  ByteString.copyFrom(be.amount.amount.value.toByteArray)
-                )
-              )
-          )
-          .void
+        // Async[F]
+        //   .start(
+        //     consensusClient
+        //       .postTBTCMint(
+        //         PostTBTCMintOperation(
+        //           session.id,
+        //           be.currentStrataBlockHeight,
+        //           be.utxoTxId,
+        //           be.utxoIndex,
+        //           ByteString.copyFrom(be.amount.amount.value.toByteArray)
+        //         )
+        //       )
+        //   )
+        //   .void
+        // FIXME: change state
+        Async[F].unit
       case (
             _: MMintingTBTC,
             ev: NewBTCBlock
@@ -172,15 +151,17 @@ trait TransitionToEffect {
             _: MConfirmingTBTCMint,
             _: NewBTCBlock
           ) =>
-        Async[F]
-          .start(
-            consensusClient.undoTBTCMint(
-              UndoTBTCMintOperation(
-                session.id
-              )
-            )
-          )
-          .void
+        // Async[F]
+        //   .start(
+        //     consensusClient.undoTBTCMint(
+        //       UndoTBTCMintOperation(
+        //         session.id
+        //       )
+        //     )
+        //   )
+        //   .void
+        // FIXME: change state
+        Async[F].unit
       case (
             cs: MConfirmingTBTCMint,
             be: NewStrataBlock
@@ -191,16 +172,18 @@ trait TransitionToEffect {
             cs.depositTBTCBlockHeight
           )
         ) {
-          Async[F]
-            .start(
-              consensusClient.confirmTBTCMint(
-                ConfirmTBTCMintOperation(
-                  session.id,
-                  be.height
-                )
-              )
-            )
-            .void
+          // Async[F]
+          //   .start(
+          //     consensusClient.confirmTBTCMint(
+          //       ConfirmTBTCMintOperation(
+          //         session.id,
+          //         be.height
+          //       )
+          //     )
+          //   )
+          //   .void
+          // FIXME: change state
+          Async[F].unit
         } else if ( // FIXME: check that this is the right time to wait
           toplWaitExpirationTime.underlying < (be.height - cs.depositTBTCBlockHeight)
         )
@@ -214,15 +197,17 @@ trait TransitionToEffect {
             )
             .void
         else if (be.height <= cs.depositTBTCBlockHeight)
-          Async[F]
-            .start(
-              consensusClient.undoTBTCMint(
-                UndoTBTCMintOperation(
-                  session.id
-                )
-              )
-            )
-            .void
+          // Async[F]
+          //   .start(
+          //     consensusClient.undoTBTCMint(
+          //       UndoTBTCMintOperation(
+          //         session.id
+          //       )
+          //     )
+          //   )
+          //   .void
+          // FIXME: change state
+          Async[F].unit
         else
           Async[F].unit
       case (
@@ -287,26 +272,30 @@ trait TransitionToEffect {
             ev: NewBTCBlock
           ) =>
         if (isAboveConfirmationThresholdBTC(ev.height, cs.claimBTCBlockHeight))
-          Async[F]
-            .start(
-              consensusClient.confirmClaimTx(
-                ConfirmClaimTxOperation(
-                  session.id,
-                  ev.height
-                )
-              )
-            )
-            .void
+          // Async[F]
+          //   .start(
+          //     consensusClient.confirmClaimTx(
+          //       ConfirmClaimTxOperation(
+          //         session.id,
+          //         ev.height
+          //       )
+          //     )
+          //   )
+          //   .void
+          // FIXME: change state
+          Async[F].unit
         else
-          Async[F]
-            .start(
-              consensusClient.undoClaimTx(
-                UndoClaimTxOperation(
-                  session.id
-                )
-              )
-            )
-            .void
+          // Async[F]
+          //   .start(
+          //     consensusClient.undoClaimTx(
+          //       UndoClaimTxOperation(
+          //         session.id
+          //       )
+          //     )
+          //   )
+          //   .void
+          // FIXME: change state
+          Async[F].unit
       case (
             cs: MWaitingForClaim,
             ev: NewBTCBlock
@@ -318,17 +307,19 @@ trait TransitionToEffect {
             Async[F].unit
           case Some(startBtcBlockHeight) =>
             if (btcRetryThreshold.underlying < (ev.height - startBtcBlockHeight))
-              Async[F]
-                .start(
-                  warn"Confirming claim tx" >>
-                  consensusClient.confirmClaimTx(
-                    ConfirmClaimTxOperation(
-                      session.id,
-                      ev.height
-                    )
-                  )
-                )
-                .void
+              // Async[F]
+              //   .start(
+              //     warn"Confirming claim tx" >>
+              //     consensusClient.confirmClaimTx(
+              //       ConfirmClaimTxOperation(
+              //         session.id,
+              //         ev.height
+              //       )
+              //     )
+              //   )
+              //   .void
+              // FIXME: change state
+              Async[F].unit
             else
               Async[F].unit
         }

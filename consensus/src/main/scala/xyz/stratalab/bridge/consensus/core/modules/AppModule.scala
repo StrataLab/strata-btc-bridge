@@ -37,7 +37,6 @@ import xyz.stratalab.bridge.consensus.core.{
   CurrentStrataHeightRef,
   Fellowship,
   KWatermark,
-  LastReplyMap,
   PeginWalletManager,
   PublicApiClientGrpcMap,
   StrataBTCBridgeConsensusParamConfig,
@@ -63,6 +62,7 @@ import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair, PublicKey}
 import java.util.concurrent.ConcurrentHashMap
+import xyz.stratalab.bridge.consensus.core.LastReplyMap
 
 trait AppModule extends WalletStateResource {
 
@@ -196,7 +196,11 @@ trait AppModule extends WalletStateResource {
           requestTimerManager,
           bridgeStateMachineExecutionManager
         )
-
+      peginStateMachine <- MonitorStateMachine
+        .make[IO](
+          currentBitcoinNetworkHeight,
+          currentStrataHeight
+        )
     } yield {
       implicit val iRequestStateManager = requestStateManager
       implicit val iRequestTimerManager = requestTimerManager
@@ -207,12 +211,6 @@ trait AppModule extends WalletStateResource {
         viewManager,
         replicaKeysMap
       )
-      val peginStateMachine = MonitorStateMachine
-        .make[IO](
-          currentBitcoinNetworkHeight,
-          currentStrataHeight,
-          new ConcurrentHashMap()
-        )
       (
         xyz.stratalab.bridge.consensus.core.StateMachineGrpcServiceServer
           .stateMachineGrpcServiceServer(

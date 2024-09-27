@@ -26,16 +26,10 @@ import java.util.concurrent.atomic.LongAdder
 import cats.effect.std.Mutex
 import xyz.stratalab.bridge.shared.PostDepositBTCOperation
 import xyz.stratalab.bridge.shared.TimeoutDepositBTCOperation
-import xyz.stratalab.bridge.shared.UndoDepositBTCOperation
-import xyz.stratalab.bridge.shared.ConfirmDepositBTCOperation
 import xyz.stratalab.bridge.shared.PostTBTCMintOperation
 import xyz.stratalab.bridge.shared.TimeoutTBTCMintOperation
-import xyz.stratalab.bridge.shared.UndoTBTCMintOperation
-import xyz.stratalab.bridge.shared.ConfirmTBTCMintOperation
 import xyz.stratalab.bridge.shared.PostRedemptionTxOperation
 import xyz.stratalab.bridge.shared.PostClaimTxOperation
-import xyz.stratalab.bridge.shared.ConfirmClaimTxOperation
-import xyz.stratalab.bridge.shared.UndoClaimTxOperation
 import xyz.stratalab.bridge.consensus.service.MintingStatusReply
 
 trait StateMachineServiceGrpcClient[F[_]] {
@@ -58,18 +52,6 @@ trait StateMachineServiceGrpcClient[F[_]] {
       clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
-  def undoDepositBTC(
-      undoDepositBTCOperation: UndoDepositBTCOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def confirmDepositBTC(
-      confirmDepositBTCOperation: ConfirmDepositBTCOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
   def postTBTCMint(
       postTBTCMintOperation: PostTBTCMintOperation
   )(implicit
@@ -82,18 +64,6 @@ trait StateMachineServiceGrpcClient[F[_]] {
       clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
-  def undoTBTCMint(
-      undoTBTCMintOperation: UndoTBTCMintOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def confirmTBTCMint(
-      confirmTBTCMintOperation: ConfirmTBTCMintOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
   def postRedemptionTx(
       postRedemptionTxOperation: PostRedemptionTxOperation
   )(implicit
@@ -102,18 +72,6 @@ trait StateMachineServiceGrpcClient[F[_]] {
 
   def postClaimTx(
       postClaimTxOperation: PostClaimTxOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def confirmClaimTx(
-      confirmClaimTxOperation: ConfirmClaimTxOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def undoClaimTx(
-      undoClaimTxOperation: UndoClaimTxOperation
   )(implicit
       clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
@@ -170,34 +128,6 @@ object StateMachineServiceGrpcClientImpl {
       replicaMap = idClientList.toMap
     } yield new StateMachineServiceGrpcClient[F] {
 
-      def undoClaimTx(
-          undoClaimTxOperation: UndoClaimTxOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] =
-        mutex.lock.surround(for {
-          request <- prepareRequest(
-            StateMachineRequest.Operation.UndoClaimTx(
-              undoClaimTxOperation
-            )
-          )
-          response <- executeRequest(request)
-        } yield response)
-
-      def confirmClaimTx(
-          confirmClaimTxOperation: ConfirmClaimTxOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] =
-        mutex.lock.surround(for {
-          request <- prepareRequest(
-            StateMachineRequest.Operation.ConfirmClaimTx(
-              confirmClaimTxOperation
-            )
-          )
-          response <- executeRequest(request)
-        } yield response)
-
       def postClaimTx(
           postClaimTxOperation: PostClaimTxOperation
       )(implicit
@@ -226,32 +156,6 @@ object StateMachineServiceGrpcClientImpl {
           response <- executeRequest(request)
         } yield response)
 
-      def confirmTBTCMint(
-          confirmTBTCMintOperation: ConfirmTBTCMintOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.ConfirmTBTCMint(
-            confirmTBTCMintOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
-      def undoTBTCMint(
-          undoTBTCMintOperation: UndoTBTCMintOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.UndoTBTCMint(
-            undoTBTCMintOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
       def timeoutTBTCMint(
           timeoutTBTCMintOperation: TimeoutTBTCMintOperation
       )(implicit
@@ -273,32 +177,6 @@ object StateMachineServiceGrpcClientImpl {
         request <- prepareRequest(
           StateMachineRequest.Operation.PostTBTCMint(
             postTBTCMintOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
-      def confirmDepositBTC(
-          confirmDepositBTCOperation: ConfirmDepositBTCOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.ConfirmDepositBTC(
-            confirmDepositBTCOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
-      override def undoDepositBTC(
-          undoDepositBTCOperation: UndoDepositBTCOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.UndoDepositBTC(
-            undoDepositBTCOperation
           )
         )
         response <- executeRequest(request)
