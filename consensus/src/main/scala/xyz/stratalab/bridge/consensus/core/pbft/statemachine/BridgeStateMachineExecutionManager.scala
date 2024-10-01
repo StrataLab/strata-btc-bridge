@@ -16,11 +16,29 @@ import xyz.stratalab.bridge.consensus.core.controllers.StartSessionController
 import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
 import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.PBFTEvent
-import xyz.stratalab.bridge.consensus.core.{BitcoinNetworkIdentifiers, BridgeWalletManager, CheckpointInterval, CurrentBTCHeightRef, CurrentStrataHeightRef, Fellowship, PeginWalletManager, PublicApiClientGrpcMap, StrataKeypair, Template, stateDigest}
+import xyz.stratalab.bridge.consensus.core.{
+  stateDigest,
+  BitcoinNetworkIdentifiers,
+  BridgeWalletManager,
+  CheckpointInterval,
+  CurrentBTCHeightRef,
+  CurrentStrataHeightRef,
+  Fellowship,
+  LastReplyMap,
+  PeginWalletManager,
+  PublicApiClientGrpcMap,
+  StrataKeypair,
+  Template
+}
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.consensus.service.{InvalidInputRes, StartSessionRes}
-import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{PeginSessionStateMintingTBTC, PeginSessionStateTimeout, PeginSessionStateWaitingForBTC, PeginSessionWaitingForClaim}
+import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{
+  PeginSessionStateMintingTBTC,
+  PeginSessionStateTimeout,
+  PeginSessionStateWaitingForBTC,
+  PeginSessionWaitingForClaim
+}
 import xyz.stratalab.bridge.consensus.shared.{
   AssetToken,
   BTCWaitExpirationTime,
@@ -50,7 +68,6 @@ import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
-import xyz.stratalab.bridge.consensus.core.LastReplyMap
 
 trait BridgeStateMachineExecutionManager[F[_]] {
 
@@ -124,6 +141,7 @@ object BridgeStateMachineExecutionManagerImpl {
             sessionId <- Sync[F].delay(
               sc.sessionId.getOrElse(UUID.randomUUID().toString)
             )
+            _ <- debug"Session ID: $sessionId"
             res <- startPeginSession[F](
               sessionId,
               sc

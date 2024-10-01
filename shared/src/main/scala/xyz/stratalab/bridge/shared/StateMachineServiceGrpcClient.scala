@@ -334,7 +334,6 @@ object StateMachineServiceGrpcClientImpl {
           _ <- info"Replica count is ${replicaCount.value}"
           currentPrimary = (currentView % replicaCount.value).toInt
           _ <- info"Current primary is $currentPrimary"
-          _ <- info"Replica map: $replicaMap"
           _ <- replicaMap(currentPrimary).executeRequest(
             request,
             new Metadata()

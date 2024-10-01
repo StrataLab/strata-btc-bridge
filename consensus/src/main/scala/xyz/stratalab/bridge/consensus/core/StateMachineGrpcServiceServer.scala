@@ -17,10 +17,20 @@ import xyz.stratalab.bridge.consensus.service.{
 }
 import xyz.stratalab.bridge.consensus.shared.PeginSessionInfo
 import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientId, Empty, MintingStatusOperation, ReplicaCount, ReplicaId}
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.StartSession
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  ClientId,
+  Empty,
+  MintingStatusOperation,
+  ReplicaCount,
+  ReplicaId,
+  StateMachineRequest
+}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair, MessageDigest}
+import java.util.UUID
 
 object StateMachineGrpcServiceServer {
 
@@ -129,7 +139,18 @@ object StateMachineGrpcServiceServer {
                         .getInstance("SHA-256")
                         .digest(request.signableBytes)
                     ),
-                    payload = Some(request)
+                    payload = Some(request match {
+                      case StateMachineRequest(_, _, _, operation: StartSession, _) =>
+                        request.withOperation(
+                          operation.copy(
+                            value = operation.value.withSessionId(
+                              UUID.randomUUID().toString
+                            )
+                          )
+                        )
+                      case _ => request
+
+                    })
                   )
                   val prepareRequest = PrepareRequest(
                     viewNumber = currentView,

@@ -143,13 +143,13 @@ object MonitorStateMachine {
             }
           )).collect { case Some(value) =>
           if (blockchainEvent.isInstanceOf[NewBTCBlock])
-            debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewBTCBlock].height}" >> value
+            trace"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewBTCBlock].height}" >> value
           else if (blockchainEvent.isInstanceOf[SkippedBTCBlock])
-            debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[SkippedBTCBlock].height}" >> value
+            trace"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[SkippedBTCBlock].height}" >> value
           else if (blockchainEvent.isInstanceOf[NewStrataBlock])
-            debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewStrataBlock].height}" >> value
+            trace"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()} at height ${blockchainEvent.asInstanceOf[NewStrataBlock].height}" >> value
           else
-            debug"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()}" >> value
+            trace"Processed blockchain event ${blockchainEvent.getClass().getSimpleName()}" >> value
         }
 
       def processTransition(sessionId: String, transition: FSMTransitionTo[F]) =

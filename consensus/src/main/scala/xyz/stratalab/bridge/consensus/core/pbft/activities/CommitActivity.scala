@@ -15,7 +15,7 @@ import java.security.PublicKey
 object CommitActivity {
 
   sealed private trait CommitProblem extends Throwable
-  private case object InvalidPrepareSignature extends CommitProblem
+  private case object InvalidCommitSignature extends CommitProblem
   private case object InvalidView extends CommitProblem
   private case object InvalidWatermark extends CommitProblem
   private case object LogAlreadyExists extends CommitProblem
@@ -38,7 +38,7 @@ object CommitActivity {
         request.signature.toByteArray()
       )
       _ <- Async[F].raiseUnless(reqSignCheck)(
-        InvalidPrepareSignature
+        InvalidCommitSignature
       )
       viewNumberCheck <- checkViewNumber(request.viewNumber)
       _ <- Async[F].raiseUnless(viewNumberCheck)(
@@ -49,7 +49,7 @@ object CommitActivity {
         InvalidWatermark
       )
       canInsert <- storageApi
-        .getCommitMessages(request.viewNumber, request.sequenceNumber)
+        .getCommitMessage(request.viewNumber, request.sequenceNumber, request.replicaId)
         .map(x =>
           x.find(y =>
             Encoding.encodeToHex(y.digest.toByteArray()) == Encoding
@@ -82,7 +82,7 @@ object CommitActivity {
       ): PBFTInternalEvent
     )).handleErrorWith {
       _ match {
-        case InvalidPrepareSignature =>
+        case InvalidCommitSignature =>
           error"Invalid commit signature" >> none[PBFTInternalEvent]
             .pure[F]
         case InvalidView =>

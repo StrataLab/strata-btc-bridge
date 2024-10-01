@@ -37,6 +37,7 @@ import xyz.stratalab.bridge.consensus.core.{
   CurrentStrataHeightRef,
   Fellowship,
   KWatermark,
+  LastReplyMap,
   PeginWalletManager,
   PublicApiClientGrpcMap,
   StrataBTCBridgeConsensusParamConfig,
@@ -62,7 +63,6 @@ import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair, PublicKey}
 import java.util.concurrent.ConcurrentHashMap
-import xyz.stratalab.bridge.consensus.core.LastReplyMap
 
 trait AppModule extends WalletStateResource {
 

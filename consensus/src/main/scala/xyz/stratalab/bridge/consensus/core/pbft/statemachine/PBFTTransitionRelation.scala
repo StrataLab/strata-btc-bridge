@@ -1,7 +1,5 @@
 package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
-
-
 object PBFTTransitionRelation {
   import cats.implicits._
 

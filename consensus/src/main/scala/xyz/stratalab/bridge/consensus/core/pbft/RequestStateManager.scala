@@ -50,6 +50,7 @@ object RequestStateMachineTransitionRelation {
   private def commit[F[_]: Async](
     request: PrepareRequest
   )(implicit
+    replica:                ReplicaId,
     pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ) =
     pbftProtocolClientGrpc
@@ -58,7 +59,7 @@ object RequestStateMachineTransitionRelation {
           viewNumber = request.viewNumber,
           sequenceNumber = request.sequenceNumber,
           digest = request.digest,
-          replicaId = request.replicaId
+          replicaId = replica.id
         )
       )
       .void

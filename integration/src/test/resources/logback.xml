@@ -16,8 +16,20 @@
     <logger class="io.grpc.netty.shaded.io.grpc.netty.NettyClientHandler" level="WARN" />
     <logger name="Bifrost.P2P" level="WARN" />
     <logger name="it-test" level="INFO" />
-    <logger name="consensus-00" level="TRACE" />
-    <logger name="public-api-00" level="TRACE" />
+    <logger name="consensus-00" level="DEBUG" />
+    <logger name="public-api-00" level="DEBUG" />
+    <logger name="consensus-01" level="DEBUG" />
+    <logger name="public-api-01" level="DEBUG" />
+    <logger name="consensus-02" level="DEBUG" />
+    <logger name="public-api-02" level="DEBUG" />
+    <logger name="consensus-03" level="DEBUG" />
+    <logger name="public-api-03" level="DEBUG" />
+    <logger name="consensus-04" level="DEBUG" />
+    <logger name="public-api-04" level="DEBUG" />
+    <logger name="consensus-05" level="DEBUG" />
+    <logger name="public-api-05" level="DEBUG" />
+    <logger name="consensus-06" level="DEBUG" />
+    <logger name="public-api-06" level="DEBUG" />
     <root level="ERROR">
         <appender-ref ref="STDOUT" />
     </root>

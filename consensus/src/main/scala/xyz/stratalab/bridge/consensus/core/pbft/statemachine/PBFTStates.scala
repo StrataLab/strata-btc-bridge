@@ -88,7 +88,6 @@ case class PSMintingTBTC(
 
 }
 
-
 /**
  * State where we are claiming BTC.
  *
