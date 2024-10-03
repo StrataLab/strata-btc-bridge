@@ -42,10 +42,9 @@ object RequestTimerManagerImpl {
           _ <- Async[F].start(
             for {
               _   <- Async[F].sleep(requestTimeout)
-              map <- runningTimers.get
+              map <- runningTimers.getAndUpdate(_ - timerIdentifier)
               _ <-
                 if (map.contains(timerIdentifier)) {
-                  runningTimers.update(_ - timerIdentifier) >>
                   expiredTimers.update(_ + timerIdentifier) >>
                   queue.offer(PBFTTimeoutEvent(timerIdentifier))
                 } else {
@@ -56,12 +55,15 @@ object RequestTimerManagerImpl {
         } yield ()
 
       override def clearTimer(timerIdentifier: RequestIdentifier): F[Unit] =
-        runningTimers.update(_ - timerIdentifier)
+        for {
+          _ <- runningTimers.update(_ - timerIdentifier)
+          _ <- expiredTimers.update(_ - timerIdentifier)
+        } yield ()
 
       override def hasExpiredTimer(): F[Boolean] =
         expiredTimers.get.flatMap { x =>
           import org.typelevel.log4cats.syntax._
-          if (x.nonEmpty) error"Timer expired: ${x}" >> false.pure[F]
+          if (x.nonEmpty) error"Timer expired: ${x}" >> x.nonEmpty.pure[F]
           else
             x.nonEmpty.pure[F]
         }

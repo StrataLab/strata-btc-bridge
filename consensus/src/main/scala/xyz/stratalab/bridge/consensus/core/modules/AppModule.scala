@@ -40,6 +40,7 @@ import xyz.stratalab.bridge.consensus.core.{
   LastReplyMap,
   PeginWalletManager,
   PublicApiClientGrpcMap,
+  SequenceNumberManager,
   StrataBTCBridgeConsensusParamConfig,
   SystemGlobalState,
   Template,
@@ -82,7 +83,7 @@ trait AppModule extends WalletStateResource {
     pegInWalletManager:          BTCWalletAlgebra[IO],
     logger:                      Logger[IO],
     currentBitcoinNetworkHeight: Ref[IO, Int],
-    currentSequenceRef:          Ref[IO, Long],
+    seqNumberManager:            SequenceNumberManager[IO],
     currentStrataHeight:         Ref[IO, Long],
     currentState:                Ref[IO, SystemGlobalState]
   )(implicit
@@ -212,12 +213,13 @@ trait AppModule extends WalletStateResource {
         replicaKeysMap
       )
       (
+        bridgeStateMachineExecutionManager,
         xyz.stratalab.bridge.consensus.core.StateMachineGrpcServiceServer
           .stateMachineGrpcServiceServer(
             replicaKeyPair,
             pbftProtocolClient,
             idReplicaClientMap,
-            currentSequenceRef
+            seqNumberManager
           ),
         InitializationModule
           .make[IO](currentBitcoinNetworkHeight, currentState),

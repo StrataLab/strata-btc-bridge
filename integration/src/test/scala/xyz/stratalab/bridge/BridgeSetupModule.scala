@@ -105,7 +105,7 @@ trait BridgeSetupModule extends CatsEffectSuite with ReplicaConfModule with Publ
           _ <- (0 until replicaCount).toList.traverse { replicaId =>
             IO(Try(Files.delete(Paths.get(s"clientConfig${replicaId * 2}.conf"))))
           }
-          _ <- (0 to replicaCount).toList.traverse { replicaId =>
+          _ <- (0 until replicaCount).toList.traverse { replicaId =>
             IO(Try(Files.delete(Paths.get(s"replica${replicaId}.db"))))
           }
           _              <- createReplicaConfigurationFiles[IO]()

@@ -99,7 +99,7 @@ object MonitorStateMachine {
       ): fs2.Stream[F, F[Unit]] =
         updateStrataHeight(blockchainEvent) ++
         updateBTCHeight(blockchainEvent) ++ (for {
-          entrySet <- fs2.Stream.repeatEval(map.get)
+          entrySet <- fs2.Stream.eval(map.get)
           entry <- fs2.Stream[F, (String, PeginStateMachineState)](
             entrySet.toList: _*
           )

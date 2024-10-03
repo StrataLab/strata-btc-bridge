@@ -15,10 +15,9 @@ message StateMachineRequest {
     StartSessionOperation startSession = 4;
     PostDepositBTCOperation postDepositBTC = 5;
     TimeoutDepositBTCOperation timeoutDepositBTC = 6;
-    PostTBTCMintOperation postTBTCMint = 9;
-    TimeoutTBTCMintOperation timeoutTBTCMint = 10;
-    PostRedemptionTxOperation postRedemptionTx = 13;
-    PostClaimTxOperation postClaimTx = 14;
+    TimeoutTBTCMintOperation timeoutTBTCMint = 7;
+    PostRedemptionTxOperation postRedemptionTx = 8;
+    PostClaimTxOperation postClaimTx = 9;
   }
 }
 

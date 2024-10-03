@@ -144,27 +144,29 @@ trait TransitionToEffect {
         else
           Async[F].unit
       case (
-            cs: MWaitingForRedemption,
-            ev: BifrostFundsWithdrawn
+            cs: MConfirmingRedemption,
+            ev: NewStrataBlock
           ) =>
         import co.topl.brambl.syntax._
-        Async[F]
-          .start(
-            consensusClient.postRedemptionTx(
-              PostRedemptionTxOperation(
-                session.id,
-                ev.secret,
-                ev.fundsWithdrawnHeight,
-                cs.utxoTxId,
-                cs.utxoIndex,
-                cs.btcTxId,
-                cs.btcVout,
-                ByteString
-                  .copyFrom(int128AsBigInt(ev.amount.amount).toByteArray)
+        if (isAboveConfirmationThresholdStrata(ev.height, cs.currentTolpBlockHeight))
+          Async[F]
+            .start(
+              debug"Posting redemption transaction to network" >>
+              consensusClient.postRedemptionTx(
+                PostRedemptionTxOperation(
+                  session.id,
+                  cs.secret,
+                  cs.currentTolpBlockHeight,
+                  cs.utxoTxId,
+                  cs.utxoIndex,
+                  cs.btcTxId,
+                  cs.btcVout,
+                  ByteString.copyFrom(int128AsBigInt(cs.amount.amount).toByteArray)
+                )
               )
             )
-          )
-          .void
+            .void
+        else Async[F].unit
       case (
             _: MWaitingForRedemption,
             ev: NewStrataBlock

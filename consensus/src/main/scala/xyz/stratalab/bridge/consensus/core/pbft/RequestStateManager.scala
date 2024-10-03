@@ -2,6 +2,8 @@ package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.kernel.{Async, Outcome, Ref, Resource}
 import cats.effect.std.Queue
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.syntax._
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
 import xyz.stratalab.bridge.consensus.pbft.{CommitRequest, PrePrepareRequest, PrepareRequest}
 import xyz.stratalab.bridge.shared.{ClientId, ReplicaId, StateMachineRequest}
@@ -18,9 +20,10 @@ trait RequestStateManager[F[_]] {
 sealed trait RequestState
 
 case object PrePreparePhase extends RequestState
-case class PreparePhase(stateMachineRequest: StateMachineRequest) extends RequestState
+case class PreparePhase(seqNumber: Long, stateMachineRequest: StateMachineRequest) extends RequestState
 
 case class CommitPhase(
+  seqNumber:           Long,
   stateMachineRequest: StateMachineRequest
 ) extends RequestState
 
@@ -64,7 +67,8 @@ object RequestStateMachineTransitionRelation {
       )
       .void
 
-  private def complete[F[_]: Async](
+  private def complete[F[_]: Async: Logger](
+    seqNumber: Long,
     smRequest: StateMachineRequest,
     rmOp:      F[Unit]
   )(implicit
@@ -72,13 +76,13 @@ object RequestStateMachineTransitionRelation {
     bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
   ) =
     for {
-      _ <- bridgeStateMachineExecutionManager.executeRequest(smRequest)
-      _ <- requestTimerManager.clearTimer(
-        RequestIdentifier(
-          ClientId(smRequest.clientNumber),
-          smRequest.timestamp
-        )
+      _ <- bridgeStateMachineExecutionManager.executeRequest(seqNumber, smRequest)
+      reqIdentifier = RequestIdentifier(
+        ClientId(smRequest.clientNumber),
+        smRequest.timestamp
       )
+      _ <- debug"Request $reqIdentifier completed, clearing timer"
+      _ <- requestTimerManager.clearTimer(reqIdentifier)
       _ <- rmOp
     } yield ()
 
@@ -91,7 +95,7 @@ object RequestStateMachineTransitionRelation {
       _       <- pbftProtocolClientGrpc.viewChange(request)
     } yield ()
 
-  def transition[F[_]: Async](
+  def transition[F[_]: Async: Logger](
     rmOp: F[Unit]
   )(requestState: RequestState, event: PBFTInternalEvent)(implicit
     replica:                            ReplicaId,
@@ -102,11 +106,11 @@ object RequestStateMachineTransitionRelation {
   ): (Option[RequestState], F[Unit]) =
     (requestState, event) match {
       case (PrePreparePhase, PrePreparedInserted(request)) =>
-        (Some(PreparePhase(request.payload.get)), prepare[F](request))
-      case (PreparePhase(smRequest), Prepared(_, request)) =>
-        (Some(CommitPhase(smRequest)), commit[F](request))
-      case (CommitPhase(smRequest), Commited(_, _)) =>
-        (Some(Completed), complete(smRequest, rmOp))
+        (Some(PreparePhase(request.sequenceNumber, request.payload.get)), prepare[F](request))
+      case (PreparePhase(seqNumber, smRequest), Prepared(_, request)) =>
+        (Some(CommitPhase(seqNumber, smRequest)), commit[F](request))
+      case (CommitPhase(seqNumber, smRequest), Commited(_, _)) =>
+        (Some(Completed), complete(seqNumber, smRequest, rmOp))
       case (_, PBFTTimeoutEvent(_)) =>
         // if there is a timeout event, then we remove only
         // the request from the state machine
@@ -127,7 +131,7 @@ object RequestStateManagerImpl {
 
   import cats.implicits._
 
-  def make[F[_]: Async](
+  def make[F[_]: Async: Logger](
     viewManager:         ViewManager[F],
     queue:               Queue[F, PBFTInternalEvent],
     requestTimerManager: RequestTimerManager[F],

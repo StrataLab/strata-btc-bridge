@@ -1,6 +1,7 @@
 package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.{Async, Ref, Resource, Sync}
+import cats.effect.std.Queue
 import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.dataApi.{FellowshipStorageAlgebra, GenusQueryAlgebra, TemplateStorageAlgebra, WalletStateAlgebra}
 import co.topl.brambl.models.{GroupId, SeriesId}
@@ -35,6 +36,7 @@ import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.consensus.service.{InvalidInputRes, StartSessionRes}
 import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{
   PeginSessionStateMintingTBTC,
+  PeginSessionStateSuccessfulPegin,
   PeginSessionStateTimeout,
   PeginSessionStateWaitingForBTC,
   PeginSessionWaitingForClaim
@@ -60,6 +62,7 @@ import xyz.stratalab.bridge.shared.{
   BridgeCryptoUtils,
   BridgeError,
   ClientId,
+  ReplicaCount,
   ReplicaId,
   StartSessionOperation,
   StateMachineRequest
@@ -72,8 +75,11 @@ import java.util.UUID
 trait BridgeStateMachineExecutionManager[F[_]] {
 
   def executeRequest(
-    request: xyz.stratalab.bridge.shared.StateMachineRequest
+    sequenceNumber: Long,
+    request:        xyz.stratalab.bridge.shared.StateMachineRequest
   ): F[Unit]
+
+  def runStream(): fs2.Stream[F, Unit]
 
 }
 
@@ -116,6 +122,7 @@ object BridgeStateMachineExecutionManagerImpl {
     defaultFromFellowship:    Fellowship,
     defaultFromTemplate:      Template,
     bitcoindInstance:         BitcoindRpcClient,
+    replicaCount:             ReplicaCount,
     defaultFeePerByte:        CurrencyUnit
   ) = {
     for {
@@ -123,11 +130,30 @@ object BridgeStateMachineExecutionManagerImpl {
         toplWalletSeedFile,
         toplWalletPassword
       )
-      state <- Ref.of[F, Map[String, PBFTState]](Map.empty)
+      state              <- Ref.of[F, Map[String, PBFTState]](Map.empty)
+      queue              <- Queue.unbounded[F, (Long, StateMachineRequest)]
+      elegibilityManager <- ExecutionElegibilityManagerImpl.make[F]()
     } yield {
-      implicit val iViewManager = viewManager
       implicit val toplKeypair = new StrataKeypair(tKeyPair)
       new BridgeStateMachineExecutionManager[F] {
+
+        def runStream(): fs2.Stream[F, Unit] =
+          fs2.Stream
+            .fromQueueUnterminated[F, (Long, StateMachineRequest)](queue)
+            .evalMap(x =>
+              trace"Appending request: ${x._1}, ${x._2}" >>
+              elegibilityManager.appendOrUpdateRequest(
+                x._1,
+                x._2
+              )
+            )
+            .flatMap(_ =>
+              fs2.Stream
+                .unfoldEval[F, Unit, (Long, StateMachineRequest)](())(_ =>
+                  elegibilityManager.getNextExecutableRequest().map(_.map(x => ((x._1, x._2), ())))
+                )
+            )
+            .evalMap(x => trace"Executing the request: ${x._2}" >> executeRequestF(x._1, x._2))
 
         private def startSession(
           clientNumber: Int,
@@ -200,8 +226,10 @@ object BridgeStateMachineExecutionManagerImpl {
               throw new Exception("Invalid operation")
             case StartSession(_) =>
               throw new Exception("Invalid operation")
-            case TimeoutDepositBTC(_) =>
-              throw new Exception("Invalid operation")
+            case TimeoutTBTCMint(value) =>
+              TimeoutMinting(value.sessionId)
+            case TimeoutDepositBTC(value) =>
+              TimeoutDeposit(value.sessionId)
             case PostDepositBTC(value) =>
               PostDepositBTCEvt(
                 sessionId = value.sessionId,
@@ -239,11 +267,13 @@ object BridgeStateMachineExecutionManagerImpl {
         ): F[Option[PBFTState]] =
           for {
             currentState <- state.get.map(_.apply(sessionId))
+            _            <- debug"Current state: $currentState"
             newState = PBFTTransitionRelation
               .handlePBFTEvent(
                 currentState,
                 pbftEvent
               )
+            _ <- debug"New state: $newState"
             _ <- state.update(x =>
               newState
                 .map(y =>
@@ -266,13 +296,10 @@ object BridgeStateMachineExecutionManagerImpl {
           }
 
         private def standardResponse(
-          clientNumber: Int,
-          timestamp:    Long,
-          sessionId:    String,
-          value:        StateMachineRequest.Operation
+          sessionId: String,
+          value:     StateMachineRequest.Operation
         ) =
           for {
-            viewNumber <- viewManager.currentView
             newState <- executeStateMachine(
               sessionId,
               toEvt(value)
@@ -288,33 +315,17 @@ object BridgeStateMachineExecutionManagerImpl {
                   )
                   .getOrElse(x)
             )
-            _ <- publicApiClientGrpcMap
-              .underlying(ClientId(clientNumber))
-              ._1
-              .replyStartPegin(timestamp, viewNumber, Result.Empty)
           } yield someSessionInfo
-
-        private def sendResponse[F[_]: Sync](
-          clientNumber: Int,
-          timestamp:    Long
-        )(implicit
-          viewManager:            ViewManager[F],
-          publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
-        ) =
-          for {
-            viewNumber <- viewManager.currentView
-            _ <- publicApiClientGrpcMap
-              .underlying(ClientId(clientNumber))
-              ._1
-              .replyStartPegin(timestamp, viewNumber, Result.Empty)
-          } yield Result.Empty
 
         private def executeRequestAux(
           request: xyz.stratalab.bridge.shared.StateMachineRequest
         ) =
           (request.operation match {
             case StateMachineRequest.Operation.Empty =>
-              warn"Received empty message" >> Sync[F].delay(Result.Empty)
+              // This is just a no-op for the when an operation
+              // is used to vote on the result but requires no
+              // action
+              trace"No op" >> Sync[F].delay(Result.Empty)
             case StartSession(sc) =>
               trace"handling StartSession" >> startSession(
                 request.clientNumber,
@@ -323,43 +334,54 @@ object BridgeStateMachineExecutionManagerImpl {
               )
             case PostDepositBTC(
                   value
-                ) => // FIXME: add checks before executing
-              trace"handling PostDepositBTC ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
-                value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
-            case TimeoutDepositBTC(
-                  value
-                ) => // FIXME: add checks before executing
+                ) =>
+              import WaitingBTCOps._
+              import co.topl.brambl.syntax._
+              for {
+                _ <- debug"handling PostDepositBTC ${value.sessionId}"
+                someSessionInfo <- standardResponse(
+                  value.sessionId,
+                  request.operation
+                )
+                currentPrimary <- viewManager.currentPrimary
+                _ <- someSessionInfo
+                  .flatMap(sessionInfo =>
+                    if (currentPrimary == replica.id)
+                      MiscUtils.sessionInfoPeginPrism
+                        .getOption(sessionInfo)
+                        .map(peginSessionInfo =>
+                          debug"Starting minting process" >>
+                          startMintingProcess[F](
+                            defaultFromFellowship,
+                            defaultFromTemplate,
+                            peginSessionInfo.redeemAddress,
+                            BigInt(value.amount.toByteArray())
+                          )
+                        )
+                    else None
+                  )
+                  .getOrElse(Sync[F].unit)
+              } yield Result.Empty
+            case TimeoutDepositBTC(value) =>
               trace"handling TimeoutDepositBTC ${value.sessionId}" >> state.update(_ - (value.sessionId)) >>
               sessionManager.removeSession(
                 value.sessionId,
                 PeginSessionStateTimeout
-              ) >> sendResponse(
-                request.clientNumber,
-                request.timestamp
-              ) // FIXME: this is just a change of state at db level
+              ) >> Result.Empty.pure[F]
             case TimeoutTBTCMint(
                   value
-                ) => // FIXME: Add checks before executing
+                ) =>
               trace"handling TimeoutTBTCMint ${value.sessionId}" >> state.update(_ - value.sessionId) >>
               sessionManager.removeSession(
                 value.sessionId,
                 PeginSessionStateTimeout
-              ) >> sendResponse(
-                request.clientNumber,
-                request.timestamp
-              ) // FIXME: this is just a change of state at db level
+              ) >> Result.Empty.pure[F]
             case PostRedemptionTx(
                   value
-                ) => // FIXME: Add checks before executing
+                ) =>
               for {
                 _ <- trace"handling PostRedemptionTx ${value.sessionId}"
                 someSessionInfo <- standardResponse(
-                  request.clientNumber,
-                  request.timestamp,
                   value.sessionId,
                   request.operation
                 )
@@ -381,12 +403,11 @@ object BridgeStateMachineExecutionManagerImpl {
                 )).getOrElse(Sync[F].unit)
               } yield Result.Empty
             case PostClaimTx(value) =>
-              trace"handling PostClaimTx ${value.sessionId}" >> standardResponse(
-                request.clientNumber,
-                request.timestamp,
+              debug"handling PostClaimTx ${value.sessionId}" >>
+              sessionManager.removeSession(
                 value.sessionId,
-                request.operation
-              ) >> Sync[F].delay(Result.Empty)
+                PeginSessionStateSuccessfulPegin
+              ) >> Result.Empty.pure[F]
           }).flatMap(x =>
             Sync[F].delay(
               lastReplyMap.underlying.put(
@@ -397,22 +418,20 @@ object BridgeStateMachineExecutionManagerImpl {
           )
 
         private def executeRequestF(
-          request:                xyz.stratalab.bridge.shared.StateMachineRequest,
-          keyPair:                JKeyPair,
-          pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+          sequenceNumber: Long,
+          request:        xyz.stratalab.bridge.shared.StateMachineRequest
         ) = {
           import xyz.stratalab.bridge.shared.implicits._
           import cats.implicits._
           for {
-            currentSequence <- viewManager.currentView
-            _               <- executeRequestAux(request)
+            _ <- executeRequestAux(request)
             // here we start the checkpoint
             _ <-
-              if (currentSequence % checkpointInterval.underlying == 0)
+              if (sequenceNumber % checkpointInterval.underlying == 0)
                 for {
                   digest <- state.get.map(stateDigest)
                   checkpointRequest <- CheckpointRequest(
-                    sequenceNumber = currentSequence,
+                    sequenceNumber = sequenceNumber,
                     digest = ByteString.copyFrom(digest),
                     replicaId = replica.id
                   ).pure[F]
@@ -431,13 +450,22 @@ object BridgeStateMachineExecutionManagerImpl {
         }
 
         def executeRequest(
-          request: xyz.stratalab.bridge.shared.StateMachineRequest
+          sequenceNumber: Long,
+          request:        xyz.stratalab.bridge.shared.StateMachineRequest
         ): F[Unit] =
-          executeRequestF(
-            request,
-            keyPair,
-            pbftProtocolClientGrpc
-          )
+          for {
+            _           <- queue.offer((sequenceNumber, request))
+            currentView <- viewManager.currentView
+            _ <- request.operation match {
+              case StateMachineRequest.Operation.StartSession(_) =>
+                Sync[F].unit
+              case _ =>
+                publicApiClientGrpcMap
+                  .underlying(ClientId(request.clientNumber))
+                  ._1
+                  .replyStartPegin(request.timestamp, currentView, Result.Empty)
+            }
+          } yield ()
       }
     }
   }

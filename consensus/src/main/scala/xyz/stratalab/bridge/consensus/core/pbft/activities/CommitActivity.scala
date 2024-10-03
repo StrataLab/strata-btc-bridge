@@ -18,7 +18,13 @@ object CommitActivity {
   private case object InvalidCommitSignature extends CommitProblem
   private case object InvalidView extends CommitProblem
   private case object InvalidWatermark extends CommitProblem
-  private case object LogAlreadyExists extends CommitProblem
+
+  private case class LogAlreadyExists(
+    viewNumber:     Long,
+    sequenceNumber: Long,
+    replicaId:      Int,
+    digest:         String
+  ) extends CommitProblem
 
   def apply[F[_]: Async: Logger](
     request: CommitRequest
@@ -57,7 +63,13 @@ object CommitActivity {
           ).isEmpty
         )
       _ <- Async[F].raiseUnless(canInsert)(
-        LogAlreadyExists
+        LogAlreadyExists(
+          request.viewNumber,
+          request.sequenceNumber,
+          request.replicaId,
+          Encoding
+            .encodeToHex(request.digest.toByteArray())
+        )
       )
       _ <- storageApi.insertCommitMessage(request)
       isCommited <- isCommitted[F](
@@ -93,8 +105,8 @@ object CommitActivity {
         case InvalidWatermark =>
           error"Invalid watermark in commit message" >> none[PBFTInternalEvent]
             .pure[F]
-        case LogAlreadyExists =>
-          error"Log already exists for this commit message" >> none[
+        case LogAlreadyExists(viewNumber, sequenceNumber, replicaId, digest) =>
+          error"Log already exists for this commit message: $viewNumber, $sequenceNumber, $replicaId, $digest" >> none[
             PBFTInternalEvent
           ]
             .pure[F]
