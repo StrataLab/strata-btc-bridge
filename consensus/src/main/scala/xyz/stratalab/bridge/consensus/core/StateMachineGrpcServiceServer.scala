@@ -9,7 +9,12 @@ import xyz.stratalab.bridge.consensus.core.pbft.{RequestIdentifier, RequestTimer
 import xyz.stratalab.bridge.consensus.core.{LastReplyMap, PublicApiClientGrpcMap}
 import xyz.stratalab.bridge.consensus.pbft.{PrePrepareRequest, PrepareRequest}
 import xyz.stratalab.bridge.consensus.service.MintingStatusReply.{Result => MSReply}
-import xyz.stratalab.bridge.consensus.service.{MintingStatusReply, MintingStatusRes, SessionNotFoundRes, StateMachineServiceFs2Grpc}
+import xyz.stratalab.bridge.consensus.service.{
+  MintingStatusReply,
+  MintingStatusRes,
+  SessionNotFoundRes,
+  StateMachineServiceFs2Grpc
+}
 import xyz.stratalab.bridge.consensus.shared.PeginSessionInfo
 import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
 import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientId, Empty, MintingStatusOperation, ReplicaCount, ReplicaId}

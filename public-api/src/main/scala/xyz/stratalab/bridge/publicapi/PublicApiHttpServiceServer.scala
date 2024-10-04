@@ -8,7 +8,20 @@ import org.http4s.headers.`Content-Type`
 import org.http4s.{HttpRoutes, _}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
-import xyz.stratalab.bridge.shared.{BridgeContants, BridgeError, BridgeResponse, ClientId, MintingStatusOperation, MintingStatusRequest, MintingStatusResponse, SessionNotFoundError, StartPeginSessionRequest, StartPeginSessionResponse, StartSessionOperation, StateMachineServiceGrpcClient}
+import xyz.stratalab.bridge.shared.{
+  BridgeContants,
+  BridgeError,
+  BridgeResponse,
+  ClientId,
+  MintingStatusOperation,
+  MintingStatusRequest,
+  MintingStatusResponse,
+  SessionNotFoundError,
+  StartPeginSessionRequest,
+  StartPeginSessionResponse,
+  StartSessionOperation,
+  StateMachineServiceGrpcClient
+}
 
 object PublicApiHttpServiceServer {
 

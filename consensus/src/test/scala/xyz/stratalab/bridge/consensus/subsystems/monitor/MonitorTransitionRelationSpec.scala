@@ -8,7 +8,27 @@ import munit.CatsEffectSuite
 import org.bitcoins.core.protocol.Bech32Address
 import xyz.stratalab.bridge.consensus.core.controllers.SharedData
 import xyz.stratalab.bridge.consensus.shared.AssetToken
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{BTCFundsDeposited, BTCFundsWithdrawn, BifrostFundsDeposited, BifrostFundsWithdrawn, BlockchainEvent, EndTransition, FSMTransitionTo, MConfirmingBTCClaim, MConfirmingBTCDeposit, MConfirmingRedemption, MConfirmingTBTCMint, MMintingTBTC, MWaitingForBTCDeposit, MWaitingForClaim, MWaitingForRedemption, MonitorTransitionRelation, NewBTCBlock, NewStrataBlock, PeginStateMachineState}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  BTCFundsDeposited,
+  BTCFundsWithdrawn,
+  BifrostFundsDeposited,
+  BifrostFundsWithdrawn,
+  BlockchainEvent,
+  EndTransition,
+  FSMTransitionTo,
+  MConfirmingBTCClaim,
+  MConfirmingBTCDeposit,
+  MConfirmingRedemption,
+  MConfirmingTBTCMint,
+  MMintingTBTC,
+  MWaitingForBTCDeposit,
+  MWaitingForClaim,
+  MWaitingForRedemption,
+  MonitorTransitionRelation,
+  NewBTCBlock,
+  NewStrataBlock,
+  PeginStateMachineState
+}
 
 import scala.annotation.nowarn
 

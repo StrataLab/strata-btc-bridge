@@ -13,9 +13,27 @@ import org.typelevel.log4cats.Logger
 import scodec.bits.ByteVector
 import xyz.stratalab.bridge.consensus.core.managers.StrataWalletAlgebra
 import xyz.stratalab.bridge.consensus.core.utils.BitcoinUtils
-import xyz.stratalab.bridge.consensus.core.{BitcoinNetworkIdentifiers, BridgeWalletManager, CurrentStrataHeightRef, PeginWalletManager, StrataKeypair}
-import xyz.stratalab.bridge.consensus.shared.{BTCWaitExpirationTime, PeginSessionInfo, PeginSessionState, StrataWaitExpirationTime}
-import xyz.stratalab.bridge.shared.{BridgeError, InvalidHash, InvalidInput, InvalidKey, StartPeginSessionResponse, StartSessionOperation}
+import xyz.stratalab.bridge.consensus.core.{
+  BitcoinNetworkIdentifiers,
+  BridgeWalletManager,
+  CurrentStrataHeightRef,
+  PeginWalletManager,
+  StrataKeypair
+}
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCWaitExpirationTime,
+  PeginSessionInfo,
+  PeginSessionState,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.shared.{
+  BridgeError,
+  InvalidHash,
+  InvalidInput,
+  InvalidKey,
+  StartPeginSessionResponse,
+  StartSessionOperation
+}
 
 import java.util.UUID
 

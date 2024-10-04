@@ -21,13 +21,30 @@ import scopt.OParser
 import xyz.stratalab.bridge.consensus.core.managers.{BTCWalletAlgebra, BTCWalletAlgebraImpl}
 import xyz.stratalab.bridge.consensus.core.modules.AppModule
 import xyz.stratalab.bridge.consensus.core.utils.KeyGenerationUtils
-import xyz.stratalab.bridge.consensus.core.{ConsensusParamsDescriptor, ServerConfig, StrataBTCBridgeConsensusParamConfig}
+import xyz.stratalab.bridge.consensus.core.{
+  ConsensusParamsDescriptor,
+  ServerConfig,
+  StrataBTCBridgeConsensusParamConfig
+}
 import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
 import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
 import xyz.stratalab.bridge.consensus.shared.persistence.{StorageApi, StorageApiImpl}
 import xyz.stratalab.bridge.consensus.shared.utils.ConfUtils._
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{BlockProcessor, SessionEvent}
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, BridgeError, BridgeResponse, ClientCount, ClientId, ConsensusClientMessageId, ReplicaCount, ReplicaId, ReplicaNode, ResponseGrpcServiceServer, StateMachineServiceGrpcClient, StateMachineServiceGrpcClientImpl}
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  BridgeError,
+  BridgeResponse,
+  ClientCount,
+  ClientId,
+  ConsensusClientMessageId,
+  ReplicaCount,
+  ReplicaId,
+  ReplicaNode,
+  ResponseGrpcServiceServer,
+  StateMachineServiceGrpcClient,
+  StateMachineServiceGrpcClientImpl
+}
 import xyz.stratalab.consensus.core.{PBFTInternalGrpcServiceClient, PBFTInternalGrpcServiceClientImpl}
 
 import java.net.InetSocketAddress

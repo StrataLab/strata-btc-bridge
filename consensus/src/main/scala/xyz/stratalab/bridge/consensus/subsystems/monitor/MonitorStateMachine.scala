@@ -4,8 +4,21 @@ import cats.effect.kernel.{Async, Ref, Sync}
 import cats.implicits._
 import co.topl.brambl.models.{GroupId, SeriesId}
 import org.typelevel.log4cats.Logger
-import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCRetryThreshold, BTCWaitExpirationTime, PeginSessionInfo, StrataConfirmationThreshold, StrataWaitExpirationTime}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{EndTransition, FSMTransitionTo, MWaitingForBTCDeposit, MonitorTransitionRelation, PeginStateMachineState}
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  BTCWaitExpirationTime,
+  PeginSessionInfo,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransitionTo,
+  MWaitingForBTCDeposit,
+  MonitorTransitionRelation,
+  PeginStateMachineState
+}
 import xyz.stratalab.bridge.shared.{ClientId, SessionId, StateMachineServiceGrpcClient}
 
 import java.util.Map.Entry

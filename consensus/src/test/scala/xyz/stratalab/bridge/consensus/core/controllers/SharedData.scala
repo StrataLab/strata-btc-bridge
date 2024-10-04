@@ -6,7 +6,13 @@ import co.topl.brambl.utils.Encoding
 import com.google.protobuf.ByteString
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import xyz.stratalab.bridge.consensus.core.StrataPrivatenet
-import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCRetryThreshold, BTCWaitExpirationTime, StrataConfirmationThreshold, StrataWaitExpirationTime}
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  BTCWaitExpirationTime,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
 
 trait SharedData {
 

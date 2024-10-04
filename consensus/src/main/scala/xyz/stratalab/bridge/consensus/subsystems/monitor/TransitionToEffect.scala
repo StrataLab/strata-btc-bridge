@@ -5,9 +5,38 @@ import cats.implicits._
 import com.google.protobuf.ByteString
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
-import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCRetryThreshold, StrataConfirmationThreshold, StrataWaitExpirationTime}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{MConfirmingBTCDeposit, MConfirmingTBTCMint, MMintingTBTC, MWaitingForBTCDeposit, MWaitingForClaim, MWaitingForRedemption, PeginStateMachineState}
-import xyz.stratalab.bridge.shared.{ClientId, ConfirmClaimTxOperation, ConfirmDepositBTCOperation, ConfirmTBTCMintOperation, PostClaimTxOperation, PostDepositBTCOperation, PostRedemptionTxOperation, PostTBTCMintOperation, SessionId, StateMachineServiceGrpcClient, TimeoutDepositBTCOperation, TimeoutTBTCMintOperation, UndoClaimTxOperation, UndoDepositBTCOperation, UndoTBTCMintOperation}
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  MConfirmingBTCDeposit,
+  MConfirmingTBTCMint,
+  MMintingTBTC,
+  MWaitingForBTCDeposit,
+  MWaitingForClaim,
+  MWaitingForRedemption,
+  PeginStateMachineState
+}
+import xyz.stratalab.bridge.shared.{
+  ClientId,
+  ConfirmClaimTxOperation,
+  ConfirmDepositBTCOperation,
+  ConfirmTBTCMintOperation,
+  PostClaimTxOperation,
+  PostDepositBTCOperation,
+  PostRedemptionTxOperation,
+  PostTBTCMintOperation,
+  SessionId,
+  StateMachineServiceGrpcClient,
+  TimeoutDepositBTCOperation,
+  TimeoutTBTCMintOperation,
+  UndoClaimTxOperation,
+  UndoDepositBTCOperation,
+  UndoTBTCMintOperation
+}
 
 trait TransitionToEffect {
 

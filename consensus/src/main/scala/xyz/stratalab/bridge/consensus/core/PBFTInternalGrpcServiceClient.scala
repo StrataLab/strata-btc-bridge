@@ -5,7 +5,15 @@ import fs2.grpc.syntax.all._
 import io.grpc.{ManagedChannelBuilder, Metadata}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
-import xyz.stratalab.bridge.consensus.pbft.{CheckpointRequest, CommitRequest, NewViewRequest, PBFTInternalServiceFs2Grpc, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
+import xyz.stratalab.bridge.consensus.pbft.{
+  CheckpointRequest,
+  CommitRequest,
+  NewViewRequest,
+  PBFTInternalServiceFs2Grpc,
+  PrePrepareRequest,
+  PrepareRequest,
+  ViewChangeRequest
+}
 import xyz.stratalab.bridge.shared.{Empty, ReplicaNode}
 
 trait PBFTInternalGrpcServiceClient[F[_]] {

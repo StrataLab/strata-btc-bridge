@@ -4,7 +4,13 @@ import munit.CatsEffectSuite
 import org.bitcoins.core.config.RegTest
 import org.bitcoins.core.currency.{Bitcoins, SatoshisLong}
 import org.bitcoins.core.number.UInt32
-import org.bitcoins.core.protocol.script.{NonStandardScriptSignature, P2WPKHWitnessSPKV0, P2WSHWitnessV0, RawScriptPubKey, ScriptSignature}
+import org.bitcoins.core.protocol.script.{
+  NonStandardScriptSignature,
+  P2WPKHWitnessSPKV0,
+  P2WSHWitnessV0,
+  RawScriptPubKey,
+  ScriptSignature
+}
 import org.bitcoins.core.protocol.transaction.{TransactionOutput, _}
 import org.bitcoins.core.script.constant.ScriptConstant
 import org.bitcoins.core.wallet.fee.SatoshisPerVirtualByte

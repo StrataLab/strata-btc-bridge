@@ -3,8 +3,22 @@ package xyz.stratalab.bridge.consensus.core.utils
 import org.bitcoins.core.config.NetworkParameters
 import org.bitcoins.core.currency.CurrencyUnit
 import org.bitcoins.core.number.{Int32, UInt32}
-import org.bitcoins.core.protocol.script.{EmptyScriptPubKey, NonStandardScriptSignature, P2WPKHWitnessSPKV0, P2WSHWitnessV0, RawScriptPubKey, ScriptPubKey, ScriptSignature}
-import org.bitcoins.core.protocol.transaction.{Transaction, TransactionInput, TransactionOutPoint, TransactionOutput, WitnessTransaction}
+import org.bitcoins.core.protocol.script.{
+  EmptyScriptPubKey,
+  NonStandardScriptSignature,
+  P2WPKHWitnessSPKV0,
+  P2WSHWitnessV0,
+  RawScriptPubKey,
+  ScriptPubKey,
+  ScriptSignature
+}
+import org.bitcoins.core.protocol.transaction.{
+  Transaction,
+  TransactionInput,
+  TransactionOutPoint,
+  TransactionOutput,
+  WitnessTransaction
+}
 import org.bitcoins.core.protocol.{Bech32Address, CompactSizeUInt}
 import org.bitcoins.core.script.bitwise.{OP_EQUAL, OP_EQUALVERIFY}
 import org.bitcoins.core.script.constant.{ScriptConstant, ScriptNumber, ScriptNumberOperation, ScriptToken}

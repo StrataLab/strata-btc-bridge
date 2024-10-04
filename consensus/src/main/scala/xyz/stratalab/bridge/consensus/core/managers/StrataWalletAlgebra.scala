@@ -5,7 +5,14 @@ import cats.effect.kernel.Sync
 import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.codecs.AddressCodecs
 import co.topl.brambl.constants.NetworkConstants
-import co.topl.brambl.dataApi.{FellowshipStorageAlgebra, GenusQueryAlgebra, TemplateStorageAlgebra, WalletFellowship, WalletStateAlgebra, WalletTemplate}
+import co.topl.brambl.dataApi.{
+  FellowshipStorageAlgebra,
+  GenusQueryAlgebra,
+  TemplateStorageAlgebra,
+  WalletFellowship,
+  WalletStateAlgebra,
+  WalletTemplate
+}
 import co.topl.brambl.models.box.AssetMintingStatement
 import co.topl.brambl.models.transaction.IoTransaction
 import co.topl.brambl.models.{LockAddress, LockId}

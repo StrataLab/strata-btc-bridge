@@ -1,7 +1,14 @@
 package xyz.stratalab.bridge.stubs
 
 import cats.effect.IO
-import xyz.stratalab.bridge.consensus.pbft.{CheckpointRequest, CommitRequest, NewViewRequest, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
+import xyz.stratalab.bridge.consensus.pbft.{
+  CheckpointRequest,
+  CommitRequest,
+  NewViewRequest,
+  PrePrepareRequest,
+  PrepareRequest,
+  ViewChangeRequest
+}
 import xyz.stratalab.bridge.shared.Empty
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 

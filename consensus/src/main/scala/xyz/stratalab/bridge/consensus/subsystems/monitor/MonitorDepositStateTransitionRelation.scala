@@ -2,7 +2,14 @@ package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import org.bitcoins.core.protocol.Bech32Address
 import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCWaitExpirationTime}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{EndTransition, FSMTransition, FSMTransitionTo, MConfirmingBTCDeposit, MWaitingForBTCDeposit, PeginStateMachineState}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransition,
+  FSMTransitionTo,
+  MConfirmingBTCDeposit,
+  MWaitingForBTCDeposit,
+  PeginStateMachineState
+}
 
 trait MonitorDepositStateTransitionRelation extends TransitionToEffect {
 

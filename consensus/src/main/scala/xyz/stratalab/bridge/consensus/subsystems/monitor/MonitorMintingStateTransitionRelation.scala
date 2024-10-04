@@ -2,8 +2,22 @@ package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import co.topl.brambl.models.{GroupId, SeriesId}
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.shared.{AssetToken, BTCWaitExpirationTime, StrataConfirmationThreshold, StrataWaitExpirationTime}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{EndTransition, FSMTransition, FSMTransitionTo, MConfirmingTBTCMint, MMintingTBTC, MWaitingForClaim, MWaitingForRedemption, PeginStateMachineState}
+import xyz.stratalab.bridge.consensus.shared.{
+  AssetToken,
+  BTCWaitExpirationTime,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransition,
+  FSMTransitionTo,
+  MConfirmingTBTCMint,
+  MMintingTBTC,
+  MWaitingForClaim,
+  MWaitingForRedemption,
+  PeginStateMachineState
+}
 
 trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
 

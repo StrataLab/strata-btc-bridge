@@ -7,7 +7,13 @@ import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.constants.NetworkConstants
 import co.topl.brambl.dataApi.GenusQueryAlgebra
 import co.topl.brambl.models.{GroupId, SeriesId}
-import co.topl.brambl.servicekit.{FellowshipStorageApi, TemplateStorageApi, WalletKeyApi, WalletStateApi, WalletStateResource}
+import co.topl.brambl.servicekit.{
+  FellowshipStorageApi,
+  TemplateStorageApi,
+  WalletKeyApi,
+  WalletStateApi,
+  WalletStateResource
+}
 import co.topl.brambl.wallet.WalletApi
 import io.grpc.Metadata
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
@@ -16,12 +22,41 @@ import org.http4s.{HttpRoutes, _}
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.managers.{BTCWalletAlgebra, WalletManagementUtils}
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManagerImpl
-import xyz.stratalab.bridge.consensus.core.pbft.{CheckpointManagerImpl, PBFTInternalEvent, PBFTRequestPreProcessorImpl, RequestStateManagerImpl, RequestTimerManagerImpl, ViewManagerImpl}
-import xyz.stratalab.bridge.consensus.core.{BridgeWalletManager, CheckpointInterval, CurrentBTCHeightRef, CurrentStrataHeightRef, Fellowship, KWatermark, LastReplyMap, PeginWalletManager, PublicApiClientGrpcMap, StrataBTCBridgeConsensusParamConfig, SystemGlobalState, Template, WatermarkRef, channelResource}
+import xyz.stratalab.bridge.consensus.core.pbft.{
+  CheckpointManagerImpl,
+  PBFTInternalEvent,
+  PBFTRequestPreProcessorImpl,
+  RequestStateManagerImpl,
+  RequestTimerManagerImpl,
+  ViewManagerImpl
+}
+import xyz.stratalab.bridge.consensus.core.{
+  BridgeWalletManager,
+  CheckpointInterval,
+  CurrentBTCHeightRef,
+  CurrentStrataHeightRef,
+  Fellowship,
+  KWatermark,
+  LastReplyMap,
+  PeginWalletManager,
+  PublicApiClientGrpcMap,
+  StrataBTCBridgeConsensusParamConfig,
+  SystemGlobalState,
+  Template,
+  WatermarkRef,
+  channelResource
+}
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCRetryThreshold, BTCWaitExpirationTime, Lvl, StrataConfirmationThreshold, StrataWaitExpirationTime}
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  BTCWaitExpirationTime,
+  Lvl,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{MonitorStateMachine, SessionEvent, SessionManagerImpl}
 import xyz.stratalab.bridge.shared.{ClientId, ReplicaCount, ReplicaId, StateMachineServiceGrpcClient}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient

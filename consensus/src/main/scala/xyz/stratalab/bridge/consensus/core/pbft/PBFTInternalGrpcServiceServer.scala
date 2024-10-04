@@ -6,7 +6,15 @@ import io.grpc.{Metadata, ServerServiceDefinition}
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.pbft.activities.CheckpointActivity
 import xyz.stratalab.bridge.consensus.core.{KWatermark, WatermarkRef}
-import xyz.stratalab.bridge.consensus.pbft.{CheckpointRequest, CommitRequest, NewViewRequest, PBFTInternalServiceFs2Grpc, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
+import xyz.stratalab.bridge.consensus.pbft.{
+  CheckpointRequest,
+  CommitRequest,
+  NewViewRequest,
+  PBFTInternalServiceFs2Grpc,
+  PrePrepareRequest,
+  PrepareRequest,
+  ViewChangeRequest
+}
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.shared.{Empty, ReplicaCount}
 

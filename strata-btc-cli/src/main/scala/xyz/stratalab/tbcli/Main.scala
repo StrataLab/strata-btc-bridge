@@ -16,8 +16,8 @@ object Main extends IOApp with TBCLIParamsDescriptor {
     //     }
     //   case None =>
     IO.consoleForIO.errorln("Invalid arguments") *>
-      IO(ExitCode.Error)
-    // }
+    IO(ExitCode.Error)
+  // }
 
   // def processCommand(
   //     network: BitcoinNetworkIdentifiers,

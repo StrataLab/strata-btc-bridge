@@ -17,7 +17,18 @@ import org.http4s.server.staticcontent.resourceServiceBuilder
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 import scopt.OParser
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, BridgeError, BridgeResponse, ClientId, ConsensusClientMessageId, ReplicaCount, ReplicaNode, ResponseGrpcServiceServer, StateMachineServiceGrpcClient, StateMachineServiceGrpcClientImpl}
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  BridgeError,
+  BridgeResponse,
+  ClientId,
+  ConsensusClientMessageId,
+  ReplicaCount,
+  ReplicaNode,
+  ResponseGrpcServiceServer,
+  StateMachineServiceGrpcClient,
+  StateMachineServiceGrpcClientImpl
+}
 
 import java.net.InetSocketAddress
 import java.security.{PublicKey, Security}

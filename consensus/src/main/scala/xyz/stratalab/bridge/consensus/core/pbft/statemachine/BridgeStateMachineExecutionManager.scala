@@ -15,16 +15,79 @@ import scodec.bits.ByteVector
 import xyz.stratalab.bridge.consensus.core.controllers.StartSessionController
 import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
 import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
-import xyz.stratalab.bridge.consensus.core.pbft.statemachine.{ConfirmDepositBTCEvt, ConfirmTBTCMintEvt, PBFTEvent, PBFTTransitionRelation, PostClaimTxEvt, PostDepositBTCEvt, PostRedemptionTxEvt, PostTBTCMintEvt, UndoClaimTxEvt, UndoDepositBTCEvt, UndoTBTCMintEvt}
-import xyz.stratalab.bridge.consensus.core.{BitcoinNetworkIdentifiers, BridgeWalletManager, CheckpointInterval, CurrentBTCHeightRef, CurrentStrataHeightRef, Fellowship, LastReplyMap, PeginWalletManager, PublicApiClientGrpcMap, StrataKeypair, Template, stateDigest}
+import xyz.stratalab.bridge.consensus.core.pbft.statemachine.{
+  ConfirmDepositBTCEvt,
+  ConfirmTBTCMintEvt,
+  PBFTEvent,
+  PBFTTransitionRelation,
+  PostClaimTxEvt,
+  PostDepositBTCEvt,
+  PostRedemptionTxEvt,
+  PostTBTCMintEvt,
+  UndoClaimTxEvt,
+  UndoDepositBTCEvt,
+  UndoTBTCMintEvt
+}
+import xyz.stratalab.bridge.consensus.core.{
+  BitcoinNetworkIdentifiers,
+  BridgeWalletManager,
+  CheckpointInterval,
+  CurrentBTCHeightRef,
+  CurrentStrataHeightRef,
+  Fellowship,
+  LastReplyMap,
+  PeginWalletManager,
+  PublicApiClientGrpcMap,
+  StrataKeypair,
+  Template,
+  stateDigest
+}
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.consensus.service.{InvalidInputRes, StartSessionRes}
-import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{PeginSessionMintingTBTCConfirmation, PeginSessionStateMintingTBTC, PeginSessionStateSuccessfulPegin, PeginSessionStateTimeout, PeginSessionStateWaitingForBTC, PeginSessionWaitingForClaim, PeginSessionWaitingForClaimBTCConfirmation, PeginSessionWaitingForEscrowBTCConfirmation, PeginSessionWaitingForRedemption}
-import xyz.stratalab.bridge.consensus.shared.{AssetToken, BTCWaitExpirationTime, Lvl, MiscUtils, PeginSessionState, StrataWaitExpirationTime}
+import xyz.stratalab.bridge.consensus.shared.PeginSessionState.{
+  PeginSessionMintingTBTCConfirmation,
+  PeginSessionStateMintingTBTC,
+  PeginSessionStateSuccessfulPegin,
+  PeginSessionStateTimeout,
+  PeginSessionStateWaitingForBTC,
+  PeginSessionWaitingForClaim,
+  PeginSessionWaitingForClaimBTCConfirmation,
+  PeginSessionWaitingForEscrowBTCConfirmation,
+  PeginSessionWaitingForRedemption
+}
+import xyz.stratalab.bridge.consensus.shared.{
+  AssetToken,
+  BTCWaitExpirationTime,
+  Lvl,
+  MiscUtils,
+  PeginSessionState,
+  StrataWaitExpirationTime
+}
 import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.{ConfirmClaimTx, ConfirmDepositBTC, ConfirmTBTCMint, PostClaimTx, PostDepositBTC, PostRedemptionTx, PostTBTCMint, StartSession, TimeoutDepositBTC, TimeoutTBTCMint, UndoClaimTx, UndoDepositBTC, UndoTBTCMint}
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, BridgeError, ClientId, ReplicaId, StartSessionOperation, StateMachineRequest}
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.{
+  ConfirmClaimTx,
+  ConfirmDepositBTC,
+  ConfirmTBTCMint,
+  PostClaimTx,
+  PostDepositBTC,
+  PostRedemptionTx,
+  PostTBTCMint,
+  StartSession,
+  TimeoutDepositBTC,
+  TimeoutTBTCMint,
+  UndoClaimTx,
+  UndoDepositBTC,
+  UndoTBTCMint
+}
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  BridgeError,
+  ClientId,
+  ReplicaId,
+  StartSessionOperation,
+  StateMachineRequest
+}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair}

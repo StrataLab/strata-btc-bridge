@@ -6,7 +6,14 @@ import org.bitcoins.core.protocol.Bech32Address
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCRetryThreshold}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{EndTransition, FSMTransition, FSMTransitionTo, MConfirmingBTCClaim, MWaitingForClaim, PeginStateMachineState}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransition,
+  FSMTransitionTo,
+  MConfirmingBTCClaim,
+  MWaitingForClaim,
+  PeginStateMachineState
+}
 
 trait MonitorClaimStateTransitionRelation extends TransitionToEffect {
 

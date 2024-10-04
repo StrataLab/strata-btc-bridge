@@ -4,7 +4,12 @@ import cats.effect.kernel.Async
 import cats.effect.std.Queue
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
-import xyz.stratalab.bridge.consensus.core.pbft.activities.{CommitActivity, PrePrepareActivity, PrepareActivity, ViewChangeActivity}
+import xyz.stratalab.bridge.consensus.core.pbft.activities.{
+  CommitActivity,
+  PrePrepareActivity,
+  PrepareActivity,
+  ViewChangeActivity
+}
 import xyz.stratalab.bridge.consensus.pbft.{CommitRequest, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.shared.ReplicaCount

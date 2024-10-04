@@ -4,7 +4,13 @@ import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.std.Queue
 import org.typelevel.log4cats.Logger
-import xyz.stratalab.bridge.consensus.core.pbft.{CheckpointManagerImpl, PBFTInternalEvent, PBFTInternalGrpcServiceServer, PBFTRequestPreProcessorImpl, ViewManagerImpl}
+import xyz.stratalab.bridge.consensus.core.pbft.{
+  CheckpointManagerImpl,
+  PBFTInternalEvent,
+  PBFTInternalGrpcServiceServer,
+  PBFTRequestPreProcessorImpl,
+  ViewManagerImpl
+}
 import xyz.stratalab.bridge.consensus.core.{PublicApiClientGrpcMap, WatermarkRef}
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.consensus.shared.utils.ConfUtils._
