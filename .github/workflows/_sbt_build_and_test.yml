@@ -119,8 +119,8 @@ jobs:
             openssl ec -in integration/clientPrivateKey$j.pem -pubout -out integration/clientPublicKey$j.pem
           done      
           for i in {0..6}; do
-            cp $STRATA_WALLET_DB strata-wallet$i.db
-            cp $STRATA_WALLET_JSON strata-wallet$i.json
+            cp $STRATA_WALLET_DB integration/strata-wallet$i.db
+            cp $STRATA_WALLET_JSON integration/strata-wallet$i.json
           done
       - name: Run integration tests
         run: |
