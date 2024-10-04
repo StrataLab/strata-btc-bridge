@@ -17,7 +17,20 @@ import xyz.stratalab.bridge.consensus.core.controllers.StartSessionController
 import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
 import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
 import xyz.stratalab.bridge.consensus.core.pbft.statemachine.PBFTEvent
-import xyz.stratalab.bridge.consensus.core.{BitcoinNetworkIdentifiers, BridgeWalletManager, CheckpointInterval, CurrentBTCHeightRef, CurrentStrataHeightRef, Fellowship, LastReplyMap, PeginWalletManager, PublicApiClientGrpcMap, StrataKeypair, Template, stateDigest}
+import xyz.stratalab.bridge.consensus.core.{
+  BitcoinNetworkIdentifiers,
+  BridgeWalletManager,
+  CheckpointInterval,
+  CurrentBTCHeightRef,
+  CurrentStrataHeightRef,
+  Fellowship,
+  LastReplyMap,
+  PeginWalletManager,
+  PublicApiClientGrpcMap,
+  StrataKeypair,
+  Template,
+  stateDigest
+}
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
 import xyz.stratalab.bridge.consensus.service.{InvalidInputRes, StartSessionRes, StateMachineReply}
@@ -144,7 +157,6 @@ object BridgeStateMachineExecutionManagerImpl {
 
         private def startSession(
           clientNumber: Int,
-          timestamp:    Long,
           sc:           StartSessionOperation
         ): F[Result] = {
           import StartSessionController._
@@ -159,7 +171,6 @@ object BridgeStateMachineExecutionManagerImpl {
               sessionId,
               sc
             )
-            viewNumber       <- viewManager.currentView
             currentBTCHeight <- currentBTCHeightRef.underlying.get
             resp <- res match {
               case Left(e: BridgeError) =>
@@ -310,7 +321,6 @@ object BridgeStateMachineExecutionManagerImpl {
             case StartSession(sc) =>
               trace"handling StartSession" >> startSession(
                 request.clientNumber,
-                request.timestamp,
                 sc
               )
             case PostDepositBTC(
