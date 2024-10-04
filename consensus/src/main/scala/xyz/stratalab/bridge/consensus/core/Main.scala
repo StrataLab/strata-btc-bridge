@@ -1,53 +1,16 @@
 package xyz.stratalab.bridge.consensus.core
 
-import cats.effect.ExitCode
-import cats.effect.IO
-import cats.effect.IOApp
-import cats.effect.kernel.Async
-import cats.effect.kernel.Ref
-import cats.effect.kernel.Sync
-import cats.effect.std.Mutex
-import cats.effect.std.Queue
+import cats.effect.kernel.{Async, Ref, Sync}
+import cats.effect.std.{Mutex, Queue}
+import cats.effect.{ExitCode, IO, IOApp}
 import co.topl.brambl.dataApi.BifrostQueryAlgebra
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
-import co.topl.brambl.monitoring.BifrostMonitor
-import co.topl.brambl.monitoring.BitcoinMonitor
+import co.topl.brambl.models.{GroupId, SeriesId}
+import co.topl.brambl.monitoring.{BifrostMonitor, BitcoinMonitor}
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.core.ConsensusParamsDescriptor
-import xyz.stratalab.bridge.consensus.core.ServerConfig
-import xyz.stratalab.bridge.consensus.core.StrataBTCBridgeConsensusParamConfig
-import xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebra
-import xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebraImpl
-import xyz.stratalab.bridge.consensus.core.modules.AppModule
-import xyz.stratalab.bridge.consensus.core.utils.KeyGenerationUtils
-import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
-import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
-import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.consensus.shared.persistence.StorageApiImpl
-import xyz.stratalab.bridge.consensus.shared.utils.ConfUtils._
-import xyz.stratalab.bridge.consensus.subsystems.monitor.BlockProcessor
-import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionEvent
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.shared.BridgeError
-import xyz.stratalab.bridge.shared.BridgeResponse
-import xyz.stratalab.bridge.shared.ClientCount
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.ConsensusClientMessageId
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.shared.ReplicaId
-import xyz.stratalab.bridge.shared.ReplicaNode
-import xyz.stratalab.bridge.shared.ResponseGrpcServiceServer
-import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
-import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClientImpl
-import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
-import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClientImpl
 import com.google.protobuf.ByteString
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-import io.grpc.ManagedChannelBuilder
-import io.grpc.Metadata
+import com.typesafe.config.{Config, ConfigFactory}
 import io.grpc.netty.NettyServerBuilder
+import io.grpc.{ManagedChannelBuilder, Metadata}
 import org.bitcoins.keymanager.bip39.BIP39KeyManager
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.bitcoins.rpc.config.BitcoindAuthCredentials
@@ -55,29 +18,50 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 import scopt.OParser
+import xyz.stratalab.bridge.consensus.core.managers.{BTCWalletAlgebra, BTCWalletAlgebraImpl}
+import xyz.stratalab.bridge.consensus.core.modules.AppModule
+import xyz.stratalab.bridge.consensus.core.utils.KeyGenerationUtils
+import xyz.stratalab.bridge.consensus.core.{
+  ConsensusParamsDescriptor,
+  ServerConfig,
+  StrataBTCBridgeConsensusParamConfig
+}
+import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
+import xyz.stratalab.bridge.consensus.shared.persistence.{StorageApi, StorageApiImpl}
+import xyz.stratalab.bridge.consensus.shared.utils.ConfUtils._
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{BlockProcessor, SessionEvent}
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  BridgeError,
+  BridgeResponse,
+  ClientCount,
+  ClientId,
+  ConsensusClientMessageId,
+  ReplicaCount,
+  ReplicaId,
+  ReplicaNode,
+  ResponseGrpcServiceServer,
+  StateMachineServiceGrpcClient,
+  StateMachineServiceGrpcClientImpl
+}
+import xyz.stratalab.consensus.core.{PBFTInternalGrpcServiceClient, PBFTInternalGrpcServiceClientImpl}
 
 import java.net.InetSocketAddress
-import java.security.PublicKey
-import java.security.Security
-import java.security.{KeyPair => JKeyPair}
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
+import java.security.{KeyPair => JKeyPair, PublicKey, Security}
 import java.util.concurrent.atomic.LongAdder
+import java.util.concurrent.{ConcurrentHashMap, Executors}
 import scala.concurrent.ExecutionContext
 
 case class SystemGlobalState(
-    currentStatus: Option[String],
-    currentError: Option[String],
-    isReady: Boolean = false
+  currentStatus: Option[String],
+  currentError:  Option[String],
+  isReady:       Boolean = false
 )
 
-object Main
-    extends IOApp
-    with ConsensusParamsDescriptor
-    with AppModule
-    with InitUtils {
+object Main extends IOApp with ConsensusParamsDescriptor with AppModule with InitUtils {
 
-  override def run(args: List[String]): IO[ExitCode] = {
+  override def run(args: List[String]): IO[ExitCode] =
     OParser.parse(
       parser,
       args,
@@ -85,8 +69,7 @@ object Main
         toplHost = Option(System.getenv("STRATA_HOST")).getOrElse("localhost"),
         toplWalletDb = System.getenv("STRATA_WALLET_DB"),
         zmqHost = Option(System.getenv("ZMQ_HOST")).getOrElse("localhost"),
-        zmqPort =
-          Option(System.getenv("ZMQ_PORT")).map(_.toInt).getOrElse(28332),
+        zmqPort = Option(System.getenv("ZMQ_PORT")).map(_.toInt).getOrElse(28332),
         btcUrl = Option(System.getenv("BTC_URL")).getOrElse("http://localhost"),
         btcUser = Option(System.getenv("BTC_USER")).getOrElse("bitcoin"),
         groupId = Option(System.getenv("ABTC_GROUP_ID"))
@@ -99,8 +82,7 @@ object Main
           .flatten
           .map(x => SeriesId(ByteString.copyFrom(x)))
           .getOrElse(SeriesId(ByteString.copyFrom(Array.fill(32)(0.toByte)))),
-        btcPassword =
-          Option(System.getenv("BTC_PASSWORD")).getOrElse("password")
+        btcPassword = Option(System.getenv("BTC_PASSWORD")).getOrElse("password")
       )
     ) match {
       case Some(config) =>
@@ -108,12 +90,11 @@ object Main
       case None =>
         println("Invalid arguments")
         IO.consoleForIO.errorln("Invalid arguments") *>
-          IO(ExitCode.Error)
+        IO(ExitCode.Error)
     }
-  }
 
   private def loadKeyPegin(
-      params: StrataBTCBridgeConsensusParamConfig
+    params: StrataBTCBridgeConsensusParamConfig
   ): IO[BIP39KeyManager] =
     KeyGenerationUtils.loadKeyManager[IO](
       params.btcNetwork,
@@ -122,7 +103,7 @@ object Main
     )
 
   private def loadKeyWallet(
-      params: StrataBTCBridgeConsensusParamConfig
+    params: StrataBTCBridgeConsensusParamConfig
   ): IO[BIP39KeyManager] =
     KeyGenerationUtils.loadKeyManager[IO](
       params.btcNetwork,
@@ -131,87 +112,83 @@ object Main
     )
 
   private def loadReplicaNodeFromConfig[F[_]: Sync: Logger](
-      conf: Config
+    conf: Config
   )(implicit replicaCount: ReplicaCount): F[List[ReplicaNode[F]]] = {
     import cats.implicits._
-    (for (i <- 0 until replicaCount.value) yield {
-      for {
-        host <- Sync[F].delay(
-          conf.getString(s"bridge.replica.consensus.replicas.$i.host")
-        )
-        port <- Sync[F].delay(
-          conf.getInt(s"bridge.replica.consensus.replicas.$i.port")
-        )
-        secure <- Sync[F].delay(
-          conf.getBoolean(s"bridge.replica.consensus.replicas.$i.secure")
-        )
-        _ <-
-          info"bridge.replica.consensus.replicas.$i.host: ${host}"
-        _ <-
-          info"bridge.replica.consensus.replicas.$i.port: ${port}"
-        _ <-
-          info"bridge.replica.consensus.replicas.$i.secure: ${secure}"
-      } yield ReplicaNode[F](i, host, port, secure)
-    }).toList.sequence
+    (for (i <- 0 until replicaCount.value) yield for {
+      host <- Sync[F].delay(
+        conf.getString(s"bridge.replica.consensus.replicas.$i.host")
+      )
+      port <- Sync[F].delay(
+        conf.getInt(s"bridge.replica.consensus.replicas.$i.port")
+      )
+      secure <- Sync[F].delay(
+        conf.getBoolean(s"bridge.replica.consensus.replicas.$i.secure")
+      )
+      _ <-
+        info"bridge.replica.consensus.replicas.$i.host: ${host}"
+      _ <-
+        info"bridge.replica.consensus.replicas.$i.port: ${port}"
+      _ <-
+        info"bridge.replica.consensus.replicas.$i.secure: ${secure}"
+    } yield ReplicaNode[F](i, host, port, secure)).toList.sequence
   }
 
   private def createReplicaClienMap[F[_]: Async](
-      replicaNodes: List[ReplicaNode[F]]
+    replicaNodes: List[ReplicaNode[F]]
   ) = {
     import cats.implicits._
     import fs2.grpc.syntax.all._
     for {
       idClientList <- (for {
         replicaNode <- replicaNodes
-      } yield {
-        for {
-          channel <-
-            (if (replicaNode.backendSecure)
-               ManagedChannelBuilder
-                 .forAddress(replicaNode.backendHost, replicaNode.backendPort)
-                 .useTransportSecurity()
-             else
-               ManagedChannelBuilder
-                 .forAddress(replicaNode.backendHost, replicaNode.backendPort)
-                 .usePlaintext()).resource[F]
-          consensusClient <- StateMachineServiceFs2Grpc.stubResource(
-            channel
-          )
-        } yield (replicaNode.id -> consensusClient)
-      }).sequence.map(x => Map(x: _*))
+      } yield for {
+        channel <-
+          (if (replicaNode.backendSecure)
+             ManagedChannelBuilder
+               .forAddress(replicaNode.backendHost, replicaNode.backendPort)
+               .useTransportSecurity()
+           else
+             ManagedChannelBuilder
+               .forAddress(replicaNode.backendHost, replicaNode.backendPort)
+               .usePlaintext()).resource[F]
+        consensusClient <- StateMachineServiceFs2Grpc.stubResource(
+          channel
+        )
+      } yield (replicaNode.id -> consensusClient)).sequence.map(x => Map(x: _*))
     } yield idClientList
   }
 
   def initializeForResources(
-      replicaKeysMap: Map[Int, PublicKey],
-      replicaKeyPair: JKeyPair,
-      pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
-      storageApi: StorageApi[IO],
-      consensusClient: StateMachineServiceGrpcClient[IO],
-      idReplicaClientMap: Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
-      publicApiClientGrpcMap: Map[
-        ClientId,
-        (PublicApiClientGrpc[IO], PublicKey)
-      ],
-      params: StrataBTCBridgeConsensusParamConfig,
-      queue: Queue[IO, SessionEvent],
-      walletManager: BTCWalletAlgebra[IO],
-      pegInWalletManager: BTCWalletAlgebra[IO],
-      currentBitcoinNetworkHeight: Ref[IO, Int],
-      currentSequenceRef: Ref[IO, Long],
-      currentStrataHeight: Ref[IO, Long],
-      currentState: Ref[IO, SystemGlobalState]
+    replicaKeysMap:     Map[Int, PublicKey],
+    replicaKeyPair:     JKeyPair,
+    pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
+    storageApi:         StorageApi[IO],
+    consensusClient:    StateMachineServiceGrpcClient[IO],
+    idReplicaClientMap: Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
+    publicApiClientGrpcMap: Map[
+      ClientId,
+      (PublicApiClientGrpc[IO], PublicKey)
+    ],
+    params:                      StrataBTCBridgeConsensusParamConfig,
+    queue:                       Queue[IO, SessionEvent],
+    walletManager:               BTCWalletAlgebra[IO],
+    pegInWalletManager:          BTCWalletAlgebra[IO],
+    currentBitcoinNetworkHeight: Ref[IO, Int],
+    currentSequenceRef:          Ref[IO, Long],
+    currentStrataHeight:         Ref[IO, Long],
+    currentState:                Ref[IO, SystemGlobalState]
   )(implicit
-      clientId: ClientId,
-      replicaId: ReplicaId,
-      replicaCount: ReplicaCount,
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      bitcoindInstance: BitcoindRpcClient,
-      btcRetryThreshold: BTCRetryThreshold,
-      groupIdIdentifier: GroupId,
-      seriesIdIdentifier: SeriesId,
-      logger: Logger[IO]
+    clientId:           ClientId,
+    replicaId:          ReplicaId,
+    replicaCount:       ReplicaCount,
+    fromFellowship:     Fellowship,
+    fromTemplate:       Template,
+    bitcoindInstance:   BitcoindRpcClient,
+    btcRetryThreshold:  BTCRetryThreshold,
+    groupIdIdentifier:  GroupId,
+    seriesIdIdentifier: SeriesId,
+    logger:             Logger[IO]
   ) = {
     implicit val consensusClientImpl = consensusClient
     implicit val storageApiImpl = storageApi
@@ -219,7 +196,7 @@ object Main
     implicit val pbftProtocolClientImpl =
       new PublicApiClientGrpcMap[IO](publicApiClientGrpcMap)
     for {
-      currentStrataHeightVal <- currentStrataHeight.get
+      currentStrataHeightVal         <- currentStrataHeight.get
       currentBitcoinNetworkHeightVal <- currentBitcoinNetworkHeight.get
       res <- createApp(
         replicaKeysMap,
@@ -247,28 +224,28 @@ object Main
   }
 
   def startResources(
-      privateKeyFile: String,
-      params: StrataBTCBridgeConsensusParamConfig,
-      queue: Queue[IO, SessionEvent],
-      walletManager: BTCWalletAlgebra[IO],
-      pegInWalletManager: BTCWalletAlgebra[IO],
-      currentBitcoinNetworkHeight: Ref[IO, Int],
-      currentSequenceRef: Ref[IO, Long],
-      currentStrataHeight: Ref[IO, Long],
-      currentState: Ref[IO, SystemGlobalState]
+    privateKeyFile:              String,
+    params:                      StrataBTCBridgeConsensusParamConfig,
+    queue:                       Queue[IO, SessionEvent],
+    walletManager:               BTCWalletAlgebra[IO],
+    pegInWalletManager:          BTCWalletAlgebra[IO],
+    currentBitcoinNetworkHeight: Ref[IO, Int],
+    currentSequenceRef:          Ref[IO, Long],
+    currentStrataHeight:         Ref[IO, Long],
+    currentState:                Ref[IO, SystemGlobalState]
   )(implicit
-      conf: Config,
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      bitcoindInstance: BitcoindRpcClient,
-      btcRetryThreshold: BTCRetryThreshold,
-      groupIdIdentifier: GroupId,
-      seriesIdIdentifier: SeriesId,
-      logger: Logger[IO],
-      clientId: ClientId,
-      replicaId: ReplicaId,
-      clientCount: ClientCount,
-      replicaCount: ReplicaCount
+    conf:               Config,
+    fromFellowship:     Fellowship,
+    fromTemplate:       Template,
+    bitcoindInstance:   BitcoindRpcClient,
+    btcRetryThreshold:  BTCRetryThreshold,
+    groupIdIdentifier:  GroupId,
+    seriesIdIdentifier: SeriesId,
+    logger:             Logger[IO],
+    clientId:           ClientId,
+    replicaId:          ReplicaId,
+    clientCount:        ClientCount,
+    replicaCount:       ReplicaCount
   ) = {
     import fs2.grpc.syntax.all._
     import scala.jdk.CollectionConverters._
@@ -289,10 +266,10 @@ object Main
         replicaKeyPair,
         conf
       )(IO.asyncForIO, logger, replicaId, clientCount)
-      replicaNodes <- loadReplicaNodeFromConfig[IO](conf).toResource
-      storageApi <- StorageApiImpl.make[IO](params.dbFile.toPath().toString())
+      replicaNodes       <- loadReplicaNodeFromConfig[IO](conf).toResource
+      storageApi         <- StorageApiImpl.make[IO](params.dbFile.toPath().toString())
       idReplicaClientMap <- createReplicaClienMap[IO](replicaNodes)
-      mutex <- Mutex[IO].toResource
+      mutex              <- Mutex[IO].toResource
       pbftProtocolClientGrpc <- PBFTInternalGrpcServiceClientImpl.make[IO](
         replicaNodes
       )
@@ -333,7 +310,7 @@ object Main
         pbftServiceResource,
         requestStateManager
       ) = res
-      _ <- requestStateManager.startProcessingEvents()
+      _           <- requestStateManager.startProcessingEvents()
       pbftService <- pbftServiceResource
       bifrostQueryAlgebra = BifrostQueryAlgebra
         .make[IO](
@@ -354,7 +331,7 @@ object Main
         params.toplSecureConnection,
         bifrostQueryAlgebra
       )
-      _ <- storageApi.initializeStorage().toResource
+      _              <- storageApi.initializeStorage().toResource
       currentViewRef <- Ref[IO].of(0L).toResource
       responsesService <- ResponseGrpcServiceServer
         .responseGrpcServiceServer[IO](
@@ -413,10 +390,10 @@ object Main
           btcMonitor
             .either(
               bifrostMonitor
-                .handleErrorWith(e => {
+                .handleErrorWith { e =>
                   e.printStackTrace()
                   fs2.Stream.empty
-                })
+                }
             )
             .flatMap(
               BlockProcessor
@@ -433,13 +410,13 @@ object Main
           ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
         )
       outcomeVal <- outcome.toResource
-      _ <- info"Outcome of monitoring: $outcomeVal".toResource
+      _          <- info"Outcome of monitoring: $outcomeVal".toResource
     } yield ()
   }
 
   def getAndSetCurrentStrataHeight[F[_]: Async: Logger](
-      currentStrataHeight: Ref[F, Long],
-      bqa: BifrostQueryAlgebra[F]
+    currentStrataHeight: Ref[F, Long],
+    bqa:                 BifrostQueryAlgebra[F]
   ) = {
     import cats.implicits._
     import scala.concurrent.duration._
@@ -449,8 +426,8 @@ object Main
         .map({ tip =>
           val (_, header, _, _) = tip
           currentStrataHeight.set(header.height) >>
-            info"Obtained and set topl height: ${header.height}" >>
-            header.height.pure[F]
+          info"Obtained and set topl height: ${header.height}" >>
+          header.height.pure[F]
         })
         .getOrElse(
           warn"Failed to obtain and set topl height" >> Async[F]
@@ -460,8 +437,8 @@ object Main
   }
 
   def getAndSetCurrentBitcoinHeight[F[_]: Async: Logger](
-      currentBitcoinNetworkHeight: Ref[F, Int],
-      bitcoindInstance: BitcoindRpcClient
+    currentBitcoinNetworkHeight: Ref[F, Int],
+    bitcoindInstance:            BitcoindRpcClient
   ) = {
     import cats.implicits._
     import scala.concurrent.duration._
@@ -509,20 +486,20 @@ object Main
       org.typelevel.log4cats.slf4j.Slf4jLogger
         .getLoggerFromName[IO]("consensus-" + f"${replicaId.id}%02d")
     (for {
-      _ <- IO(Security.addProvider(new BouncyCastleProvider()))
-      pegInKm <- loadKeyPegin(params)
-      walletKm <- loadKeyWallet(params)
+      _                  <- IO(Security.addProvider(new BouncyCastleProvider()))
+      pegInKm            <- loadKeyPegin(params)
+      walletKm           <- loadKeyWallet(params)
       pegInWalletManager <- BTCWalletAlgebraImpl.make[IO](pegInKm)
-      walletManager <- BTCWalletAlgebraImpl.make[IO](walletKm)
-      _ <- printParams[IO](params)
-      _ <- printConfig[IO]
+      walletManager      <- BTCWalletAlgebraImpl.make[IO](walletKm)
+      _                  <- printParams[IO](params)
+      _                  <- printConfig[IO]
       globalState <- Ref[IO].of(
         SystemGlobalState(Some("Setting up wallet..."), None)
       )
-      currentStrataHeight <- Ref[IO].of(0L)
-      queue <- Queue.unbounded[IO, SessionEvent]
+      currentStrataHeight         <- Ref[IO].of(0L)
+      queue                       <- Queue.unbounded[IO, SessionEvent]
       currentBitcoinNetworkHeight <- Ref[IO].of(0)
-      currentSequenceRef <- Ref[IO].of(0L)
+      currentSequenceRef          <- Ref[IO].of(0L)
       _ <- startResources(
         privateKeyFile,
         params,
@@ -534,11 +511,9 @@ object Main
         currentStrataHeight,
         globalState
       ).useForever
-    } yield {
-      Right(
-        s"Server started on ${ServerConfig.host}:${ServerConfig.port}"
-      )
-    }).handleErrorWith { e =>
+    } yield Right(
+      s"Server started on ${ServerConfig.host}:${ServerConfig.port}"
+    )).handleErrorWith { e =>
       e.printStackTrace()
       IO(Left(e.getMessage))
     } >> IO.never

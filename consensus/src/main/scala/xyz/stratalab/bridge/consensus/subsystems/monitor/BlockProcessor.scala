@@ -20,8 +20,8 @@ object BlockProcessor {
   }
 
   def process[F[_]](
-      initialBTCHeight: Int,
-      initialStrataHeight: Long
+    initialBTCHeight:    Int,
+    initialStrataHeight: Long
   ): Either[BitcoinBlockSync, BifrostMonitor.BifrostBlockSync] => fs2.Stream[
     F,
     BlockchainEvent
@@ -32,7 +32,7 @@ object BlockProcessor {
     var btcAscending = false
     var toplAscending = false
     def processAux[F[_]](
-        block: Either[BitcoinBlockSync, BifrostMonitor.BifrostBlockSync]
+      block: Either[BitcoinBlockSync, BifrostMonitor.BifrostBlockSync]
     ): fs2.Stream[F, BlockchainEvent] = block match {
       case Left(b) =>
         val allTransactions = fs2.Stream(
@@ -72,8 +72,7 @@ object BlockProcessor {
             )
           } else if (b.height < (btcHeight - 1)) { // we went down by more than one, we ommit transactions
             btcAscending = false
-            fs2.Stream(
-              NewBTCBlock(b.height))
+            fs2.Stream(NewBTCBlock(b.height))
           } else {
             // we stayed the same
             if (btcAscending) {

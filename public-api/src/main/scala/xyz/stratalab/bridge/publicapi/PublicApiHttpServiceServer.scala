@@ -1,37 +1,40 @@
 package xyz.stratalab.bridge.publicapi
 
 import cats.effect.IO
-import xyz.stratalab.bridge.shared.MintingStatusOperation
-import xyz.stratalab.bridge.shared.StartSessionOperation
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
-import xyz.stratalab.bridge.shared.BridgeContants
-import xyz.stratalab.bridge.shared.BridgeError
-import xyz.stratalab.bridge.shared.BridgeResponse
-import xyz.stratalab.bridge.shared.MintingStatusRequest
-import xyz.stratalab.bridge.shared.MintingStatusResponse
-import xyz.stratalab.bridge.shared.SessionNotFoundError
-import xyz.stratalab.bridge.shared.StartPeginSessionRequest
-import xyz.stratalab.bridge.shared.StartPeginSessionResponse
 import io.circe.Json
 import io.circe.generic.auto._
-import org.http4s.HttpRoutes
-import org.http4s._
 import org.http4s.circe._
 import org.http4s.headers.`Content-Type`
+import org.http4s.{HttpRoutes, _}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
+import xyz.stratalab.bridge.shared.{
+  BridgeContants,
+  BridgeError,
+  BridgeResponse,
+  ClientId,
+  MintingStatusOperation,
+  MintingStatusRequest,
+  MintingStatusResponse,
+  SessionNotFoundError,
+  StartPeginSessionRequest,
+  StartPeginSessionResponse,
+  StartSessionOperation,
+  StateMachineServiceGrpcClient
+}
 
 object PublicApiHttpServiceServer {
+
   def publicApiHttpServiceServer(
-      consensusGrpcClients: StateMachineServiceGrpcClient[IO]
+    consensusGrpcClients: StateMachineServiceGrpcClient[IO]
   )(implicit
-      l: Logger[IO],
-      clientNumber: ClientId
+    l:            Logger[IO],
+    clientNumber: ClientId
   ) = {
     import org.http4s.dsl.io._
     implicit val bridgeErrorEntityEncoder: EntityEncoder[IO, BridgeError] =
       new EntityEncoder[IO, BridgeError] {
+
         override def toEntity(a: BridgeError): Entity[IO] =
           Entity[IO](
             fs2.Stream.fromIterator[IO](
@@ -52,6 +55,7 @@ object PublicApiHttpServiceServer {
       }
     implicit val startSessionRequestEncoder: EntityEncoder[IO, BridgeResponse] =
       new EntityEncoder[IO, BridgeResponse] {
+
         override def toEntity(a: BridgeResponse): Entity[IO] =
           Entity[IO](a match {
             case r: MintingStatusResponse =>
@@ -91,8 +95,7 @@ object PublicApiHttpServiceServer {
       }
     HttpRoutes.of[IO] {
       case req @ POST -> Root / BridgeContants.START_PEGIN_SESSION_PATH =>
-        implicit val startSessionRequestDecoder
-            : EntityDecoder[IO, StartPeginSessionRequest] =
+        implicit val startSessionRequestDecoder: EntityDecoder[IO, StartPeginSessionRequest] =
           jsonOf[IO, StartPeginSessionRequest]
 
         (for {
@@ -122,13 +125,12 @@ object PublicApiHttpServiceServer {
           }
         } yield res).handleErrorWith { e =>
           IO(e.printStackTrace()) >>
-            error"Error in start pegin session request: ${e.getMessage}" >> BadRequest(
-              "Error starting pegin session"
-            )
+          error"Error in start pegin session request: ${e.getMessage}" >> BadRequest(
+            "Error starting pegin session"
+          )
         }
       case req @ POST -> Root / BridgeContants.STRATA_MINTING_STATUS =>
-        implicit val mintingStatusRequestDecoder
-            : EntityDecoder[IO, MintingStatusRequest] =
+        implicit val mintingStatusRequestDecoder: EntityDecoder[IO, MintingStatusRequest] =
           jsonOf[IO, MintingStatusRequest]
 
         for {

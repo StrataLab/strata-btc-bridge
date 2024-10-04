@@ -5,39 +5,36 @@ import cats.effect.kernel.Sync
 import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.codecs.AddressCodecs
 import co.topl.brambl.constants.NetworkConstants
-import co.topl.brambl.dataApi.FellowshipStorageAlgebra
-import co.topl.brambl.dataApi.GenusQueryAlgebra
-import co.topl.brambl.dataApi.TemplateStorageAlgebra
-import co.topl.brambl.dataApi.WalletFellowship
-import co.topl.brambl.dataApi.WalletStateAlgebra
-import co.topl.brambl.dataApi.WalletTemplate
-import co.topl.brambl.models.LockAddress
-import co.topl.brambl.models.LockId
+import co.topl.brambl.dataApi.{
+  FellowshipStorageAlgebra,
+  GenusQueryAlgebra,
+  TemplateStorageAlgebra,
+  WalletFellowship,
+  WalletStateAlgebra,
+  WalletTemplate
+}
 import co.topl.brambl.models.box.AssetMintingStatement
 import co.topl.brambl.models.transaction.IoTransaction
+import co.topl.brambl.models.{LockAddress, LockId}
 import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
-import xyz.stratalab.bridge.consensus.core.Fellowship
-import xyz.stratalab.bridge.consensus.shared.Lvl
-import xyz.stratalab.bridge.consensus.core.Template
 import co.topl.genus.services.Txo
-import xyz.stratalab.bridge.shared.InvalidHash
-import xyz.stratalab.bridge.shared.InvalidInput
-import xyz.stratalab.bridge.shared.InvalidKey
-import xyz.stratalab.bridge.consensus.core.StrataNetworkIdentifiers
 import com.google.protobuf.ByteString
 import io.circe.Json
-import quivr.models.KeyPair
-import quivr.models.VerificationKey
+import quivr.models.{KeyPair, VerificationKey}
+import xyz.stratalab.bridge.consensus.core.{Fellowship, StrataNetworkIdentifiers, Template}
+import xyz.stratalab.bridge.consensus.shared.Lvl
+import xyz.stratalab.bridge.shared.{InvalidHash, InvalidInput, InvalidKey}
 
 object StrataWalletAlgebra {
+
   import WalletApiHelpers._
   import AssetMintingOps._
 
   private def computeSerializedTemplateMintLock[F[_]: Sync](
-      sha256: String,
-      min: Long,
-      max: Long
+    sha256: String,
+    min:    Long,
+    max:    Long
   ) = {
     import cats.implicits._
     for {
@@ -64,18 +61,18 @@ object StrataWalletAlgebra {
   }
 
   def setupBridgeWalletForMinting[F[_]: Sync](
-      fromFellowship: String,
-      mintTemplateName: String,
-      keypair: KeyPair,
-      sha256: String,
-      min: Long,
-      max: Long
+    fromFellowship:   String,
+    mintTemplateName: String,
+    keypair:          KeyPair,
+    sha256:           String,
+    min:              Long,
+    max:              Long
   )(implicit
-      fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
-      templateStorageAlgebra: TemplateStorageAlgebra[F],
-      tba: TransactionBuilderApi[F],
-      walletApi: WalletApi[F],
-      wsa: WalletStateAlgebra[F]
+    fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
+    templateStorageAlgebra:   TemplateStorageAlgebra[F],
+    tba:                      TransactionBuilderApi[F],
+    walletApi:                WalletApi[F],
+    wsa:                      WalletStateAlgebra[F]
   ): F[Option[(String, String)]] = {
 
     import cats.implicits._
@@ -166,9 +163,9 @@ object StrataWalletAlgebra {
   }
 
   private def computeSerializedTemplate[F[_]: Sync](
-      sha256: String,
-      waitTime: Int,
-      currentHeight: Int
+    sha256:        String,
+    waitTime:      Int,
+    currentHeight: Int
   ) = {
     import cats.implicits._
     for {
@@ -225,19 +222,19 @@ object StrataWalletAlgebra {
   }
 
   def setupBridgeWallet[F[_]: Sync](
-      networkId: StrataNetworkIdentifiers,
-      keypair: KeyPair,
-      userBaseKey: String,
-      fellowshipName: String,
-      templateName: String,
-      sha256: String,
-      waitTime: Int,
-      currentHeight: Int
+    networkId:      StrataNetworkIdentifiers,
+    keypair:        KeyPair,
+    userBaseKey:    String,
+    fellowshipName: String,
+    templateName:   String,
+    sha256:         String,
+    waitTime:       Int,
+    currentHeight:  Int
   )(implicit
-      fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
-      templateStorageAlgebra: TemplateStorageAlgebra[F],
-      walletApi: WalletApi[F],
-      wsa: WalletStateAlgebra[F]
+    fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
+    templateStorageAlgebra:   TemplateStorageAlgebra[F],
+    walletApi:                WalletApi[F],
+    wsa:                      WalletStateAlgebra[F]
   ): F[Option[String]] = {
 
     import cats.implicits._
@@ -343,12 +340,13 @@ object StrataWalletAlgebra {
         .liftT
     } yield currentAddress).value
   }
+
   private def sharedOps[F[_]: Sync](
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      someFromInteraction: Option[Int]
+    fromFellowship:      Fellowship,
+    fromTemplate:        Template,
+    someFromInteraction: Option[Int]
   )(implicit
-      wsa: WalletStateAlgebra[F]
+    wsa: WalletStateAlgebra[F]
   ) = {
     import cats.implicits._
     for {
@@ -358,7 +356,7 @@ object StrataWalletAlgebra {
         someFromInteraction
       )
       predicateFundsToUnlock <- getPredicateFundsToUnlock[F](someCurrentIndices)
-      someNextIndices <- getNextIndices(fromFellowship, fromTemplate)
+      someNextIndices        <- getNextIndices(fromFellowship, fromTemplate)
       changeLock <- getChangeLockPredicate[F](
         someNextIndices,
         fromFellowship,
@@ -373,20 +371,20 @@ object StrataWalletAlgebra {
   }
 
   def createSimpleAssetMintingTransactionFromParams[F[_]: Sync](
-      keyPair: KeyPair,
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      someFromInteraction: Option[Int],
-      fee: Lvl,
-      ephemeralMetadata: Option[Json],
-      commitment: Option[ByteString],
-      assetMintingStatement: AssetMintingStatement,
-      redeemLockAddress: String
+    keyPair:               KeyPair,
+    fromFellowship:        Fellowship,
+    fromTemplate:          Template,
+    someFromInteraction:   Option[Int],
+    fee:                   Lvl,
+    ephemeralMetadata:     Option[Json],
+    commitment:            Option[ByteString],
+    assetMintingStatement: AssetMintingStatement,
+    redeemLockAddress:     String
   )(implicit
-      tba: TransactionBuilderApi[F],
-      walletApi: WalletApi[F],
-      wsa: WalletStateAlgebra[F],
-      utxoAlgebra: GenusQueryAlgebra[F]
+    tba:         TransactionBuilderApi[F],
+    walletApi:   WalletApi[F],
+    wsa:         WalletStateAlgebra[F],
+    utxoAlgebra: GenusQueryAlgebra[F]
   ): F[IoTransaction] = {
     import cats.implicits._
     for {
@@ -422,8 +420,8 @@ object StrataWalletAlgebra {
       nonLvlTxos = response.filter(x =>
         (
           !x.transactionOutput.value.value.isLvl &&
-            x.outputAddress != assetMintingStatement.groupTokenUtxo &&
-            x.outputAddress != assetMintingStatement.seriesTokenUtxo
+          x.outputAddress != assetMintingStatement.groupTokenUtxo &&
+          x.outputAddress != assetMintingStatement.seriesTokenUtxo
         )
       )
       groupTxo <- response

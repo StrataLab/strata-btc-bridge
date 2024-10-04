@@ -1,7 +1,6 @@
 package xyz.stratalab.bridge.consensus.shared
 
-import xyz.stratalab.bridge.consensus.shared.SessionInfo
-import xyz.stratalab.bridge.consensus.shared.PeginSessionInfo
+import xyz.stratalab.bridge.consensus.shared.{PeginSessionInfo, SessionInfo}
 
 object MiscUtils {
   import monocle.macros.GenPrism

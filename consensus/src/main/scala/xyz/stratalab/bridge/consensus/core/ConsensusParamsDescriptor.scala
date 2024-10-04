@@ -1,10 +1,9 @@
 package xyz.stratalab.bridge.consensus.core
 
+import co.topl.brambl.models.{GroupId, SeriesId}
+import org.bitcoins.core.currency.{CurrencyUnit, SatoshisLong}
 import scopt.OParser
-import org.bitcoins.core.currency.CurrencyUnit
-import org.bitcoins.core.currency.SatoshisLong
-import co.topl.brambl.models.SeriesId
-import co.topl.brambl.models.GroupId
+
 import java.io.File
 
 trait ConsensusParamsDescriptor {

@@ -3,23 +3,25 @@ package xyz.stratalab.bridge.consensus.core.pbft.activities
 import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.brambl.utils.Encoding
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
-import xyz.stratalab.bridge.consensus.core.pbft.PBFTInternalEvent
-import xyz.stratalab.bridge.consensus.core.pbft.PrePreparedInserted
-import xyz.stratalab.bridge.consensus.core.pbft.RequestIdentifier
-import xyz.stratalab.bridge.consensus.core.pbft.RequestStateManager
-import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
+import xyz.stratalab.bridge.consensus.core.pbft.{
+  PBFTInternalEvent,
+  PrePreparedInserted,
+  RequestIdentifier,
+  RequestStateManager,
+  ViewManager
+}
 import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.shared.ClientId
 import xyz.stratalab.bridge.shared.implicits._
-import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
 
 object PrePrepareActivity {
 
-  private sealed trait PreprepareProblem extends Throwable
+  sealed private trait PreprepareProblem extends Throwable
   private case object InvalidPrepreareSignature extends PreprepareProblem
   private case object InvalidRequestSignature extends PreprepareProblem
   private case object InvalidRequestDigest extends PreprepareProblem
@@ -27,8 +29,8 @@ object PrePrepareActivity {
   private case object LogAlreadyExists extends PreprepareProblem
 
   private def checkViewNumber[F[_]: Async](
-      requestViewNumber: Long
-  )(implicit viewManager: ViewManager[F]): F[Unit] = {
+    requestViewNumber: Long
+  )(implicit viewManager: ViewManager[F]): F[Unit] =
     for {
       currentView <- viewManager.currentView
       isValidViewNumber = requestViewNumber == currentView
@@ -36,18 +38,16 @@ object PrePrepareActivity {
         InvalidView
       )
     } yield ()
-  }
 
-  private def checkWaterMark[F[_]: Async]()
-      : F[Unit] = // FIXME: add check when watermarks are implemented
+  private def checkWaterMark[F[_]: Async](): F[Unit] = // FIXME: add check when watermarks are implemented
     ().pure[F]
 
   private def checkMessageSignaturePrimaryAux[F[_]: Async](
-      replicaKeysMap: Map[Int, PublicKey],
-      requestSignableBytes: Array[Byte],
-      requestSignature: Array[Byte]
+    replicaKeysMap:       Map[Int, PublicKey],
+    requestSignableBytes: Array[Byte],
+    requestSignature:     Array[Byte]
   )(implicit
-      viewManager: ViewManager[F]
+    viewManager: ViewManager[F]
   ): F[Boolean] = {
     import cats.implicits._
     for {
@@ -64,14 +64,14 @@ object PrePrepareActivity {
   }
 
   def apply[F[_]: Async: Logger](
-      request: PrePrepareRequest
+    request: PrePrepareRequest
   )(
-      replicaKeysMap: Map[Int, PublicKey]
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      requestStateManager: RequestStateManager[F],
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
-      storageApi: StorageApi[F]
+    requestStateManager:    RequestStateManager[F],
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
+    storageApi:             StorageApi[F]
   ): F[Option[PBFTInternalEvent]] = {
     import org.typelevel.log4cats.syntax._
     (for {

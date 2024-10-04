@@ -1,26 +1,18 @@
 package xyz.stratalab.bridge.consensus.shared.utils
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.Resource
-import cats.effect.kernel.Sync
-import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpc
-import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcImpl
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.shared.ClientCount
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.shared.ReplicaId
+import cats.effect.kernel.{Async, Resource, Sync}
 import com.typesafe.config.Config
 import io.grpc.ManagedChannelBuilder
 import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.consensus.core.{PublicApiClientGrpc, PublicApiClientGrpcImpl}
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientCount, ClientId, ReplicaCount, ReplicaId}
 
-import java.security.KeyPair
-import java.security.PublicKey
+import java.security.{KeyPair, PublicKey}
 
 object ConfUtils {
 
   def createReplicaPublicKeyMap[F[_]: Sync](
-      conf: Config
+    conf: Config
   )(implicit replicaCount: ReplicaCount): F[Map[Int, PublicKey]] = {
     import cats.implicits._
     (for (i <- 0 until replicaCount.value) yield {
@@ -34,11 +26,11 @@ object ConfUtils {
   }
 
   def createClientMap[F[_]: Async: Logger](
-      replicaKeyPair: KeyPair,
-      conf: Config
+    replicaKeyPair: KeyPair,
+    conf:           Config
   )(implicit
-      replicaId: ReplicaId,
-      clientCount: ClientCount
+    replicaId:   ReplicaId,
+    clientCount: ClientCount
   ): Resource[F, Map[ClientId, (PublicApiClientGrpc[F], PublicKey)]] = {
     import cats.implicits._
     (for (i <- 0 until clientCount.value) yield {

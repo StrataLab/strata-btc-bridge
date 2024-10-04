@@ -1,21 +1,18 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
-import co.topl.brambl.dataApi.WalletStateAlgebra
 import cats.Monad
-import co.topl.brambl.models.Indices
-import co.topl.brambl.models.box.Lock
-import co.topl.brambl.models.LockAddress
 import co.topl.brambl.builders.TransactionBuilderApi
-import xyz.stratalab.bridge.consensus.core.Fellowship
-import xyz.stratalab.bridge.consensus.core.Template
+import co.topl.brambl.dataApi.WalletStateAlgebra
+import co.topl.brambl.models.box.Lock
+import co.topl.brambl.models.{Indices, LockAddress}
+import xyz.stratalab.bridge.consensus.core.{Fellowship, Template}
 
 object WalletApiHelpers {
 
-
   def getCurrentIndices[F[_]](
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      someFromInteraction: Option[Int]
+    fromFellowship:      Fellowship,
+    fromTemplate:        Template,
+    someFromInteraction: Option[Int]
   )(implicit wsa: WalletStateAlgebra[F]) = wsa.getCurrentIndicesForFunds(
     fromFellowship.underlying,
     fromTemplate.underlying,
@@ -23,12 +20,12 @@ object WalletApiHelpers {
   )
 
   def getCurrentAddress[F[_]: Monad](
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      someFromInteraction: Option[Int]
+    fromFellowship:      Fellowship,
+    fromTemplate:        Template,
+    someFromInteraction: Option[Int]
   )(implicit
-      wsa: WalletStateAlgebra[F],
-      tba: TransactionBuilderApi[F]
+    wsa: WalletStateAlgebra[F],
+    tba: TransactionBuilderApi[F]
   ): F[LockAddress] = {
     import cats.implicits._
     for {
@@ -45,7 +42,7 @@ object WalletApiHelpers {
   }
 
   def getPredicateFundsToUnlock[F[_]: Monad](
-      someIndices: Option[Indices]
+    someIndices: Option[Indices]
   )(implicit wsa: WalletStateAlgebra[F]) = {
     import cats.implicits._
     someIndices
@@ -55,8 +52,8 @@ object WalletApiHelpers {
   }
 
   def getNextIndices[F[_]](
-      fromFellowship: Fellowship,
-      fromTemplate: Template
+    fromFellowship: Fellowship,
+    fromTemplate:   Template
   )(implicit wsa: WalletStateAlgebra[F]) =
     wsa.getNextIndicesForFunds(
       if (fromFellowship.underlying == "nofellowship") "self"
@@ -66,9 +63,9 @@ object WalletApiHelpers {
     )
 
   def getChangeLockPredicate[F[_]: Monad](
-      someNextIndices: Option[Indices],
-      fromFellowship: Fellowship,
-      fromTemplate: Template
+    someNextIndices: Option[Indices],
+    fromFellowship:  Fellowship,
+    fromTemplate:    Template
   )(implicit wsa: WalletStateAlgebra[F]) = {
     import cats.implicits._
     someNextIndices

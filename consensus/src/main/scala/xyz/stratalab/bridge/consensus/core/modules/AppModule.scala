@@ -6,64 +6,63 @@ import cats.effect.std.Queue
 import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.constants.NetworkConstants
 import co.topl.brambl.dataApi.GenusQueryAlgebra
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
-import co.topl.brambl.servicekit.FellowshipStorageApi
-import co.topl.brambl.servicekit.TemplateStorageApi
-import co.topl.brambl.servicekit.WalletKeyApi
-import co.topl.brambl.servicekit.WalletStateApi
-import co.topl.brambl.servicekit.WalletStateResource
+import co.topl.brambl.models.{GroupId, SeriesId}
+import co.topl.brambl.servicekit.{
+  FellowshipStorageApi,
+  TemplateStorageApi,
+  WalletKeyApi,
+  WalletStateApi,
+  WalletStateResource
+}
 import co.topl.brambl.wallet.WalletApi
-import xyz.stratalab.bridge.consensus.core.BridgeWalletManager
-import xyz.stratalab.bridge.consensus.core.CheckpointInterval
-import xyz.stratalab.bridge.consensus.core.CurrentBTCHeightRef
-import xyz.stratalab.bridge.consensus.core.CurrentStrataHeightRef
-import xyz.stratalab.bridge.consensus.core.Fellowship
-import xyz.stratalab.bridge.consensus.core.KWatermark
-import xyz.stratalab.bridge.consensus.core.LastReplyMap
-import xyz.stratalab.bridge.consensus.core.PeginWalletManager
-import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
-import xyz.stratalab.bridge.consensus.core.SystemGlobalState
-import xyz.stratalab.bridge.consensus.core.Template
-import xyz.stratalab.bridge.consensus.core.StrataBTCBridgeConsensusParamConfig
-import xyz.stratalab.bridge.consensus.core.WatermarkRef
-import xyz.stratalab.bridge.consensus.core.channelResource
-import xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebra
-import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
-import xyz.stratalab.bridge.consensus.core.pbft.CheckpointManagerImpl
-import xyz.stratalab.bridge.consensus.core.pbft.PBFTInternalEvent
-import xyz.stratalab.bridge.consensus.core.pbft.PBFTRequestPreProcessorImpl
-import xyz.stratalab.bridge.consensus.core.pbft.RequestStateManagerImpl
-import xyz.stratalab.bridge.consensus.core.pbft.RequestTimerManagerImpl
-import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManagerImpl
-import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
-import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
-import xyz.stratalab.bridge.consensus.shared.BTCConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCRetryThreshold
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.Lvl
-import xyz.stratalab.bridge.consensus.shared.StrataConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.StrataWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MonitorStateMachine
-import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionEvent
-import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerImpl
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.shared.ReplicaId
-import xyz.stratalab.bridge.shared.StateMachineServiceGrpcClient
-import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 import io.grpc.Metadata
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
-import org.http4s.HttpRoutes
-import org.http4s._
 import org.http4s.dsl.io._
+import org.http4s.{HttpRoutes, _}
 import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.consensus.core.managers.{BTCWalletAlgebra, WalletManagementUtils}
+import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManagerImpl
+import xyz.stratalab.bridge.consensus.core.pbft.{
+  CheckpointManagerImpl,
+  PBFTInternalEvent,
+  PBFTRequestPreProcessorImpl,
+  RequestStateManagerImpl,
+  RequestTimerManagerImpl,
+  ViewManagerImpl
+}
+import xyz.stratalab.bridge.consensus.core.{
+  BridgeWalletManager,
+  CheckpointInterval,
+  CurrentBTCHeightRef,
+  CurrentStrataHeightRef,
+  Fellowship,
+  KWatermark,
+  LastReplyMap,
+  PeginWalletManager,
+  PublicApiClientGrpcMap,
+  StrataBTCBridgeConsensusParamConfig,
+  SystemGlobalState,
+  Template,
+  WatermarkRef,
+  channelResource
+}
+import xyz.stratalab.bridge.consensus.service.StateMachineReply.Result
+import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
+import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
+import xyz.stratalab.bridge.consensus.shared.{
+  BTCConfirmationThreshold,
+  BTCRetryThreshold,
+  BTCWaitExpirationTime,
+  Lvl,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{MonitorStateMachine, SessionEvent, SessionManagerImpl}
+import xyz.stratalab.bridge.shared.{ClientId, ReplicaCount, ReplicaId, StateMachineServiceGrpcClient}
+import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
-import java.security.PublicKey
-import java.security.{KeyPair => JKeyPair}
+import java.security.{KeyPair => JKeyPair, PublicKey}
 import java.util.concurrent.ConcurrentHashMap
-import xyz.stratalab.bridge.consensus.core.pbft.ViewManagerImpl
 
 trait AppModule extends WalletStateResource {
 
@@ -74,32 +73,32 @@ trait AppModule extends WalletStateResource {
   }
 
   def createApp(
-      replicaKeysMap: Map[Int, PublicKey],
-      replicaKeyPair: JKeyPair,
-      idReplicaClientMap: Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
-      params: StrataBTCBridgeConsensusParamConfig,
-      queue: Queue[IO, SessionEvent],
-      walletManager: BTCWalletAlgebra[IO],
-      pegInWalletManager: BTCWalletAlgebra[IO],
-      logger: Logger[IO],
-      currentBitcoinNetworkHeight: Ref[IO, Int],
-      currentSequenceRef: Ref[IO, Long],
-      currentStrataHeight: Ref[IO, Long],
-      currentState: Ref[IO, SystemGlobalState]
+    replicaKeysMap:              Map[Int, PublicKey],
+    replicaKeyPair:              JKeyPair,
+    idReplicaClientMap:          Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
+    params:                      StrataBTCBridgeConsensusParamConfig,
+    queue:                       Queue[IO, SessionEvent],
+    walletManager:               BTCWalletAlgebra[IO],
+    pegInWalletManager:          BTCWalletAlgebra[IO],
+    logger:                      Logger[IO],
+    currentBitcoinNetworkHeight: Ref[IO, Int],
+    currentSequenceRef:          Ref[IO, Long],
+    currentStrataHeight:         Ref[IO, Long],
+    currentState:                Ref[IO, SystemGlobalState]
   )(implicit
-      pbftProtocolClient: PBFTInternalGrpcServiceClient[IO],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
-      clientId: ClientId,
-      storageApi: StorageApi[IO],
-      consensusClient: StateMachineServiceGrpcClient[IO],
-      replicaId: ReplicaId,
-      replicaCount: ReplicaCount,
-      fromFellowship: Fellowship,
-      fromTemplate: Template,
-      bitcoindInstance: BitcoindRpcClient,
-      btcRetryThreshold: BTCRetryThreshold,
-      groupIdIdentifier: GroupId,
-      seriesIdIdentifier: SeriesId
+    pbftProtocolClient:     PBFTInternalGrpcServiceClient[IO],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[IO],
+    clientId:               ClientId,
+    storageApi:             StorageApi[IO],
+    consensusClient:        StateMachineServiceGrpcClient[IO],
+    replicaId:              ReplicaId,
+    replicaCount:           ReplicaCount,
+    fromFellowship:         Fellowship,
+    fromTemplate:           Template,
+    bitcoindInstance:       BitcoindRpcClient,
+    btcRetryThreshold:      BTCRetryThreshold,
+    groupIdIdentifier:      GroupId,
+    seriesIdIdentifier:     SeriesId
   ) = {
     val walletKeyApi = WalletKeyApi.make[IO]()
     implicit val walletApi = WalletApi.make[IO](walletKeyApi)
@@ -169,7 +168,7 @@ trait AppModule extends WalletStateResource {
     implicit val kWatermark = new KWatermark(params.kWatermark)
     import scala.concurrent.duration._
     for {
-      queue <- Queue.unbounded[IO, PBFTInternalEvent]
+      queue             <- Queue.unbounded[IO, PBFTInternalEvent]
       checkpointManager <- CheckpointManagerImpl.make[IO]()
       requestTimerManager <- RequestTimerManagerImpl.make[IO](
         params.requestTimeout.seconds,

@@ -1,24 +1,26 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.subsystems.monitor.EndTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransitionTo
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MConfirmingBTCDeposit
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MWaitingForBTCDeposit
-import xyz.stratalab.bridge.consensus.subsystems.monitor.PeginStateMachineState
+
 import org.bitcoins.core.protocol.Bech32Address
-import xyz.stratalab.bridge.consensus.shared.BTCConfirmationThreshold
+import xyz.stratalab.bridge.consensus.shared.{BTCConfirmationThreshold, BTCWaitExpirationTime}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransition,
+  FSMTransitionTo,
+  MConfirmingBTCDeposit,
+  MWaitingForBTCDeposit,
+  PeginStateMachineState
+}
 
 trait MonitorDepositStateTransitionRelation extends TransitionToEffect {
 
   def handleBlockchainEventDeposit[F[_]](
-      currentState: DepositState,
-      blockchainEvent: BlockchainEvent
+    currentState:    DepositState,
+    blockchainEvent: BlockchainEvent
   )(
-      t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
+    t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
   )(implicit
-      btcWaitExpirationTime: BTCWaitExpirationTime,
-      btcConfirmationThreshold: BTCConfirmationThreshold
+    btcWaitExpirationTime:    BTCWaitExpirationTime,
+    btcConfirmationThreshold: BTCConfirmationThreshold
   ): Option[FSMTransition] =
     ((currentState, blockchainEvent) match {
       case (
@@ -51,9 +53,7 @@ trait MonitorDepositStateTransitionRelation extends TransitionToEffect {
             cs: MWaitingForBTCDeposit,
             ev: NewBTCBlock
           ) =>
-        if (
-          btcWaitExpirationTime.underlying < (ev.height - cs.currentBTCBlockHeight)
-        )
+        if (btcWaitExpirationTime.underlying < (ev.height - cs.currentBTCBlockHeight))
           Some(
             EndTransition[F](
               t2E(currentState, blockchainEvent)
@@ -66,9 +66,7 @@ trait MonitorDepositStateTransitionRelation extends TransitionToEffect {
             ev: NewBTCBlock
           ) =>
         // check that the confirmation threshold has been passed
-        if (
-          isAboveConfirmationThresholdBTC(ev.height, cs.depositBTCBlockHeight)
-        )
+        if (isAboveConfirmationThresholdBTC(ev.height, cs.depositBTCBlockHeight))
           Some(
             FSMTransitionTo(
               currentState,

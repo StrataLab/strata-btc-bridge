@@ -6,8 +6,8 @@ object PBFTTransitionRelation {
   import cats.implicits._
 
   def handlePBFTEvent(
-      currentState: PBFTState,
-      pbftEvent: PBFTEvent
+    currentState: PBFTState,
+    pbftEvent:    PBFTEvent
   ): Option[PBFTState] =
     (currentState, pbftEvent) match {
       case (

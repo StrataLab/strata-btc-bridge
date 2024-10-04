@@ -1,15 +1,11 @@
 package xyz.stratalab.bridge.consensus.core
 
-import org.bitcoins.core.currency.CurrencyUnit
-
-import org.bitcoins.core.currency.SatoshisLong
-import scala.util.Try
-import scala.util.Success
-import scala.util.Failure
+import co.topl.brambl.models.{GroupId, SeriesId}
 import co.topl.brambl.utils.Encoding
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
 import com.google.protobuf.ByteString
+import org.bitcoins.core.currency.{CurrencyUnit, SatoshisLong}
+
+import scala.util.{Failure, Success, Try}
 
 object ParamParser {
 
@@ -34,6 +30,7 @@ object ParamParser {
             "Invalid network. Possible values: mainnet, testnet, private"
           )
       })
+
   implicit val currencyUnit: scopt.Read[CurrencyUnit] =
     scopt.Read
       .reads(x => Try(x.toLong.satoshis))

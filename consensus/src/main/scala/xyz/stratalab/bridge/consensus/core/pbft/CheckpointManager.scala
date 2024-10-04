@@ -1,13 +1,12 @@
 package xyz.stratalab.bridge.consensus.core.pbft
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.Ref
+import cats.effect.kernel.{Async, Ref}
 import co.topl.brambl.utils.Encoding
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 
 private[pbft] case class CheckpointIdentifier(
-    sequenceNumber: Long,
-    digest: String
+  sequenceNumber: Long,
+  digest:         String
 )
 
 trait CheckpointManager[F[_]] {
@@ -15,25 +14,25 @@ trait CheckpointManager[F[_]] {
   def latestStableCheckpoint: F[StableCheckpoint]
 
   def setLatestStableCheckpoint(
-      stableCheckpoint: StableCheckpoint
+    stableCheckpoint: StableCheckpoint
   ): F[Unit]
 
   def updateLatestStableCheckpoint(
-      request: CheckpointRequest
+    request: CheckpointRequest
   ): F[Map[Int, CheckpointRequest]]
 
   def stateSnapshot(sequenceNumber: Long): F[Option[StateSnapshot]]
 
   def unstableCheckpoint(
-      identifier: CheckpointIdentifier
+    identifier: CheckpointIdentifier
   ): F[Option[UnstableCheckpoint]]
 
   def createUnstableCheckpoint(
-      request: CheckpointRequest
+    request: CheckpointRequest
   ): F[Map[Int, CheckpointRequest]]
 
   def updateUnstableCheckpoint(
-      request: CheckpointRequest
+    request: CheckpointRequest
   ): F[Map[Int, CheckpointRequest]]
 
 }
@@ -41,7 +40,7 @@ trait CheckpointManager[F[_]] {
 object CheckpointManagerImpl {
   import cats.implicits._
 
-  def make[F[_]: Async](): F[CheckpointManager[F]] = {
+  def make[F[_]: Async](): F[CheckpointManager[F]] =
     for {
       stableCheckpoint <- Ref.of(StableCheckpoint(0, Map(), Map()))
       unstableCheckpoints <- Ref.of[
@@ -55,13 +54,12 @@ object CheckpointManagerImpl {
         stableCheckpoint.get
 
       override def unstableCheckpoint(
-          identifier: CheckpointIdentifier
-      ): F[Option[UnstableCheckpoint]] = {
+        identifier: CheckpointIdentifier
+      ): F[Option[UnstableCheckpoint]] =
         unstableCheckpoints.get.map(_.get(identifier))
-      }
 
       override def createUnstableCheckpoint(
-          request: CheckpointRequest
+        request: CheckpointRequest
       ): F[Map[Int, CheckpointRequest]] = {
         val certificates = Map(request.replicaId -> request)
         unstableCheckpoints.update(
@@ -76,32 +74,29 @@ object CheckpointManagerImpl {
       }
 
       def updateLatestStableCheckpoint(
-          request: CheckpointRequest
-      ): F[Map[Int, CheckpointRequest]] = {
+        request: CheckpointRequest
+      ): F[Map[Int, CheckpointRequest]] =
         stableCheckpoint.update { stableCheckpoint =>
           val newCertificates =
             stableCheckpoint.certificates + (request.replicaId -> request)
           stableCheckpoint.copy(certificates = newCertificates)
         } >> stableCheckpoint.get.map(_.certificates)
-      }
 
       override def setLatestStableCheckpoint(
-          newStableCheckpoint: StableCheckpoint
+        newStableCheckpoint: StableCheckpoint
       ): F[Unit] =
         for {
           _ <- stableCheckpoint.set(newStableCheckpoint)
-          _ <- unstableCheckpoints.update(x =>
-            x.filter(_._1.sequenceNumber < newStableCheckpoint.sequenceNumber)
-          )
+          _ <- unstableCheckpoints.update(x => x.filter(_._1.sequenceNumber < newStableCheckpoint.sequenceNumber))
         } yield ()
 
       override def stateSnapshot(
-          sequenceNumber: Long
+        sequenceNumber: Long
       ): F[Option[StateSnapshot]] =
         stateSnapshotMap.get.map(_.get(sequenceNumber))
 
       override def updateUnstableCheckpoint(
-          request: CheckpointRequest
+        request: CheckpointRequest
       ): F[Map[Int, CheckpointRequest]] =
         for {
           unstableCheckpoint <- unstableCheckpoints.get.map(
@@ -134,5 +129,4 @@ object CheckpointManagerImpl {
 
     }
 
-  }
 }

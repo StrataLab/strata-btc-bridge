@@ -4,19 +4,39 @@ import cats.effect.IO
 import cats.effect.kernel.Async
 import co.topl.brambl.syntax._
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.shared.AssetToken
-import xyz.stratalab.bridge.consensus.core.controllers.SharedData
 import munit.CatsEffectSuite
 import org.bitcoins.core.protocol.Bech32Address
+import xyz.stratalab.bridge.consensus.core.controllers.SharedData
+import xyz.stratalab.bridge.consensus.shared.AssetToken
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  BTCFundsDeposited,
+  BTCFundsWithdrawn,
+  BifrostFundsDeposited,
+  BifrostFundsWithdrawn,
+  BlockchainEvent,
+  EndTransition,
+  FSMTransitionTo,
+  MConfirmingBTCClaim,
+  MConfirmingBTCDeposit,
+  MConfirmingRedemption,
+  MConfirmingTBTCMint,
+  MMintingTBTC,
+  MWaitingForBTCDeposit,
+  MWaitingForClaim,
+  MWaitingForRedemption,
+  MonitorTransitionRelation,
+  NewBTCBlock,
+  NewStrataBlock,
+  PeginStateMachineState
+}
 
 import scala.annotation.nowarn
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{BifrostFundsDeposited, BlockchainEvent, PeginStateMachineState, FSMTransitionTo, MConfirmingBTCClaim, MWaitingForRedemption, BTCFundsWithdrawn, BTCFundsDeposited, MConfirmingBTCDeposit, MWaitingForClaim, BifrostFundsWithdrawn, MConfirmingRedemption, MConfirmingTBTCMint, EndTransition, NewStrataBlock, NewBTCBlock, MMintingTBTC, MWaitingForBTCDeposit}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MonitorTransitionRelation
 
 class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
 
   val escrowAddress =
     "bcrt1qsc9qvqvlswpzlvf4t80g05l2la2cykazmdcur45st5g339vw6aps47j7sw"
+
   val escrowAddressPubkey =
     Bech32Address.fromString(escrowAddress).scriptPubKey.asmHex
 
@@ -37,8 +57,8 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
 
   @nowarn // just dummy function
   def transitionToEffect[F[_]: Async](
-      currentState: PeginStateMachineState,
-      blockchainEvent: BlockchainEvent
+    currentState:    PeginStateMachineState,
+    blockchainEvent: BlockchainEvent
   ) = Async[F].unit
 
   import org.bitcoins.core.currency.SatoshisLong
@@ -125,8 +145,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             claimAddress
           ),
           BifrostFundsDeposited(
-            currentStrataBlockHeight =
-              0L, // Assuming a placeholder value for the missing argument
+            currentStrataBlockHeight = 0L, // Assuming a placeholder value for the missing argument
             address = redeemAddress,
             utxoTxId = "utxoTxId",
             utxoIndex = 0,
@@ -134,25 +153,25 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
           )
         )(transitionToEffect[IO](_, _))
         .isEmpty &&
-        MonitorTransitionRelation
-          .handleBlockchainEvent[IO](
-            MWaitingForBTCDeposit(
-              1,
-              1,
-              "",
-              escrowAddress,
-              redeemAddress,
-              claimAddress
-            ),
-            BifrostFundsWithdrawn(
-              1L,
-              "bifrostTxId",
-              0,
-              "strata-secret",
-              AssetToken("groupId", "seriesId", 100L)
-            )
-          )(transitionToEffect[IO](_, _))
-          .isEmpty
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MWaitingForBTCDeposit(
+            1,
+            1,
+            "",
+            escrowAddress,
+            redeemAddress,
+            claimAddress
+          ),
+          BifrostFundsWithdrawn(
+            1L,
+            "bifrostTxId",
+            0,
+            "strata-secret",
+            AssetToken("groupId", "seriesId", 100L)
+          )
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -242,29 +261,29 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
           )
         )(transitionToEffect[IO](_, _))
         .isEmpty &&
-        MonitorTransitionRelation
-          .handleBlockchainEvent[IO](
-            MWaitingForRedemption(
-              currentTolpBlockHeight = 1L,
-              currentWalletIdx = 0,
-              scriptAsm = "",
-              redeemAddress = redeemAddress,
-              claimAddress = claimAddress,
-              btcTxId = "txId",
-              btcVout = 0,
-              utxoTxId = "bifrostTxId",
-              utxoIndex = 0,
-              amount = AssetToken("groupId", "seriesId", 100L)
-            ),
-            BifrostFundsWithdrawn(
-              1L,
-              "bifrostTxId",
-              1,
-              "strata-secret",
-              AssetToken("groupId", "seriesId", 100L)
-            )
-          )(transitionToEffect[IO](_, _))
-          .isEmpty
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MWaitingForRedemption(
+            currentTolpBlockHeight = 1L,
+            currentWalletIdx = 0,
+            scriptAsm = "",
+            redeemAddress = redeemAddress,
+            claimAddress = claimAddress,
+            btcTxId = "txId",
+            btcVout = 0,
+            utxoTxId = "bifrostTxId",
+            utxoIndex = 0,
+            amount = AssetToken("groupId", "seriesId", 100L)
+          ),
+          BifrostFundsWithdrawn(
+            1L,
+            "bifrostTxId",
+            1,
+            "strata-secret",
+            AssetToken("groupId", "seriesId", 100L)
+          )
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -290,23 +309,23 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
           BTCFundsDeposited(2, escrowAddressPubkey, "txId", 0, 100.satoshis)
         )(transitionToEffect[IO](_, _))
         .isEmpty &&
-        MonitorTransitionRelation
-          .handleBlockchainEvent[IO](
-            MWaitingForRedemption(
-              currentTolpBlockHeight = 1L,
-              currentWalletIdx = 0,
-              scriptAsm = "",
-              redeemAddress = redeemAddress,
-              claimAddress = claimAddress,
-              btcTxId = "txId",
-              btcVout = 0,
-              utxoTxId = "bifrostTxId",
-              utxoIndex = 0,
-              amount = AssetToken("groupId", "seriesId", 100L)
-            ),
-            BTCFundsWithdrawn("txId", 0)
-          )(transitionToEffect[IO](_, _))
-          .isEmpty
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MWaitingForRedemption(
+            currentTolpBlockHeight = 1L,
+            currentWalletIdx = 0,
+            scriptAsm = "",
+            redeemAddress = redeemAddress,
+            claimAddress = claimAddress,
+            btcTxId = "txId",
+            btcVout = 0,
+            utxoTxId = "bifrostTxId",
+            utxoIndex = 0,
+            amount = AssetToken("groupId", "seriesId", 100L)
+          ),
+          BTCFundsWithdrawn("txId", 0)
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -317,12 +336,10 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
           MWaitingForClaim(
-            someStartBtcBlockHeight =
-              None, // Assuming None if not specified, adjust as necessary
+            someStartBtcBlockHeight = None, // Assuming None if not specified, adjust as necessary
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
-            btcTxId =
-              "yourBtcTxIdHere", // Replace with actual BTC transaction ID
+            btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
             btcVout = 0L, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
@@ -338,29 +355,26 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
         .asInstanceOf[FSMTransitionTo[IO]]
         .nextState
         .isInstanceOf[MConfirmingBTCClaim]
-        &&
-          MonitorTransitionRelation
-            .handleBlockchainEvent[IO](
-              MWaitingForClaim(
-                someStartBtcBlockHeight =
-                  None, // Assuming None if not specified, adjust as necessary
-                secret = "yourSecretHere", // Replace with actual secret
-                currentWalletIdx = 0, // Adjust according to your logic
-                btcTxId =
-                  "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-                btcVout = 0L, // Adjust as necessary
-                scriptAsm =
-                  "yourScriptAsmHere", // Replace with actual script ASM
-                amount = AssetToken(
-                  "groupId",
-                  "seriesId",
-                  100L
-                ), // Adjust amount as necessary
-                claimAddress = claimAddress
-              ),
-              BTCFundsDeposited(2, escrowAddressPubkey, "txId", 0, 100.satoshis)
-            )(transitionToEffect[IO](_, _))
-            .isEmpty
+      &&
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MWaitingForClaim(
+            someStartBtcBlockHeight = None, // Assuming None if not specified, adjust as necessary
+            secret = "yourSecretHere", // Replace with actual secret
+            currentWalletIdx = 0, // Adjust according to your logic
+            btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
+            btcVout = 0L, // Adjust as necessary
+            scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
+            amount = AssetToken(
+              "groupId",
+              "seriesId",
+              100L
+            ), // Adjust amount as necessary
+            claimAddress = claimAddress
+          ),
+          BTCFundsDeposited(2, escrowAddressPubkey, "txId", 0, 100.satoshis)
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -385,21 +399,21 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
         )(transitionToEffect[IO](_, _))
         .get
         .isInstanceOf[EndTransition[IO]]: @nowarn) &&
-        MonitorTransitionRelation
-          .handleBlockchainEvent[IO](
-            MConfirmingBTCClaim(
-              1,
-              "secret",
-              1,
-              "btcTxId",
-              0,
-              "scriptAsm",
-              AssetToken("groupId", "seriesId", 100L),
-              claimAddress
-            ),
-            NewBTCBlock(7)
-          )(transitionToEffect[IO](_, _))
-          .isEmpty
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MConfirmingBTCClaim(
+            1,
+            "secret",
+            1,
+            "btcTxId",
+            0,
+            "scriptAsm",
+            AssetToken("groupId", "seriesId", 100L),
+            claimAddress
+          ),
+          NewBTCBlock(7)
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -410,12 +424,10 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
           MWaitingForClaim(
-            someStartBtcBlockHeight =
-              None, // Assuming None if not specified, adjust as necessary
+            someStartBtcBlockHeight = None, // Assuming None if not specified, adjust as necessary
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
-            btcTxId =
-              "yourBtcTxIdHere", // Replace with actual BTC transaction ID
+            btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
             btcVout = 0L, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
@@ -440,12 +452,10 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
           MWaitingForClaim(
-            someStartBtcBlockHeight =
-              None, // Assuming None if not specified, adjust as necessary
+            someStartBtcBlockHeight = None, // Assuming None if not specified, adjust as necessary
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
-            btcTxId =
-              "yourBtcTxIdHere", // Replace with actual BTC transaction ID
+            btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
             btcVout = 0L, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
@@ -456,8 +466,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             claimAddress = claimAddress
           ),
           BifrostFundsDeposited(
-            currentStrataBlockHeight =
-              0L, // Assuming a missing parameter needs to be added
+            currentStrataBlockHeight = 0L, // Assuming a missing parameter needs to be added
             address = redeemAddress,
             utxoTxId = "utxoTxId",
             utxoIndex = 0,
@@ -469,33 +478,31 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
           )
         )(transitionToEffect[IO](_, _))
         .isEmpty &&
-        MonitorTransitionRelation
-          .handleBlockchainEvent[IO](
-            MWaitingForClaim(
-              someStartBtcBlockHeight =
-                None, // Assuming None if not specified, adjust as necessary
-              secret = "yourSecretHere", // Replace with actual secret
-              currentWalletIdx = 0, // Adjust according to your logic
-              btcTxId =
-                "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-              btcVout = 0L, // Adjust as necessary
-              scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
-              amount = AssetToken(
-                "groupId",
-                "seriesId",
-                100L
-              ), // Adjust amount as necessary
-              claimAddress = claimAddress
-            ),
-            BifrostFundsWithdrawn(
-              1L,
-              "bifrostTxId",
-              0,
-              "strata-secret",
-              AssetToken("groupId", "seriesId", 100L)
-            )
-          )(transitionToEffect[IO](_, _))
-          .isEmpty
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MWaitingForClaim(
+            someStartBtcBlockHeight = None, // Assuming None if not specified, adjust as necessary
+            secret = "yourSecretHere", // Replace with actual secret
+            currentWalletIdx = 0, // Adjust according to your logic
+            btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
+            btcVout = 0L, // Adjust as necessary
+            scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
+            amount = AssetToken(
+              "groupId",
+              "seriesId",
+              100L
+            ), // Adjust amount as necessary
+            claimAddress = claimAddress
+          ),
+          BifrostFundsWithdrawn(
+            1L,
+            "bifrostTxId",
+            0,
+            "strata-secret",
+            AssetToken("groupId", "seriesId", 100L)
+          )
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -543,8 +550,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             100.satoshis
           ),
           BifrostFundsDeposited(
-            currentStrataBlockHeight =
-              0L, // Assuming a missing parameter needs to be added
+            currentStrataBlockHeight = 0L, // Assuming a missing parameter needs to be added
             address = redeemAddress,
             utxoTxId = "utxoTxId",
             utxoIndex = 0,
@@ -581,8 +587,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             100.satoshis
           ),
           BifrostFundsDeposited(
-            currentStrataBlockHeight =
-              0L, // Assuming a missing parameter needs to be added
+            currentStrataBlockHeight = 0L, // Assuming a missing parameter needs to be added
             address = redeemAddressOther,
             utxoTxId = "utxoTxId",
             utxoIndex = 0,
@@ -617,21 +622,21 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
           BTCFundsDeposited(2, escrowAddressPubkey, "txId", 0, 100.satoshis)
         )(transitionToEffect[IO](_, _))
         .isEmpty &&
-        MonitorTransitionRelation
-          .handleBlockchainEvent[IO](
-            MMintingTBTC(
-              1,
-              1,
-              "",
-              redeemAddress,
-              claimAddress,
-              "btcTxId",
-              0,
-              100.satoshis
-            ),
-            BTCFundsWithdrawn("txId", 0)
-          )(transitionToEffect[IO](_, _))
-          .isEmpty
+      MonitorTransitionRelation
+        .handleBlockchainEvent[IO](
+          MMintingTBTC(
+            1,
+            1,
+            "",
+            redeemAddress,
+            claimAddress,
+            "btcTxId",
+            0,
+            100.satoshis
+          ),
+          BTCFundsWithdrawn("txId", 0)
+        )(transitionToEffect[IO](_, _))
+        .isEmpty
     )
   }
 
@@ -680,6 +685,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
         .isInstanceOf[MMintingTBTC]
     )
   }
+
   // WaitingForEscrowBTCConfirmation -> MWaitingForBTCDeposit
   test(
     "PeginTransitionRelation should transition from WaitingForEscrowBTCConfirmation to MWaitingForBTCDeposit on reorg"

@@ -1,25 +1,17 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
-import cats.effect.kernel.Resource
-import cats.effect.kernel.Sync
+import cats.effect.kernel.{Resource, Sync}
 import co.topl.brambl.Context
-import co.topl.brambl.dataApi.BifrostQueryAlgebra
-import co.topl.brambl.dataApi.WalletStateAlgebra
-import co.topl.brambl.models.Datum
-import co.topl.brambl.models.Event
+import co.topl.brambl.dataApi.{BifrostQueryAlgebra, WalletStateAlgebra}
 import co.topl.brambl.models.transaction.IoTransaction
+import co.topl.brambl.models.{Datum, Event}
 import co.topl.brambl.syntax.cryptoToPbKeyPair
 import co.topl.brambl.utils.Encoding
-import co.topl.brambl.validation.TransactionAuthorizationError
-import co.topl.brambl.validation.TransactionSyntaxError
-import co.topl.brambl.validation.TransactionSyntaxError.EmptyInputs
-import co.topl.brambl.validation.TransactionSyntaxError.InvalidDataLength
-import co.topl.brambl.validation.TransactionSyntaxInterpreter
-import co.topl.brambl.wallet.CredentiallerInterpreter
-import co.topl.brambl.wallet.WalletApi
+import co.topl.brambl.validation.TransactionSyntaxError.{EmptyInputs, InvalidDataLength}
+import co.topl.brambl.validation.{TransactionAuthorizationError, TransactionSyntaxError, TransactionSyntaxInterpreter}
+import co.topl.brambl.wallet.{CredentiallerInterpreter, WalletApi}
 import co.topl.crypto.signing.ExtendedEd25519
-import co.topl.quivr.runtime.QuivrRuntimeError
-import co.topl.quivr.runtime.QuivrRuntimeErrors
+import co.topl.quivr.runtime.{QuivrRuntimeError, QuivrRuntimeErrors}
 import io.grpc.ManagedChannel
 import quivr.models.KeyPair
 
@@ -42,15 +34,15 @@ object TransactionAlgebra {
     }
 
   def broadcastSimpleTransactionFromParams[F[_]: Sync](
-      provedTransaction: IoTransaction
+    provedTransaction: IoTransaction
   )(implicit
-      walletApi: WalletApi[F],
-      walletStateApi: WalletStateAlgebra[F],
-      channelResource: Resource[F, ManagedChannel]
+    walletApi:       WalletApi[F],
+    walletStateApi:  WalletStateAlgebra[F],
+    channelResource: Resource[F, ManagedChannel]
   ): F[Either[SimpleTransactionAlgebraError, String]] = {
     import cats.implicits._
     (for {
-      _ <- validateTx(provedTransaction)
+      _           <- validateTx(provedTransaction)
       validations <- checkSignatures(provedTransaction)
       _ <- Sync[F]
         .raiseError(
@@ -81,15 +73,15 @@ object TransactionAlgebra {
           import co.topl.brambl.syntax._
           Encoding.encodeToBase58(tx.id.value.toByteArray()).asRight
         case Left(e: SimpleTransactionAlgebraError) => e.asLeft
-        case Left(e) => UnexpectedError(e.getMessage()).asLeft
+        case Left(e)                                => UnexpectedError(e.getMessage()).asLeft
       }
     )
   }
 
   private def checkSignatures[F[_]: Sync](tx: IoTransaction)(implicit
-      walletApi: WalletApi[F],
-      walletStateApi: WalletStateAlgebra[F],
-      channelResource: Resource[F, ManagedChannel]
+    walletApi:       WalletApi[F],
+    walletStateApi:  WalletStateAlgebra[F],
+    channelResource: Resource[F, ManagedChannel]
   ) = {
     import cats.implicits._
     val mockKeyPair: KeyPair = (new ExtendedEd25519).deriveKeyPairFromSeed(
@@ -176,11 +168,11 @@ object TransactionAlgebra {
   }
 
   def proveSimpleTransactionFromParams[F[_]: Sync](
-      ioTransaction: IoTransaction,
-      keyPair: KeyPair
+    ioTransaction: IoTransaction,
+    keyPair:       KeyPair
   )(implicit
-      walletApi: WalletApi[F],
-      walletStateApi: WalletStateAlgebra[F]
+    walletApi:      WalletApi[F],
+    walletStateApi: WalletStateAlgebra[F]
   ): F[Either[SimpleTransactionAlgebraError, IoTransaction]] = {
     import cats.implicits._
 
@@ -191,12 +183,12 @@ object TransactionAlgebra {
             .make[F](walletApi, walletStateApi, keyPair)
         )
       provedTransaction <- credentialer.prove(ioTransaction)
-      _ <- validateTx(ioTransaction)
+      _                 <- validateTx(ioTransaction)
     } yield provedTransaction).attempt.map(e =>
       e match {
         case Right(v)                               => v.asRight
         case Left(e: SimpleTransactionAlgebraError) => e.asLeft
-        case Left(e) => UnexpectedError(e.getMessage()).asLeft
+        case Left(e)                                => UnexpectedError(e.getMessage()).asLeft
       }
     )
   }

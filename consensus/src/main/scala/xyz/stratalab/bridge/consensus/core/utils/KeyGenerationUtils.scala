@@ -2,25 +2,19 @@ package xyz.stratalab.bridge.consensus.core.utils
 
 import cats.effect.kernel.Sync
 import org.bitcoins.core.crypto.MnemonicCode
-import org.bitcoins.core.hd.BIP32Path
-import org.bitcoins.core.hd.HDAccount
-import org.bitcoins.core.hd.HDPath
-import org.bitcoins.core.hd.HDPurposes
+import org.bitcoins.core.hd.{BIP32Path, HDAccount, HDPath, HDPurposes}
 import org.bitcoins.core.wallet.keymanagement.KeyManagerParams
-import org.bitcoins.crypto.AesPassword
+import org.bitcoins.crypto.{AesPassword, ECDigitalSignature, ECPublicKey, HashType}
 import org.bitcoins.keymanager.bip39.BIP39KeyManager
 import scodec.bits.ByteVector
-import org.bitcoins.crypto.ECDigitalSignature
-import org.bitcoins.crypto.HashType
-import org.bitcoins.crypto.ECPublicKey
 import xyz.stratalab.bridge.consensus.core.BitcoinNetworkIdentifiers
 
 object KeyGenerationUtils {
 
   def signWithKeyManager[F[_]: Sync](
-      km: BIP39KeyManager,
-      txBytes: ByteVector,
-      currentIdx: Int
+    km:         BIP39KeyManager,
+    txBytes:    ByteVector,
+    currentIdx: Int
   ): F[String] = {
     import cats.implicits._
     for {
@@ -35,10 +29,11 @@ object KeyGenerationUtils {
       )
     } yield canonicalSignature.hex
   }
+
   def loadKeyManager[F[_]: Sync](
-      btcNetwork: BitcoinNetworkIdentifiers,
-      seedFile: String,
-      password: String
+    btcNetwork: BitcoinNetworkIdentifiers,
+    seedFile:   String,
+    password:   String
   ): F[BIP39KeyManager] = {
     import cats.implicits._
     for {
@@ -62,9 +57,9 @@ object KeyGenerationUtils {
   }
 
   def createKeyManager[F[_]: Sync](
-      btcNetwork: BitcoinNetworkIdentifiers,
-      seedFile: String,
-      password: String
+    btcNetwork: BitcoinNetworkIdentifiers,
+    seedFile:   String,
+    password:   String
   ) = {
     import cats.implicits._
     for {
@@ -88,8 +83,8 @@ object KeyGenerationUtils {
   }
 
   def generateKey[F[_]: Sync](
-      km: BIP39KeyManager,
-      currentIdx: Int
+    km:         BIP39KeyManager,
+    currentIdx: Int
   ): F[ECPublicKey] = {
     import cats.implicits._
     for {

@@ -3,11 +3,9 @@ package xyz.stratalab.bridge.consensus.core.managers
 import cats.effect.kernel.Sync
 import co.topl.brambl.builders.TransactionBuilderApi
 import co.topl.brambl.dataApi.WalletStateAlgebra
-import co.topl.brambl.models.Indices
-import co.topl.brambl.models.LockAddress
-import co.topl.brambl.models.box.AssetMintingStatement
-import co.topl.brambl.models.box.Lock
+import co.topl.brambl.models.box.{AssetMintingStatement, Lock}
 import co.topl.brambl.models.transaction.IoTransaction
+import co.topl.brambl.models.{Indices, LockAddress}
 import co.topl.brambl.utils.Encoding
 import co.topl.brambl.wallet.WalletApi
 import co.topl.genus.services.Txo
@@ -15,33 +13,33 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.struct.Struct
 import io.circe.Json
 import quivr.models.KeyPair
+import xyz.stratalab.bridge.consensus.shared.Lvl
 
 import TransactionBuilderApi.implicits._
-import xyz.stratalab.bridge.consensus.shared.Lvl
 
 object AssetMintingOps {
 
   import cats.implicits._
 
   def buildAssetTxAux[G[_]: Sync](
-      keyPair: KeyPair,
-      lvlTxos: Seq[Txo],
-      nonLvlTxos: Seq[Txo],
-      groupTxo: Txo,
-      seriesTxo: Txo,
-      lockAddrToUnlock: LockAddress,
-      lockPredicateFrom: Lock.Predicate,
-      fee: Lvl,
-      someNextIndices: Option[Indices],
-      assetMintingStatement: AssetMintingStatement,
-      ephemeralMetadata: Option[Json],
-      commitment: Option[ByteString],
-      changeLock: Option[Lock],
-      recipientLockAddress: LockAddress
+    keyPair:               KeyPair,
+    lvlTxos:               Seq[Txo],
+    nonLvlTxos:            Seq[Txo],
+    groupTxo:              Txo,
+    seriesTxo:             Txo,
+    lockAddrToUnlock:      LockAddress,
+    lockPredicateFrom:     Lock.Predicate,
+    fee:                   Lvl,
+    someNextIndices:       Option[Indices],
+    assetMintingStatement: AssetMintingStatement,
+    ephemeralMetadata:     Option[Json],
+    commitment:            Option[ByteString],
+    changeLock:            Option[Lock],
+    recipientLockAddress:  LockAddress
   )(implicit
-      tba: TransactionBuilderApi[G],
-      wsa: WalletStateAlgebra[G],
-      wa: WalletApi[G]
+    tba: TransactionBuilderApi[G],
+    wsa: WalletStateAlgebra[G],
+    wa:  WalletApi[G]
   ) = (if (lvlTxos.isEmpty) {
          Sync[G].raiseError(CreateTxError("No LVL txos found"))
        } else {
@@ -71,20 +69,20 @@ object AssetMintingOps {
        })
 
   private def buildAssetTransaction[G[_]: Sync](
-      keyPair: KeyPair,
-      txos: Seq[Txo],
-      lockPredicateFrom: Map[LockAddress, Lock.Predicate],
-      lockForChange: Lock,
-      recipientLockAddress: LockAddress,
-      fee: Lvl,
-      assetMintingStatement: AssetMintingStatement,
-      ephemeralMetadata: Option[Struct],
-      commitment: Option[ByteString],
-      someNextIndices: Option[Indices]
+    keyPair:               KeyPair,
+    txos:                  Seq[Txo],
+    lockPredicateFrom:     Map[LockAddress, Lock.Predicate],
+    lockForChange:         Lock,
+    recipientLockAddress:  LockAddress,
+    fee:                   Lvl,
+    assetMintingStatement: AssetMintingStatement,
+    ephemeralMetadata:     Option[Struct],
+    commitment:            Option[ByteString],
+    someNextIndices:       Option[Indices]
   )(implicit
-      tba: TransactionBuilderApi[G],
-      wsa: WalletStateAlgebra[G],
-      wa: WalletApi[G]
+    tba: TransactionBuilderApi[G],
+    wsa: WalletStateAlgebra[G],
+    wa:  WalletApi[G]
   ): G[IoTransaction] = {
     import co.topl.brambl.syntax._
     for {

@@ -1,43 +1,44 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
+import co.topl.brambl.models.{GroupId, SeriesId}
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.shared.AssetToken
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.StrataConfirmationThreshold
-import xyz.stratalab.bridge.consensus.shared.StrataWaitExpirationTime
-import xyz.stratalab.bridge.consensus.subsystems.monitor.EndTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransition
-import xyz.stratalab.bridge.consensus.subsystems.monitor.FSMTransitionTo
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MConfirmingTBTCMint
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MMintingTBTC
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MWaitingForClaim
-import xyz.stratalab.bridge.consensus.subsystems.monitor.MWaitingForRedemption
-import xyz.stratalab.bridge.consensus.subsystems.monitor.PeginStateMachineState
+import xyz.stratalab.bridge.consensus.shared.{
+  AssetToken,
+  BTCWaitExpirationTime,
+  StrataConfirmationThreshold,
+  StrataWaitExpirationTime
+}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  EndTransition,
+  FSMTransition,
+  FSMTransitionTo,
+  MConfirmingTBTCMint,
+  MMintingTBTC,
+  MWaitingForClaim,
+  MWaitingForRedemption,
+  PeginStateMachineState
+}
 
 trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
 
   def handleBlockchainEventMinting[F[_]](
-      currentState: MintingState,
-      blockchainEvent: BlockchainEvent
+    currentState:    MintingState,
+    blockchainEvent: BlockchainEvent
   )(
-      t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
+    t2E: (PeginStateMachineState, BlockchainEvent) => F[Unit]
   )(implicit
-      btcWaitExpirationTime: BTCWaitExpirationTime,
-      toplWaitExpirationTime: StrataWaitExpirationTime,
-      toplConfirmationThreshold: StrataConfirmationThreshold,
-      groupId: GroupId,
-      seriesId: SeriesId
+    btcWaitExpirationTime:     BTCWaitExpirationTime,
+    toplWaitExpirationTime:    StrataWaitExpirationTime,
+    toplConfirmationThreshold: StrataConfirmationThreshold,
+    groupId:                   GroupId,
+    seriesId:                  SeriesId
   ): Option[FSMTransition] =
     ((currentState, blockchainEvent) match {
       case (
             cs: MMintingTBTC,
             ev: NewBTCBlock
           ) =>
-        if (
-          ev.height - cs.startBTCBlockHeight > btcWaitExpirationTime.underlying
-        )
+        if (ev.height - cs.startBTCBlockHeight > btcWaitExpirationTime.underlying)
           Some(
             EndTransition[F](
               t2E(currentState, blockchainEvent)
@@ -83,9 +84,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
             cs: MConfirmingTBTCMint,
             ev: NewBTCBlock
           ) =>
-        if (
-          ev.height - cs.startBTCBlockHeight > btcWaitExpirationTime.underlying
-        )
+        if (ev.height - cs.startBTCBlockHeight > btcWaitExpirationTime.underlying)
           Some(
             EndTransition[F](
               t2E(currentState, blockchainEvent)
@@ -96,9 +95,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
             cs: MConfirmingTBTCMint,
             be: NewStrataBlock
           ) =>
-        if (
-          isAboveConfirmationThresholdStrata(be.height, cs.depositTBTCBlockHeight)
-        ) {
+        if (isAboveConfirmationThresholdStrata(be.height, cs.depositTBTCBlockHeight)) {
           import co.topl.brambl.syntax._
           Some(
             FSMTransitionTo(
@@ -148,9 +145,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
             cs: MWaitingForRedemption,
             ev: NewStrataBlock
           ) =>
-        if (
-          toplWaitExpirationTime.underlying < (ev.height - cs.currentTolpBlockHeight)
-        )
+        if (toplWaitExpirationTime.underlying < (ev.height - cs.currentTolpBlockHeight))
           Some(
             EndTransition[F](
               t2E(currentState, blockchainEvent)
@@ -189,9 +184,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
             cs: MConfirmingRedemption,
             ev: NewStrataBlock
           ) =>
-        if (
-          isAboveConfirmationThresholdStrata(ev.height, cs.currentTolpBlockHeight)
-        )
+        if (isAboveConfirmationThresholdStrata(ev.height, cs.currentTolpBlockHeight))
           Some(
             FSMTransitionTo(
               currentState,

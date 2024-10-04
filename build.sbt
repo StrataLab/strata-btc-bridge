@@ -32,7 +32,7 @@ lazy val commonSettings = Seq(
       "-oDGG",
       "-u",
       "target/test-reports"
-    )
+    ),
   ),
   resolvers ++= Seq(
     Resolver.defaultLocal,
@@ -220,3 +220,6 @@ lazy val root = project
   )
   .settings(noPublish)
   .aggregate(consensus, publicApi, strataBtcCli)
+
+addCommandAlias("checkFormat", s"; scalafixAll --check; scalafmtCheckAll")
+addCommandAlias("format", s"; scalafmtAll; scalafixAll; ")
