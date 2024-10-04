@@ -71,6 +71,7 @@ import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
+import xyz.stratalab.bridge.consensus.service.StateMachineReply
 
 trait BridgeStateMachineExecutionManager[F[_]] {
 
@@ -210,10 +211,6 @@ object BridgeStateMachineExecutionManagerImpl {
                   )
                 )
             }
-            _ <- publicApiClientGrpcMap
-              .underlying(ClientId(clientNumber))
-              ._1
-              .replyStartPegin(timestamp, viewNumber, resp)
           } yield resp
         }
 
@@ -267,13 +264,11 @@ object BridgeStateMachineExecutionManagerImpl {
         ): F[Option[PBFTState]] =
           for {
             currentState <- state.get.map(_.apply(sessionId))
-            _            <- debug"Current state: $currentState"
             newState = PBFTTransitionRelation
               .handlePBFTEvent(
                 currentState,
                 pbftEvent
               )
-            _ <- debug"New state: $newState"
             _ <- state.update(x =>
               newState
                 .map(y =>
@@ -319,7 +314,7 @@ object BridgeStateMachineExecutionManagerImpl {
 
         private def executeRequestAux(
           request: xyz.stratalab.bridge.shared.StateMachineRequest
-        ) =
+        ): F[StateMachineReply.Result] =
           (request.operation match {
             case StateMachineRequest.Operation.Empty =>
               // This is just a no-op for the when an operation
@@ -414,7 +409,7 @@ object BridgeStateMachineExecutionManagerImpl {
                 (ClientId(request.clientNumber), request.timestamp),
                 x
               )
-            )
+            ) >> Sync[F].delay(x)
           )
 
         private def executeRequestF(
@@ -424,8 +419,17 @@ object BridgeStateMachineExecutionManagerImpl {
           import xyz.stratalab.bridge.shared.implicits._
           import cats.implicits._
           for {
-            _ <- executeRequestAux(request)
+            resp        <- executeRequestAux(request)
+            currentView <- viewManager.currentView
             // here we start the checkpoint
+            _ <-
+              if (!request.operation.isEmpty)
+                info"Replying to start pegin request: $resp" >>
+                publicApiClientGrpcMap
+                  .underlying(ClientId(request.clientNumber))
+                  ._1
+                  .replyStartPegin(request.timestamp, currentView, resp)
+              else Async[F].unit
             _ <-
               if (sequenceNumber % checkpointInterval.underlying == 0)
                 for {
@@ -454,17 +458,7 @@ object BridgeStateMachineExecutionManagerImpl {
           request:        xyz.stratalab.bridge.shared.StateMachineRequest
         ): F[Unit] =
           for {
-            _           <- queue.offer((sequenceNumber, request))
-            currentView <- viewManager.currentView
-            _ <- request.operation match {
-              case StateMachineRequest.Operation.StartSession(_) =>
-                Sync[F].unit
-              case _ =>
-                publicApiClientGrpcMap
-                  .underlying(ClientId(request.clientNumber))
-                  ._1
-                  .replyStartPegin(request.timestamp, currentView, Result.Empty)
-            }
+            _ <- queue.offer((sequenceNumber, request))
           } yield ()
       }
     }
