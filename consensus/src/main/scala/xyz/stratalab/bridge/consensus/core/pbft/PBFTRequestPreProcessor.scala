@@ -2,20 +2,14 @@ package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.kernel.Async
 import cats.effect.std.Queue
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
-import xyz.stratalab.bridge.consensus.core.pbft.activities.CommitActivity
-import xyz.stratalab.bridge.consensus.core.pbft.activities.PrePrepareActivity
-import xyz.stratalab.bridge.consensus.core.pbft.activities.PrepareActivity
-import xyz.stratalab.bridge.consensus.pbft.CommitRequest
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.core.pbft.activities.{CommitActivity, PrePrepareActivity, PrepareActivity, ViewChangeActivity}
+import xyz.stratalab.bridge.consensus.pbft.{CommitRequest, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
 import xyz.stratalab.bridge.shared.ReplicaCount
-import org.typelevel.log4cats.Logger
 
 import java.security.PublicKey
-import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
-import xyz.stratalab.bridge.consensus.core.pbft.activities.ViewChangeActivity
 
 trait PBFTRequestPreProcessor[F[_]] {
 
@@ -29,23 +23,23 @@ trait PBFTRequestPreProcessor[F[_]] {
 object PBFTRequestPreProcessorImpl {
 
   def make[F[_]: Async: Logger](
-      queue: Queue[F, PBFTInternalEvent],
-      viewManager: ViewManager[F],
-      replicaKeysMap: Map[Int, PublicKey]
+    queue:          Queue[F, PBFTInternalEvent],
+    viewManager:    ViewManager[F],
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      requestTimerManager: RequestTimerManager[F],
-      requestStateManager: RequestStateManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
-      storageApi: StorageApi[F],
-      replicaCount: ReplicaCount
+    requestTimerManager:    RequestTimerManager[F],
+    requestStateManager:    RequestStateManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
+    storageApi:             StorageApi[F],
+    replicaCount:           ReplicaCount
   ): PBFTRequestPreProcessor[F] = new PBFTRequestPreProcessor[F] {
 
     import org.typelevel.log4cats.syntax._
     import cats.implicits._
 
-    private implicit val viewManagerImplicit: ViewManager[F] = viewManager
+    implicit private val viewManagerImplicit: ViewManager[F] = viewManager
 
-    override def preProcessRequest(request: PrePrepareRequest): F[Unit] = {
+    override def preProcessRequest(request: PrePrepareRequest): F[Unit] =
       for {
         timerExpired <- requestTimerManager.hasExpiredTimer()
         _ <-
@@ -59,7 +53,6 @@ object PBFTRequestPreProcessorImpl {
               _ <- someEvent.map(evt => queue.offer(evt)).sequence
             } yield ()
       } yield ()
-    }
 
     override def preProcessRequest(request: PrepareRequest): F[Unit] =
       for {
@@ -75,6 +68,7 @@ object PBFTRequestPreProcessorImpl {
               _ <- someEvent.map(evt => queue.offer(evt)).sequence
             } yield ()
       } yield ()
+
     override def preProcessRequest(request: CommitRequest): F[Unit] =
       for {
         timerExpired <- requestTimerManager.hasExpiredTimer()
@@ -91,9 +85,8 @@ object PBFTRequestPreProcessorImpl {
             } yield ()
       } yield ()
 
-    override def preProcessRequest(request: ViewChangeRequest): F[Unit] = {
+    override def preProcessRequest(request: ViewChangeRequest): F[Unit] =
       ViewChangeActivity(request, replicaKeysMap)
-    }
 
   }
 }

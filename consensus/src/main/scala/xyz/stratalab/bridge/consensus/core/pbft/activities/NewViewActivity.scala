@@ -1,16 +1,12 @@
 package xyz.stratalab.bridge.consensus.core.pbft.activities
 
 import cats.effect.kernel.Async
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
 import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
-import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.shared.ReplicaCount
+import xyz.stratalab.bridge.consensus.pbft.{NewViewRequest, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
 import xyz.stratalab.bridge.shared.implicits._
-import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ReplicaCount}
 
 import java.security.PublicKey
 
@@ -18,22 +14,21 @@ object NewViewActivity {
 
   import cats.implicits._
 
-  private sealed trait ViewChangeProblem extends Throwable
+  sealed private trait ViewChangeProblem extends Throwable
   private case object NewViewSignature extends ViewChangeProblem
   private case object InvalidViewChangeSignature extends ViewChangeProblem
   private case object InvalidCertificates extends ViewChangeProblem
   private case object InvalidPreprepareSignature extends ViewChangeProblem
   private case object InvalidPrepareSignature extends ViewChangeProblem
-  private case object InvalidPreprepareRequestSignature
-      extends ViewChangeProblem
+  private case object InvalidPreprepareRequestSignature extends ViewChangeProblem
 
   private def validatePrePrepares[F[_]: Async](
-      prePrepare: PrePrepareRequest,
-      replicaKeysMap: Map[Int, PublicKey]
+    prePrepare:     PrePrepareRequest,
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
-  ): F[Unit] = {
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
+  ): F[Unit] =
     for {
       validPrePrepares <- checkRequestSignatures(prePrepare)
       _ <- Async[F].raiseUnless(validPrePrepares)(
@@ -47,12 +42,11 @@ object NewViewActivity {
         InvalidPreprepareRequestSignature
       ))
     } yield ()
-  }
 
   private def validatePrepares[F[_]: Async](
-      prepare: PrepareRequest,
-      replicaKeysMap: Map[Int, PublicKey]
-  ): F[Unit] = {
+    prepare:        PrepareRequest,
+    replicaKeysMap: Map[Int, PublicKey]
+  ): F[Unit] =
     for {
       validPrepares <- checkMessageSignature(
         prepare.replicaId,
@@ -64,15 +58,14 @@ object NewViewActivity {
         InvalidPrepareSignature
       )
     } yield ()
-  }
 
   private def performNewViewValidation[F[_]: Async](
-      request: ViewChangeRequest,
-      replicaKeysMap: Map[Int, PublicKey]
+    request:        ViewChangeRequest,
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
-  ): F[Unit] = {
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F]
+  ): F[Unit] =
     for {
       reqSignCheck <- checkMessageSignature(
         request.replicaId,
@@ -106,17 +99,16 @@ object NewViewActivity {
         pm.prepares.map(validatePrepares(_, replicaKeysMap))
       }.sequence
     } yield ()
-  }
 
   def apply[F[_]: Async: Logger](
-      request: NewViewRequest
+    request: NewViewRequest
   )(
-      replicaKeysMap: Map[Int, PublicKey]
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      viewManager: ViewManager[F],
-      publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
-      replicaCount: ReplicaCount
-  ): F[Unit] = {
+    viewManager:            ViewManager[F],
+    publicApiClientGrpcMap: PublicApiClientGrpcMap[F],
+    replicaCount:           ReplicaCount
+  ): F[Unit] =
     (for {
       reqSignCheck <- checkMessageSignature(
         (request.newViewNumber % replicaCount.value).toInt,
@@ -134,27 +126,27 @@ object NewViewActivity {
       e match {
         case NewViewSignature =>
           Logger[F].error(
-            s"NewViewActivity: NewView signature validation failed"
+            "NewViewActivity: NewView signature validation failed"
           )
         case InvalidViewChangeSignature =>
           Logger[F].error(
-            s"NewViewActivity: Invalid view change signature"
+            "NewViewActivity: Invalid view change signature"
           )
         case InvalidCertificates =>
           Logger[F].error(
-            s"NewViewActivity: Invalid checkpoint certificates"
+            "NewViewActivity: Invalid checkpoint certificates"
           )
         case InvalidPreprepareSignature =>
           Logger[F].error(
-            s"NewViewActivity: Invalid preprepare signature"
+            "NewViewActivity: Invalid preprepare signature"
           )
         case InvalidPrepareSignature =>
           Logger[F].error(
-            s"NewViewActivity: Invalid prepare signature"
+            "NewViewActivity: Invalid prepare signature"
           )
         case InvalidPreprepareRequestSignature =>
           Logger[F].error(
-            s"NewViewActivity: Invalid preprepare request signature"
+            "NewViewActivity: Invalid preprepare request signature"
           )
         case e =>
           Logger[F].error(
@@ -162,5 +154,4 @@ object NewViewActivity {
           )
       }
     }
-  }
 }

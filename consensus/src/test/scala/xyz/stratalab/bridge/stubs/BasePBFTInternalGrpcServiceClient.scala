@@ -1,17 +1,11 @@
 package xyz.stratalab.bridge.stubs
 
 import cats.effect.IO
-import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
-import xyz.stratalab.bridge.consensus.pbft.CommitRequest
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
+import xyz.stratalab.bridge.consensus.pbft.{CheckpointRequest, CommitRequest, NewViewRequest, PrePrepareRequest, PrepareRequest, ViewChangeRequest}
 import xyz.stratalab.bridge.shared.Empty
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
-import xyz.stratalab.bridge.consensus.pbft.ViewChangeRequest
-import xyz.stratalab.bridge.consensus.pbft.NewViewRequest
 
-class BasePBFTInternalGrpcServiceClient
-    extends PBFTInternalGrpcServiceClient[IO] {
+class BasePBFTInternalGrpcServiceClient extends PBFTInternalGrpcServiceClient[IO] {
 
   override def newView(request: NewViewRequest): IO[Empty] = ???
 

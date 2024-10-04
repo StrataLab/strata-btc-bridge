@@ -1,24 +1,17 @@
 package xyz.stratalab.bridge.consensus.core.pbft
 
-import co.topl.brambl.models.GroupId
-import co.topl.brambl.models.SeriesId
+import co.topl.brambl.models.{GroupId, SeriesId}
 import co.topl.brambl.syntax._
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.core.CheckpointInterval
-import xyz.stratalab.bridge.consensus.core.KWatermark
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.Lvl
-import xyz.stratalab.bridge.consensus.shared.StrataWaitExpirationTime
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.shared.ReplicaId
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
-import java.util.concurrent.ConcurrentHashMap
-import xyz.stratalab.bridge.consensus.core.LastReplyMap
-import xyz.stratalab.bridge.consensus.core.Fellowship
-import xyz.stratalab.bridge.consensus.core.Template
-import org.bitcoins.core.currency.CurrencyUnit
 import org.bitcoins.core.config.RegTest
+import org.bitcoins.core.currency.CurrencyUnit
+import xyz.stratalab.bridge.consensus.core.{CheckpointInterval, Fellowship, KWatermark, LastReplyMap, Template}
+import xyz.stratalab.bridge.consensus.shared.{BTCWaitExpirationTime, Lvl, StrataWaitExpirationTime}
+import xyz.stratalab.bridge.shared.{ReplicaCount, ReplicaId}
+
+import java.util.concurrent.ConcurrentHashMap
 
 trait SampleData {
 
@@ -29,7 +22,6 @@ trait SampleData {
   val toplHost = "localhost"
   val toplPort = 9084
   val toplSecureConnection = false
-
 
   implicit val replicaCount: ReplicaCount = new ReplicaCount(7)
 

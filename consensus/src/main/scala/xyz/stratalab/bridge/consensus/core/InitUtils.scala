@@ -1,15 +1,15 @@
 package xyz.stratalab.bridge.consensus.core
 
-import org.typelevel.log4cats.Logger
 import cats.effect.kernel.Sync
 import co.topl.brambl.utils.Encoding
 import com.typesafe.config.Config
+import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.shared.ReplicaId
 
 trait InitUtils {
 
   def printParams[F[_]: Sync: Logger](
-      params: StrataBTCBridgeConsensusParamConfig
+    params: StrataBTCBridgeConsensusParamConfig
   ) = {
     import org.typelevel.log4cats.syntax._
     import cats.implicits._
@@ -50,8 +50,10 @@ trait InitUtils {
 
   def replicaHost(implicit conf: Config) =
     conf.getString("bridge.replica.requests.host")
+
   def replicaPort(implicit conf: Config) =
     conf.getInt("bridge.replica.requests.port")
+
   def privateKeyFile(implicit conf: Config) =
     conf.getString("bridge.replica.security.privateKeyFile")
 
@@ -62,8 +64,8 @@ trait InitUtils {
     conf.getInt("bridge.replica.responses.port")
 
   def printConfig[F[_]: Sync: Logger](implicit
-      conf: Config,
-      replicaId: ReplicaId
+    conf:      Config,
+    replicaId: ReplicaId
   ) = {
 
     import org.typelevel.log4cats.syntax._

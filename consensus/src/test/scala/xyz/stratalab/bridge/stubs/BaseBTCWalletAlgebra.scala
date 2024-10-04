@@ -1,10 +1,9 @@
 package xyz.stratalab.bridge.stubs
 
-import xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebra
 import cats.effect.IO
-import org.bitcoins.crypto.ECPublicKey
-import org.bitcoins.crypto.ECDigitalSignature
+import org.bitcoins.crypto.{ECDigitalSignature, ECPublicKey}
 import scodec.bits.ByteVector
+import xyz.stratalab.bridge.consensus.core.managers.BTCWalletAlgebra
 
 class BaseBTCWalletAlgebra extends BTCWalletAlgebra[IO] {
 
@@ -13,8 +12,8 @@ class BaseBTCWalletAlgebra extends BTCWalletAlgebra[IO] {
   override def getCurrentPubKey(): IO[ECPublicKey] = ???
 
   override def signForIdx(
-      idx: Int,
-      txBytes: ByteVector
+    idx:     Int,
+    txBytes: ByteVector
   ): IO[ECDigitalSignature] = ???
 
 }

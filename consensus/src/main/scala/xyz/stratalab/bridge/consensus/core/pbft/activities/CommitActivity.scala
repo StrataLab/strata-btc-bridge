@@ -3,35 +3,31 @@ package xyz.stratalab.bridge.consensus.core.pbft.activities
 import cats.effect.kernel.Async
 import cats.implicits._
 import co.topl.brambl.utils.Encoding
-import xyz.stratalab.bridge.consensus.core.pbft.Commited
-import xyz.stratalab.bridge.consensus.core.pbft.PBFTInternalEvent
-import xyz.stratalab.bridge.consensus.core.pbft.RequestIdentifier
+import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.consensus.core.pbft.{Commited, PBFTInternalEvent, RequestIdentifier, ViewManager}
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest
 import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.ReplicaCount
 import xyz.stratalab.bridge.shared.implicits._
-import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.shared.{ClientId, ReplicaCount}
 
 import java.security.PublicKey
-import xyz.stratalab.bridge.consensus.core.pbft.ViewManager
 
 object CommitActivity {
 
-  private sealed trait CommitProblem extends Throwable
+  sealed private trait CommitProblem extends Throwable
   private case object InvalidPrepareSignature extends CommitProblem
   private case object InvalidView extends CommitProblem
   private case object InvalidWatermark extends CommitProblem
   private case object LogAlreadyExists extends CommitProblem
 
   def apply[F[_]: Async: Logger](
-      request: CommitRequest
+    request: CommitRequest
   )(
-      replicaKeysMap: Map[Int, PublicKey]
+    replicaKeysMap: Map[Int, PublicKey]
   )(implicit
-      replicaCount: ReplicaCount,
-      viewManager: ViewManager[F],
-      storageApi: StorageApi[F]
+    replicaCount: ReplicaCount,
+    viewManager:  ViewManager[F],
+    storageApi:   StorageApi[F]
   ): F[Option[PBFTInternalEvent]] = {
     import org.typelevel.log4cats.syntax._
     (for {

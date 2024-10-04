@@ -1,34 +1,29 @@
 package xyz.stratalab.bridge.consensus.core.pbft
-import cats.effect.kernel.Async
+
+import cats.effect.kernel.{Async, Sync}
 import cats.implicits._
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-
-import java.security.PublicKey
-import cats.effect.kernel.Sync
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
-import xyz.stratalab.bridge.shared.ClientId
-
-import xyz.stratalab.bridge.shared.implicits._
-import java.security.MessageDigest
 import co.topl.brambl.utils.Encoding
+import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
+import xyz.stratalab.bridge.consensus.shared.persistence.StorageApi
+import xyz.stratalab.bridge.shared.implicits._
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientId, ReplicaCount}
+
+import java.security.{MessageDigest, PublicKey}
 
 package object activities {
 
   private[activities] def checkViewNumber[F[_]: Async](
-      requestViewNumber: Long
-  )(implicit viewManager: ViewManager[F]): F[Boolean] = {
+    requestViewNumber: Long
+  )(implicit viewManager: ViewManager[F]): F[Boolean] =
     for {
       currentView <- viewManager.currentView
       isValidViewNumber = requestViewNumber == currentView
     } yield isValidViewNumber
-  }
 
   private[activities] def isPrepared[F[_]: Sync](
-      viewNumber: Long,
-      sequenceNumber: Long
+    viewNumber:     Long,
+    sequenceNumber: Long
   )(implicit replicaCount: ReplicaCount, storageApi: StorageApi[F]) = {
     import cats.implicits._
     for {
@@ -41,21 +36,21 @@ package object activities {
         sequenceNumber
       )
     } yield somePrePrepareMessage.isDefined &&
-      somePrePrepareMessage
-        .map(prePrepareMessage =>
-          (prepareMessages
-            .filter(x =>
-              x.digest.toByteArray
-                .sameElements(prePrepareMessage.digest.toByteArray())
-            )
-            .size > replicaCount.maxFailures)
-        )
-        .getOrElse(false)
+    somePrePrepareMessage
+      .map(prePrepareMessage =>
+        (prepareMessages
+          .filter(x =>
+            x.digest.toByteArray
+              .sameElements(prePrepareMessage.digest.toByteArray())
+          )
+          .size > replicaCount.maxFailures)
+      )
+      .getOrElse(false)
   }
 
   private[activities] def isCommitted[F[_]: Sync](
-      viewNumber: Long,
-      sequenceNumber: Long
+    viewNumber:     Long,
+    sequenceNumber: Long
   )(implicit replicaCount: ReplicaCount, storageApi: StorageApi[F]) = {
     import cats.implicits._
     for {
@@ -68,27 +63,27 @@ package object activities {
         sequenceNumber
       )
     } yield somePrePrepareMessage.isDefined &&
-      somePrePrepareMessage
-        .map(prePrepareMessage =>
-          (commitMessages
-            .filter(x =>
-              x.digest.toByteArray
-                .sameElements(prePrepareMessage.digest.toByteArray())
-            )
-            .size > replicaCount.maxFailures)
-        )
-        .getOrElse(false)
+    somePrePrepareMessage
+      .map(prePrepareMessage =>
+        (commitMessages
+          .filter(x =>
+            x.digest.toByteArray
+              .sameElements(prePrepareMessage.digest.toByteArray())
+          )
+          .size > replicaCount.maxFailures)
+      )
+      .getOrElse(false)
   }
 
   private[activities] def checkWaterMark[F[_]: Async]()
-      : F[Boolean] = // FIXME: add check when watermarks are implemented
+    : F[Boolean] = // FIXME: add check when watermarks are implemented
     true.pure[F]
 
   private[activities] def checkMessageSignature[F[_]: Async](
-      replicaId: Int,
-      replicaKeysMap: Map[Int, PublicKey],
-      requestSignableBytes: Array[Byte],
-      requestSignature: Array[Byte]
+    replicaId:            Int,
+    replicaKeysMap:       Map[Int, PublicKey],
+    requestSignableBytes: Array[Byte],
+    requestSignature:     Array[Byte]
   ): F[Boolean] = {
     import cats.implicits._
     val publicKey = replicaKeysMap(replicaId)
@@ -102,7 +97,7 @@ package object activities {
   }
 
   private[activities] def checkRequestSignatures[F[_]: Async](
-      request: PrePrepareRequest
+    request: PrePrepareRequest
   )(implicit publicApiClientGrpcMap: PublicApiClientGrpcMap[F]): F[Boolean] = {
     val publicKey = publicApiClientGrpcMap
       .underlying(new ClientId(request.payload.get.clientNumber))
@@ -113,14 +108,13 @@ package object activities {
       request.payload.get.signature.toByteArray()
     )
   }
-  
 
   private[activities] def checkMessageSignaturePrimary[F[_]: Async](
-      replicaKeysMap: Map[Int, PublicKey],
-      requestSignableBytes: Array[Byte],
-      requestSignature: Array[Byte]
+    replicaKeysMap:       Map[Int, PublicKey],
+    requestSignableBytes: Array[Byte],
+    requestSignature:     Array[Byte]
   )(implicit
-      viewManager: ViewManager[F]
+    viewManager: ViewManager[F]
   ): F[Boolean] = {
     import cats.implicits._
     for {
@@ -135,14 +129,13 @@ package object activities {
   }
 
   private[activities] def checkDigest[F[_]](
-      requestDigest: Array[Byte],
-      payloadSignableBytes: Array[Byte]
-  ): Boolean = {
+    requestDigest:        Array[Byte],
+    payloadSignableBytes: Array[Byte]
+  ): Boolean =
     Encoding.encodeToHex(requestDigest) == Encoding.encodeToHex(
       MessageDigest
         .getInstance("SHA-256")
         .digest(payloadSignableBytes)
     )
-  }
 
 }

@@ -1,58 +1,39 @@
 package xyz.stratalab.bridge.consensus.core.controllers
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.Sync
+import cats.effect.kernel.{Async, Sync}
 import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.dataApi.FellowshipStorageAlgebra
-import co.topl.brambl.dataApi.TemplateStorageAlgebra
-import co.topl.brambl.dataApi.WalletStateAlgebra
+import co.topl.brambl.dataApi.{FellowshipStorageAlgebra, TemplateStorageAlgebra, WalletStateAlgebra}
 import co.topl.brambl.wallet.WalletApi
-import xyz.stratalab.bridge.consensus.shared.BTCWaitExpirationTime
-import xyz.stratalab.bridge.consensus.core.BitcoinNetworkIdentifiers
-import xyz.stratalab.bridge.consensus.core.BridgeWalletManager
-import xyz.stratalab.bridge.consensus.core.CurrentStrataHeightRef
-import xyz.stratalab.bridge.consensus.shared.PeginSessionState
-import xyz.stratalab.bridge.consensus.core.PeginWalletManager
-import xyz.stratalab.bridge.consensus.core.StrataKeypair
-import xyz.stratalab.bridge.consensus.shared.StrataWaitExpirationTime
-import xyz.stratalab.bridge.consensus.shared.PeginSessionInfo
-import xyz.stratalab.bridge.consensus.core.managers.StrataWalletAlgebra
-import xyz.stratalab.bridge.consensus.core.utils.BitcoinUtils
-import xyz.stratalab.bridge.shared.StartSessionOperation
-import xyz.stratalab.bridge.shared.BridgeError
-import xyz.stratalab.bridge.shared.InvalidHash
-import xyz.stratalab.bridge.shared.InvalidInput
-import xyz.stratalab.bridge.shared.InvalidKey
-import xyz.stratalab.bridge.shared.StartPeginSessionResponse
 import org.bitcoins.core.protocol.Bech32Address
-import org.bitcoins.core.protocol.script.P2WPKHWitnessSPKV0
-import org.bitcoins.core.protocol.script.WitnessScriptPubKey
-import org.bitcoins.core.script.constant.OP_0
-import org.bitcoins.core.script.constant.ScriptConstant
-import org.bitcoins.core.util.BitcoinScriptUtil
-import org.bitcoins.core.util.BytesUtil
-import org.bitcoins.crypto.ECPublicKey
-import org.bitcoins.crypto._
+import org.bitcoins.core.protocol.script.{P2WPKHWitnessSPKV0, WitnessScriptPubKey}
+import org.bitcoins.core.script.constant.{OP_0, ScriptConstant}
+import org.bitcoins.core.util.{BitcoinScriptUtil, BytesUtil}
+import org.bitcoins.crypto.{ECPublicKey, _}
 import org.typelevel.log4cats.Logger
 import scodec.bits.ByteVector
+import xyz.stratalab.bridge.consensus.core.managers.StrataWalletAlgebra
+import xyz.stratalab.bridge.consensus.core.utils.BitcoinUtils
+import xyz.stratalab.bridge.consensus.core.{BitcoinNetworkIdentifiers, BridgeWalletManager, CurrentStrataHeightRef, PeginWalletManager, StrataKeypair}
+import xyz.stratalab.bridge.consensus.shared.{BTCWaitExpirationTime, PeginSessionInfo, PeginSessionState, StrataWaitExpirationTime}
+import xyz.stratalab.bridge.shared.{BridgeError, InvalidHash, InvalidInput, InvalidKey, StartPeginSessionResponse, StartSessionOperation}
 
 import java.util.UUID
 
 object StartSessionController {
 
   private def createPeginSessionInfo[F[_]: Sync](
-      btcPeginCurrentWalletIdx: Int,
-      btcBridgeCurrentWalletIdx: Int,
-      mintTemplateName: String,
-      sha256: String,
-      pUserPKey: String,
-      btcPeginBridgePKey: String,
-      btcBridgePKey: ECPublicKey,
-      btcWaitExpirationTime: BTCWaitExpirationTime,
-      btcNetwork: BitcoinNetworkIdentifiers,
-      redeemAddress: String,
-      minHeight: Long,
-      maxHeight: Long
+    btcPeginCurrentWalletIdx:  Int,
+    btcBridgeCurrentWalletIdx: Int,
+    mintTemplateName:          String,
+    sha256:                    String,
+    pUserPKey:                 String,
+    btcPeginBridgePKey:        String,
+    btcBridgePKey:             ECPublicKey,
+    btcWaitExpirationTime:     BTCWaitExpirationTime,
+    btcNetwork:                BitcoinNetworkIdentifiers,
+    redeemAddress:             String,
+    minHeight:                 Long,
+    maxHeight:                 Long
   ): F[(String, PeginSessionInfo)] = {
     import cats.implicits._
     for {
@@ -82,8 +63,8 @@ object StartSessionController {
           WitnessScriptPubKey
             .apply(
               Seq(OP_0) ++
-                push_op ++
-                Seq(ScriptConstant.fromBytes(scriptHash.bytes))
+              push_op ++
+              Seq(ScriptConstant.fromBytes(scriptHash.bytes))
             ),
           btcNetwork.btcNetwork
         )
@@ -114,21 +95,21 @@ object StartSessionController {
   }
 
   def startPeginSession[F[_]: Async: Logger](
-      sessionId: String,
-      req: StartSessionOperation,
-      )(implicit
-      toplKeypair: StrataKeypair,
-      btcNetwork: BitcoinNetworkIdentifiers,
-      currentStrataHeight: CurrentStrataHeightRef[F],
-      pegInWalletManager: PeginWalletManager[F],
-      bridgeWalletManager: BridgeWalletManager[F],
-      fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
-      templateStorageAlgebra: TemplateStorageAlgebra[F],
-      toplWaitExpirationTime: StrataWaitExpirationTime,
-      btcWaitExpirationTime: BTCWaitExpirationTime,
-      tba: TransactionBuilderApi[F],
-      walletApi: WalletApi[F],
-      wsa: WalletStateAlgebra[F]
+    sessionId: String,
+    req:       StartSessionOperation
+  )(implicit
+    toplKeypair:              StrataKeypair,
+    btcNetwork:               BitcoinNetworkIdentifiers,
+    currentStrataHeight:      CurrentStrataHeightRef[F],
+    pegInWalletManager:       PeginWalletManager[F],
+    bridgeWalletManager:      BridgeWalletManager[F],
+    fellowshipStorageAlgebra: FellowshipStorageAlgebra[F],
+    templateStorageAlgebra:   TemplateStorageAlgebra[F],
+    toplWaitExpirationTime:   StrataWaitExpirationTime,
+    btcWaitExpirationTime:    BTCWaitExpirationTime,
+    tba:                      TransactionBuilderApi[F],
+    walletApi:                WalletApi[F],
+    wsa:                      WalletStateAlgebra[F]
   ): F[Either[BridgeError, (PeginSessionInfo, StartPeginSessionResponse)]] = {
     import cats.implicits._
     import StrataWalletAlgebra._
@@ -198,6 +179,5 @@ object StartSessionController {
         )
     }
   }
-
 
 }

@@ -1,20 +1,12 @@
 package xyz.stratalab.bridge.consensus.core.pbft
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.Outcome
-import cats.effect.kernel.Ref
-import cats.effect.kernel.Resource
+import cats.effect.kernel.{Async, Outcome, Ref, Resource}
 import cats.effect.std.Queue
-import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
-import xyz.stratalab.bridge.consensus.pbft.CommitRequest
-import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
-import xyz.stratalab.bridge.consensus.pbft.PrepareRequest
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.shared.ClientId
-import xyz.stratalab.bridge.shared.ReplicaId
-import xyz.stratalab.bridge.shared.StateMachineRequest
-import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 import com.google.protobuf.ByteString
+import xyz.stratalab.bridge.consensus.core.pbft.statemachine.BridgeStateMachineExecutionManager
+import xyz.stratalab.bridge.consensus.pbft.{CommitRequest, PrePrepareRequest, PrepareRequest}
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientId, ReplicaId, StateMachineRequest}
+import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.KeyPair
 
@@ -29,10 +21,10 @@ trait RequestStateManager[F[_]] {
 sealed trait RequestState
 
 case object PrePreparePhase extends RequestState
-case class PreparePhase(stateMachineRequest: StateMachineRequest)
-    extends RequestState
+case class PreparePhase(stateMachineRequest: StateMachineRequest) extends RequestState
+
 case class CommitPhase(
-    stateMachineRequest: StateMachineRequest
+  stateMachineRequest: StateMachineRequest
 ) extends RequestState
 
 case object Completed extends RequestState
@@ -43,12 +35,12 @@ object RequestStateMachineTransitionRelation {
   import cats.implicits._
 
   private def prepare[F[_]: Async](
-      keyPair: KeyPair,
-      request: PrePrepareRequest
+    keyPair: KeyPair,
+    request: PrePrepareRequest
   )(implicit
-      replica: ReplicaId,
-      requestTimerManager: RequestTimerManager[F],
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+    replica:                ReplicaId,
+    requestTimerManager:    RequestTimerManager[F],
+    pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ) = {
     val prepareRequest = PrepareRequest(
       viewNumber = request.viewNumber,
@@ -77,10 +69,10 @@ object RequestStateMachineTransitionRelation {
   }
 
   private def commit[F[_]: Async](
-      keyPair: KeyPair,
-      request: PrepareRequest
+    keyPair: KeyPair,
+    request: PrepareRequest
   )(implicit
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+    pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ) = {
     val commitRequest = CommitRequest(
       viewNumber = request.viewNumber,
@@ -102,12 +94,12 @@ object RequestStateMachineTransitionRelation {
   }
 
   private def complete[F[_]: Async](
-      smRequest: StateMachineRequest,
-      rmOp: F[Unit]
+    smRequest: StateMachineRequest,
+    rmOp:      F[Unit]
   )(implicit
-      requestTimerManager: RequestTimerManager[F],
-      bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
-  ) = {
+    requestTimerManager:                RequestTimerManager[F],
+    bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
+  ) =
     for {
       _ <- bridgeStateMachineExecutionManager.executeRequest(smRequest)
       _ <- requestTimerManager.clearTimer(
@@ -118,14 +110,13 @@ object RequestStateMachineTransitionRelation {
       )
       _ <- rmOp
     } yield ()
-  }
 
   private def viewChange[F[_]: Async](
-      keyPair: KeyPair
+    keyPair: KeyPair
   )(implicit
-      viewManager: ViewManager[F],
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
-  ) = {
+    viewManager:            ViewManager[F],
+    pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+  ) =
     for {
       evt <- viewManager.createViewChangeRequest()
       signedBytes <- BridgeCryptoUtils.signBytes[F](
@@ -137,18 +128,17 @@ object RequestStateMachineTransitionRelation {
       )
       _ <- pbftProtocolClientGrpc.viewChange(evtSigned)
     } yield ()
-  }
 
   def transition[F[_]: Async](
-      keyPair: KeyPair,
-      rmOp: F[Unit]
+    keyPair: KeyPair,
+    rmOp:    F[Unit]
   )(requestState: RequestState, event: PBFTInternalEvent)(implicit
-      replica: ReplicaId,
-      viewManager: ViewManager[F],
-      requestTimerManager: RequestTimerManager[F],
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F],
-      bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
-  ): (Option[RequestState], F[Unit]) = {
+    replica:                            ReplicaId,
+    viewManager:                        ViewManager[F],
+    requestTimerManager:                RequestTimerManager[F],
+    pbftProtocolClientGrpc:             PBFTInternalGrpcServiceClient[F],
+    bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[F]
+  ): (Option[RequestState], F[Unit]) =
     (requestState, event) match {
       case (PrePreparePhase, PrePreparedInserted(request)) =>
         (Some(PreparePhase(request.payload.get)), prepare[F](keyPair, request))
@@ -170,7 +160,6 @@ object RequestStateMachineTransitionRelation {
       case (_, _) =>
         (None, Async[F].unit)
     }
-  }
 }
 
 object RequestStateManagerImpl {
@@ -178,16 +167,16 @@ object RequestStateManagerImpl {
   import cats.implicits._
 
   def make[F[_]: Async](
-      keyPair: KeyPair,
-      viewManager: ViewManager[F],
-      queue: Queue[F, PBFTInternalEvent],
-      requestTimerManager: RequestTimerManager[F],
-      bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[
-        F
-      ]
+    keyPair:             KeyPair,
+    viewManager:         ViewManager[F],
+    queue:               Queue[F, PBFTInternalEvent],
+    requestTimerManager: RequestTimerManager[F],
+    bridgeStateMachineExecutionManager: BridgeStateMachineExecutionManager[
+      F
+    ]
   )(implicit
-      replica: ReplicaId,
-      pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
+    replica:                ReplicaId,
+    pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[F]
   ): F[RequestStateManager[F]] = {
 
     implicit val iViewManager = viewManager
@@ -199,8 +188,7 @@ object RequestStateManagerImpl {
       state <- Ref.of[F, Map[RequestIdentifier, RequestState]](Map.empty)
     } yield new RequestStateManager[F] {
 
-      override def startProcessingEvents()
-          : Resource[F, F[Outcome[F, Throwable, Unit]]] =
+      override def startProcessingEvents(): Resource[F, F[Outcome[F, Throwable, Unit]]] =
         Async[F].background(
           fs2.Stream
             .fromQueueUnterminated(queue)
@@ -210,15 +198,14 @@ object RequestStateManagerImpl {
         )
 
       override def createStateMachine(
-          requestIdentifier: RequestIdentifier
-      ): F[Unit] = {
+        requestIdentifier: RequestIdentifier
+      ): F[Unit] =
         state.update(
           _ + (requestIdentifier -> PrePreparePhase)
         )
-      }
 
       private def processEvent(
-          event: PBFTInternalEvent
+        event: PBFTInternalEvent
       ): F[Unit] = for {
         _ <- state.flatModify { map =>
           val identifier = event.requestIdentifier

@@ -2,25 +2,20 @@ package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.IO
 import cats.effect.kernel.Ref
-import xyz.stratalab.bridge.consensus.core.PublicApiClientGrpcMap
-import xyz.stratalab.bridge.consensus.core.stateDigest
-import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
-import xyz.stratalab.bridge.consensus.pbft.PBFTInternalServiceFs2Grpc
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.stubs.BaseLogger
-import xyz.stratalab.bridge.stubs.BaseStorageApi
 import com.google.protobuf.ByteString
 import fs2.io.process
 import io.grpc.Metadata
 import munit.CatsEffectSuite
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.typelevel.log4cats.Logger
+import xyz.stratalab.bridge.consensus.core.{PublicApiClientGrpcMap, stateDigest}
+import xyz.stratalab.bridge.consensus.pbft.{CheckpointRequest, PBFTInternalServiceFs2Grpc}
+import xyz.stratalab.bridge.shared.BridgeCryptoUtils
+import xyz.stratalab.bridge.stubs.{BaseLogger, BaseStorageApi}
 
 import java.security.Security
 
-class PBFTInternalGrpcServiceServerSpec
-    extends CatsEffectSuite
-    with PBFTInternalGrpcServiceServerSpecAux {
+class PBFTInternalGrpcServiceServerSpec extends CatsEffectSuite with PBFTInternalGrpcServiceServerSpecAux {
 
   override def afterAll(): Unit = {
     import cats.implicits._
@@ -126,16 +121,17 @@ class PBFTInternalGrpcServiceServerSpec
   val setupServer =
     ResourceFunFixture[
       (
-          PBFTInternalServiceFs2Grpc[IO, Metadata],
-          Ref[IO, List[String]],
-          Ref[IO, List[String]]
+        PBFTInternalServiceFs2Grpc[IO, Metadata],
+        Ref[IO, List[String]],
+        Ref[IO, List[String]]
       )
     ] {
       Security.addProvider(new BouncyCastleProvider());
       implicit val storageApiStub = new BaseStorageApi() {
+
         override def getCheckpointMessage(
-            sequenceNumber: Long,
-            replicaId: Int
+          sequenceNumber: Long,
+          replicaId:      Int
         ): IO[Option[CheckpointRequest]] =
           IO.pure(
             Some(
@@ -154,11 +150,12 @@ class PBFTInternalGrpcServiceServerSpec
       import cats.implicits._
 
       (for {
-        loggedError <- Ref.of[IO, List[String]](List.empty).toResource
+        loggedError   <- Ref.of[IO, List[String]](List.empty).toResource
         loggedWarning <- Ref.of[IO, List[String]](List.empty).toResource
       } yield {
         implicit val logger: Logger[IO] =
           new BaseLogger() {
+
             override def error(message: => String): IO[Unit] =
               loggedError.update(_ :+ message)
 
@@ -168,11 +165,10 @@ class PBFTInternalGrpcServiceServerSpec
         for {
           replicaKeyPair <- BridgeCryptoUtils
             .getKeyPair[IO](privateKeyFile)
-            .use(IO.pure).toResource
+            .use(IO.pure)
+            .toResource
           serverUnderTest <- createSimpleInternalServer(replicaKeyPair)
-        } yield {
-          (serverUnderTest, loggedError, loggedWarning)
-        }
+        } yield (serverUnderTest, loggedError, loggedWarning)
       }).flatten
     }
 
@@ -231,6 +227,7 @@ class PBFTInternalGrpcServiceServerSpec
       true
     )
   }
+
   setupServer.test(
     "checkpoint should ignore message if it already exists in the log"
   ) { serverAndLogChecker =>

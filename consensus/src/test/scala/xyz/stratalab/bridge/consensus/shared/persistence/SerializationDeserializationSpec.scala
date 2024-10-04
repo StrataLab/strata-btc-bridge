@@ -1,18 +1,12 @@
 package xyz.stratalab.bridge.consensus.shared.persistence
 
-import xyz.stratalab.bridge.consensus.shared.AssetToken
-import xyz.stratalab.bridge.consensus.shared.GroupToken
-import xyz.stratalab.bridge.consensus.shared.Lvl
-import xyz.stratalab.bridge.consensus.shared.SeriesToken
 import munit.CatsEffectSuite
 import org.bitcoins.core.currency.Satoshis
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{BifrostFundsDeposited, BTCFundsWithdrawn, BTCFundsDeposited, BifrostFundsWithdrawn, SkippedStrataBlock, SkippedBTCBlock, NewStrataBlock, NewBTCBlock}
-import xyz.stratalab.bridge.consensus.shared.persistence.{SerializationOps, DeserializationOps}
+import xyz.stratalab.bridge.consensus.shared.persistence.{DeserializationOps, SerializationOps}
+import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, SeriesToken}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{BTCFundsDeposited, BTCFundsWithdrawn, BifrostFundsDeposited, BifrostFundsWithdrawn, NewBTCBlock, NewStrataBlock, SkippedBTCBlock, SkippedStrataBlock}
 
-class SerializationDeserializationSpec
-    extends CatsEffectSuite
-    with SerializationOps
-    with DeserializationOps {
+class SerializationDeserializationSpec extends CatsEffectSuite with SerializationOps with DeserializationOps {
 
   test("Serialization and Deserialization of BTCFundsWithdrawn") {
     val event = BTCFundsWithdrawn("txId", 1)
