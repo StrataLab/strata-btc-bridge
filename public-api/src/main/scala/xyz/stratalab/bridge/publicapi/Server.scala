@@ -18,19 +18,15 @@ object ServerConfig {
       }
       .getOrElse(false)
 
-  val port: Port = {
-    val portStr = Option(java.lang.System.getProperty("port")).getOrElse("5000")
+  def port(portStr: String): Port =
     Port
       .fromString(portStr)
       .getOrElse(throw new Exception(s"Bad port option: `${portStr}`"))
-  }
 
-  val host: Host = {
-    val hostStr = if (isProd) "0.0.0.0" else "0.0.0.0"
+  def host(hostStr: String): Host =
     Host
       .fromString(hostStr)
       .getOrElse(throw new Exception(s"Bad host: `${hostStr}`"))
-  }
 
   /**
    * How long the http4s web server will keep the HTTP connection up after it

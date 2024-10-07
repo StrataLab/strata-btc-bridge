@@ -30,72 +30,6 @@ case class PostDepositBTCEvt(
 ) extends PBFTEvent
 
 /**
- * Event that is emitted when a BTC deposit is confirmed.
- *
- * @param sessionId
- *   the session id of the deposit.
- * @param height
- *   the height of the BTC network where the deposit got confirmed.
- */
-case class ConfirmDepositBTCEvt(
-  sessionId: String,
-  height:    Int
-) extends PBFTEvent
-
-/**
- * Event that is emitted when a the TBTC minting is posted to the chain.
- *
- * @param sessionId
- *   the session id of the minting.
- * @param height
- *   the height of the TBTC network where the minting took place.
- * @param utxoTxId
- *   the tx id of the minting.
- * @param utxoIdx
- *   the index of the minting.
- * @param amount
- *   the amount of the minting.
- */
-case class PostTBTCMintEvt(
-  sessionId: String,
-  height:    Long,
-  utxoTxId:  String,
-  utxoIdx:   Int,
-  amount:    BifrostCurrencyUnit
-) extends PBFTEvent
-
-/**
- * Event that is emitted when a BTC deposit is undone because of a reorg.
- *
- * @param sessionId
- */
-case class UndoDepositBTCEvt(
-  sessionId: String
-) extends PBFTEvent
-
-/**
- * Event that is emitted when a TBTC minting is undone because of a reorg.
- *
- * @param sessionId
- */
-case class UndoTBTCMintEvt(
-  sessionId: String
-) extends PBFTEvent
-
-/**
- * Event that is emitted when a TBTC minting is confirmed.
- *
- * @param sessionId
- *   the session id of the minting.
- * @param height
- *   the height of the TBTC network where the minting got confirmed.
- */
-case class ConfirmTBTCMintEvt(
-  sessionId: String,
-  height:    Long
-) extends PBFTEvent
-
-/**
  * Event that is emitted when a TBTC redemption is posted to the chain.
  *
  * @param sessionId
@@ -137,16 +71,10 @@ case class PostClaimTxEvt(
   vout:      Int
 ) extends PBFTEvent
 
-case class TimeoutClaimTxEvt(
-  sessionId: String,
-  height:    Long
-) extends PBFTEvent
-
-case class UndoClaimTxEvt(
+case class TimeoutDeposit(
   sessionId: String
 ) extends PBFTEvent
 
-case class ConfirmClaimTxEvt(
-  sessionId: String,
-  height:    Int
+case class TimeoutMinting(
+  sessionId: String
 ) extends PBFTEvent

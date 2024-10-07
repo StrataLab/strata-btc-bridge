@@ -33,13 +33,7 @@ trait FailedPeginNoDepositWithReorgModule {
         signedTxHex <- signTransaction(bitcoinTx)
         _ <- sendTransaction(signedTxHex)
         _ <- generateToAddress(1, 2, newAddress)
-        _ <- (for {
-          status <- checkMintingStatus(startSessionResponse.sessionID)
-          _ <- IO.sleep(1.second)
-        } yield status)
-          .iterateUntil(
-            _.mintingStatus == "PeginSessionWaitingForEscrowBTCConfirmation"
-          )
+        _ <- IO.sleep(2.second)
         _ <- warn"We are in the waiting for escrow confirmation state"
         _ <- generateToAddress(2, 8, newAddress)
         // reconnect network
@@ -48,14 +42,15 @@ trait FailedPeginNoDepositWithReorgModule {
         // force connection
         _ <- forceConnection(1, ipBitcoin02, 18444)
         _ <- forceConnection(2, ipBitcoin01, 18444)
+        _ <- generateToAddress(1, 102, newAddress)
         _ <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)
           _ <- IO.sleep(2.second)
         } yield status)
           .iterateUntil(
-            _.mintingStatus == "PeginSessionStateWaitingForBTC"
+            _.mintingStatus == "PeginSessionStateTimeout"
           )
-        _ <- generateToAddress(1, 8, newAddress)
+
         _ <- info"Session ${startSessionResponse.sessionID} went back to wait again"
       } yield (),
       ()

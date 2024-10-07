@@ -49,7 +49,7 @@ trait SuccessfulPeginModule {
             _ <- generateToAddress(1, 1, newAddress)
             _ <- IO.sleep(1.second)
           } yield status)
-            .iterateUntil(_.mintingStatus == "PeginSessionWaitingForRedemption")
+            .iterateUntil(_.mintingStatus == "PeginSessionStateMintingTBTC")
         _ <- createVkFile(vkFile)
         _ <- importVks(1)
         _ <- fundRedeemAddressTx(1, mintingStatusResponse.address)

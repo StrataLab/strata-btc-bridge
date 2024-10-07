@@ -340,7 +340,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
             btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-            btcVout = 0L, // Adjust as necessary
+            btcVout = 0, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
               "groupId",
@@ -363,7 +363,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
             btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-            btcVout = 0L, // Adjust as necessary
+            btcVout = 0, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
               "groupId",
@@ -428,7 +428,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
             btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-            btcVout = 0L, // Adjust as necessary
+            btcVout = 0, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
               "groupId",
@@ -456,7 +456,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
             btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-            btcVout = 0L, // Adjust as necessary
+            btcVout = 0, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
               "groupId",
@@ -485,7 +485,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             secret = "yourSecretHere", // Replace with actual secret
             currentWalletIdx = 0, // Adjust according to your logic
             btcTxId = "yourBtcTxIdHere", // Replace with actual BTC transaction ID
-            btcVout = 0L, // Adjust as necessary
+            btcVout = 0, // Adjust as necessary
             scriptAsm = "yourScriptAsmHere", // Replace with actual script ASM
             amount = AssetToken(
               "groupId",

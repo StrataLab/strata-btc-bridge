@@ -15,10 +15,16 @@ import java.security.PublicKey
 object CommitActivity {
 
   sealed private trait CommitProblem extends Throwable
-  private case object InvalidPrepareSignature extends CommitProblem
+  private case object InvalidCommitSignature extends CommitProblem
   private case object InvalidView extends CommitProblem
   private case object InvalidWatermark extends CommitProblem
-  private case object LogAlreadyExists extends CommitProblem
+
+  private case class LogAlreadyExists(
+    viewNumber:     Long,
+    sequenceNumber: Long,
+    replicaId:      Int,
+    digest:         String
+  ) extends CommitProblem
 
   def apply[F[_]: Async: Logger](
     request: CommitRequest
@@ -38,7 +44,7 @@ object CommitActivity {
         request.signature.toByteArray()
       )
       _ <- Async[F].raiseUnless(reqSignCheck)(
-        InvalidPrepareSignature
+        InvalidCommitSignature
       )
       viewNumberCheck <- checkViewNumber(request.viewNumber)
       _ <- Async[F].raiseUnless(viewNumberCheck)(
@@ -49,7 +55,7 @@ object CommitActivity {
         InvalidWatermark
       )
       canInsert <- storageApi
-        .getCommitMessages(request.viewNumber, request.sequenceNumber)
+        .getCommitMessage(request.viewNumber, request.sequenceNumber, request.replicaId)
         .map(x =>
           x.find(y =>
             Encoding.encodeToHex(y.digest.toByteArray()) == Encoding
@@ -57,7 +63,13 @@ object CommitActivity {
           ).isEmpty
         )
       _ <- Async[F].raiseUnless(canInsert)(
-        LogAlreadyExists
+        LogAlreadyExists(
+          request.viewNumber,
+          request.sequenceNumber,
+          request.replicaId,
+          Encoding
+            .encodeToHex(request.digest.toByteArray())
+        )
       )
       _ <- storageApi.insertCommitMessage(request)
       isCommited <- isCommitted[F](
@@ -82,7 +94,7 @@ object CommitActivity {
       ): PBFTInternalEvent
     )).handleErrorWith {
       _ match {
-        case InvalidPrepareSignature =>
+        case InvalidCommitSignature =>
           error"Invalid commit signature" >> none[PBFTInternalEvent]
             .pure[F]
         case InvalidView =>
@@ -93,8 +105,8 @@ object CommitActivity {
         case InvalidWatermark =>
           error"Invalid watermark in commit message" >> none[PBFTInternalEvent]
             .pure[F]
-        case LogAlreadyExists =>
-          error"Log already exists for this commit message" >> none[
+        case LogAlreadyExists(viewNumber, sequenceNumber, replicaId, digest) =>
+          error"Log already exists for this commit message: $viewNumber, $sequenceNumber, $replicaId, $digest" >> none[
             PBFTInternalEvent
           ]
             .pure[F]

@@ -1,8 +1,8 @@
 package xyz.stratalab.bridge
+
 import cats.effect.IO
 
 import scala.concurrent.duration._
-import cats.effect.kernel.Ref
 
 trait FailedMintingReorgModule {
 
@@ -14,15 +14,15 @@ trait FailedMintingReorgModule {
 
     assertIO(
       for {
-        _ <- mintStrataBlock(1, 1)
+        _                    <- mintStrataBlock(1, 1)
         bridgeNetworkAndName <- computeBridgeNetworkName
-        _ <- pwd
-        _ <- initStrataWallet(2)
-        _ <- addFellowship(2)
-        _ <- addSecret(2)
-        newAddress <- getNewAddress
-        _ <- generateToAddress(1, 1, newAddress)
-        txIdAndBTCAmount <- extractGetTxIdAndAmount
+        _                    <- pwd
+        _                    <- initStrataWallet(2)
+        _                    <- addFellowship(2)
+        _                    <- addSecret(2)
+        newAddress           <- getNewAddress
+        _                    <- generateToAddress(1, 1, newAddress)
+        txIdAndBTCAmount     <- extractGetTxIdAndAmount
         (txId, btcAmount, btcAmountLong) = txIdAndBTCAmount
         startSessionResponse <- startSession(2)
         _ <- addTemplate(
@@ -42,26 +42,18 @@ trait FailedMintingReorgModule {
         _ <- info"Disconnected bridge: ${bridgeNetworkAndName._2}"
         _ <- sendTransaction(signedTxHex)
         _ <- generateToAddress(1, 8, newAddress)
-        // ref
-        mutableRef <- Ref.of[IO, Int](0)
-        _ <- (for {
-          status <- checkMintingStatus(startSessionResponse.sessionID)
-          nbTries <- mutableRef.updateAndGet(_ + 1)
-          _ <-
-            if (nbTries < 5)
-              mintStrataBlockDocker(1, 1)
-            else IO.unit
-          _ <- IO.sleep(1.second)
-        } yield status)
-          .iterateUntil(
-            _.mintingStatus == "PeginSessionMintingTBTCConfirmation"
-          )
-        _ <- info"Session ${startSessionResponse.sessionID} went to PeginSessionMintingTBTCConfirmation"	
+        _ <- List
+          .fill(5)(for {
+            _ <- mintStrataBlockDocker(1, 1)
+            _ <- IO.sleep(1.second)
+          } yield ())
+          .sequence
+        _ <- info"Session ${startSessionResponse.sessionID} went to PeginSessionMintingTBTCConfirmation"
         _ <- List.fill(10)(mintStrataBlockDocker(2, 1)).sequence
         _ <- connectBridge(bridgeNetworkAndName._2, "bifrost02")
         _ <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)
-          _ <- IO.sleep(1.second)
+          _      <- IO.sleep(1.second)
         } yield status)
           .iterateUntil(
             _.mintingStatus == "PeginSessionStateMintingTBTC"

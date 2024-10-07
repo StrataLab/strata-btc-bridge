@@ -15,16 +15,9 @@ message StateMachineRequest {
     StartSessionOperation startSession = 4;
     PostDepositBTCOperation postDepositBTC = 5;
     TimeoutDepositBTCOperation timeoutDepositBTC = 6;
-    UndoDepositBTCOperation undoDepositBTC = 7;
-    ConfirmDepositBTCOperation confirmDepositBTC = 8;
-    PostTBTCMintOperation postTBTCMint = 9;
-    TimeoutTBTCMintOperation timeoutTBTCMint = 10;
-    UndoTBTCMintOperation undoTBTCMint = 11;
-    ConfirmTBTCMintOperation confirmTBTCMint = 12;
-    PostRedemptionTxOperation postRedemptionTx = 13;
-    PostClaimTxOperation postClaimTx = 14;
-    ConfirmClaimTxOperation confirmClaimTx = 15;
-    UndoClaimTxOperation undoClaimTx = 16;
+    TimeoutTBTCMintOperation timeoutTBTCMint = 7;
+    PostRedemptionTxOperation postRedemptionTx = 8;
+    PostClaimTxOperation postClaimTx = 9;
   }
 }
 
@@ -51,16 +44,6 @@ message TimeoutDepositBTCOperation {
  uint32 height = 2;
 }
 
-message UndoDepositBTCOperation {
- string sessionId = 1;
-}
-
-message ConfirmDepositBTCOperation {
- string sessionId = 1;
- bytes amount     = 2;
- uint32 height    = 3;
-}
-
 message PostTBTCMintOperation {
  string sessionId = 1;
  uint64 height = 2;
@@ -73,15 +56,6 @@ message TimeoutTBTCMintOperation {
  string sessionId = 1;
  uint32 btcHeight = 2;
  uint64 toplHeight = 3;
-}
-
-message UndoTBTCMintOperation {
- string sessionId = 1;
-}
-
-message ConfirmTBTCMintOperation {
- string sessionId = 1;
- uint64 height = 2;
 }
 
 message PostRedemptionTxOperation {
@@ -99,14 +73,6 @@ message TimeoutRedemptionTxOperation {
  string sessionId = 1;
 }
 
-message UndoRedemptionTxOperation {
- string sessionId = 1;
-}
-
-message ConfirmRedemptionTxOperation {
- string sessionId = 1;
-}
-
 message PostClaimTxOperation {
  string sessionId = 1;
  uint32 height = 3;
@@ -116,13 +82,4 @@ message PostClaimTxOperation {
 
 message TimeoutClaimTxOperation {
  string sessionId = 1;
-}
-
-message UndoClaimTxOperation {
- string sessionId = 1;
-}
-
-message ConfirmClaimTxOperation {
- string sessionId = 1;
- uint32 height = 2;
 }

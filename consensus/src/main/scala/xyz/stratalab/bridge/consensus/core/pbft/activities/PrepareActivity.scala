@@ -17,7 +17,7 @@ object PrepareActivity {
   private case object InvalidPrepareSignature extends PrepareProblem
   private case object InvalidView extends PrepareProblem
   private case object InvalidWatermark extends PrepareProblem
-  private case object LogAlreadyExists extends PrepareProblem
+  private case class LogAlreadyExists(sequenceNumber: Long) extends PrepareProblem
   import cats.implicits._
 
   def apply[F[_]: Async: Logger](
@@ -49,7 +49,7 @@ object PrepareActivity {
         InvalidWatermark
       )
       canInsert <- storageApi
-        .getPrepareMessages(request.viewNumber, request.sequenceNumber)
+        .getPrepareMessage(request.viewNumber, request.sequenceNumber, request.replicaId)
         .map(x =>
           x.find(y =>
             Encoding.encodeToHex(y.digest.toByteArray()) == Encoding
@@ -57,7 +57,7 @@ object PrepareActivity {
           ).isEmpty
         )
       _ <- Async[F].raiseUnless(canInsert)(
-        LogAlreadyExists
+        LogAlreadyExists(request.sequenceNumber)
       )
       _ <- storageApi.insertPrepareMessage(request)
       isPrepared <- isPrepared[F](
@@ -91,8 +91,8 @@ object PrepareActivity {
         case InvalidWatermark =>
           error"Invalid watermark" >> none[PBFTInternalEvent]
             .pure[F]
-        case LogAlreadyExists =>
-          warn"Prepare message already exists for this sequence number" >> none[
+        case LogAlreadyExists(sequenceNumber) =>
+          warn"Prepare message already exists for this sequence number: $sequenceNumber" >> none[
             PBFTInternalEvent
           ]
             .pure[F]

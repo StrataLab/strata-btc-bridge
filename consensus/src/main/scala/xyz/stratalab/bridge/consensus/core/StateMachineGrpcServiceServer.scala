@@ -1,13 +1,13 @@
 package xyz.stratalab.bridge.consensus.core
 
 import cats.effect.IO
-import cats.effect.kernel.{Ref, Sync}
+import cats.effect.kernel.Sync
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.pbft.{RequestIdentifier, RequestTimerManager, ViewManager}
 import xyz.stratalab.bridge.consensus.core.{LastReplyMap, PublicApiClientGrpcMap}
-import xyz.stratalab.bridge.consensus.pbft.{PrePrepareRequest, PrepareRequest}
+import xyz.stratalab.bridge.consensus.pbft.PrePrepareRequest
 import xyz.stratalab.bridge.consensus.service.MintingStatusReply.{Result => MSReply}
 import xyz.stratalab.bridge.consensus.service.{
   MintingStatusReply,
@@ -17,10 +17,20 @@ import xyz.stratalab.bridge.consensus.service.{
 }
 import xyz.stratalab.bridge.consensus.shared.PeginSessionInfo
 import xyz.stratalab.bridge.consensus.subsystems.monitor.SessionManagerAlgebra
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, ClientId, Empty, MintingStatusOperation, ReplicaCount, ReplicaId}
+import xyz.stratalab.bridge.shared.StateMachineRequest.Operation.StartSession
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  ClientId,
+  Empty,
+  MintingStatusOperation,
+  ReplicaCount,
+  ReplicaId,
+  StateMachineRequest
+}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
 
 import java.security.{KeyPair => JKeyPair, MessageDigest}
+import java.util.UUID
 
 object StateMachineGrpcServiceServer {
 
@@ -28,7 +38,7 @@ object StateMachineGrpcServiceServer {
     keyPair:                JKeyPair,
     pbftProtocolClientGrpc: PBFTInternalGrpcServiceClient[IO],
     idReplicaClientMap:     Map[Int, StateMachineServiceFs2Grpc[IO, Metadata]],
-    currentSequenceRef:     Ref[IO, Long]
+    seqNumberManager:       SequenceNumberManager[IO]
   )(implicit
     lastReplyMap:           LastReplyMap,
     requestTimerManager:    RequestTimerManager[IO],
@@ -45,7 +55,7 @@ object StateMachineGrpcServiceServer {
       import org.typelevel.log4cats.syntax._
       import cats.implicits._
 
-      private def mintingStatusAux[F[_]: Sync](
+      private def mintingStatusAux[F[_]: Sync: Logger](
         value: MintingStatusOperation
       )(implicit
         sessionManager: SessionManagerAlgebra[F]
@@ -53,8 +63,11 @@ object StateMachineGrpcServiceServer {
         for {
           session <- sessionManager.getSession(value.sessionId)
           somePegin <- session match {
-            case Some(p: PeginSessionInfo) => Sync[F].delay(Option(p))
-            case None                      => Sync[F].delay(None)
+            case Some(p: PeginSessionInfo) =>
+              val l = implicitly[Logger[F]]
+              debug"minting status session: ${p.mintingBTCState.toString()}" (l) >>
+              Sync[F].delay(Option(p))
+            case None => Sync[F].delay(None)
             case _ =>
               Sync[F].raiseError(new Exception("Invalid session type"))
           }
@@ -102,55 +115,56 @@ object StateMachineGrpcServiceServer {
                 ._1
                 .replyStartPegin(request.timestamp, viewNumber, result)
             } yield Empty()
-          case None =>
+          case None => // w are going to execute the request
             for {
-              currentView     <- viewManager.currentView
-              currentSequence <- currentSequenceRef.updateAndGet(_ + 1)
-              currentPrimary = currentView % replicaCount.value
+              currentView <- viewManager.currentView
+              currentPrimary = (currentView % replicaCount.value).toInt
+              reqIdentifier = RequestIdentifier(
+                ClientId(request.clientNumber),
+                request.timestamp
+              )
               _ <-
                 if (currentPrimary != replicaId.id)
                   // we are not the primary, forward the request
                   requestTimerManager.startTimer(
-                    RequestIdentifier(
-                      ClientId(request.clientNumber),
-                      request.timestamp
-                    )
+                    reqIdentifier
                   ) >>
                   idReplicaClientMap(
-                    replicaId.id
+                    currentPrimary
                   ).executeRequest(request, ctx)
                 else {
                   import xyz.stratalab.bridge.shared.implicits._
-                  val prePrepareRequest = PrePrepareRequest(
+                  val prePrepareRequestNoSeq = PrePrepareRequest(
                     viewNumber = currentView,
-                    sequenceNumber = currentSequence,
                     digest = ByteString.copyFrom(
                       MessageDigest
                         .getInstance("SHA-256")
                         .digest(request.signableBytes)
                     ),
-                    payload = Some(request)
-                  )
-                  val prepareRequest = PrepareRequest(
-                    viewNumber = currentView,
-                    sequenceNumber = currentSequence,
-                    digest = prePrepareRequest.digest,
-                    replicaId = replicaId.id
+                    payload = Some(request match {
+                      case StateMachineRequest(_, _, _, operation: StartSession, _) =>
+                        request.withOperation(
+                          operation.copy(
+                            value = operation.value.withSessionId(
+                              UUID.randomUUID().toString
+                            )
+                          )
+                        )
+                      case _ => request
+
+                    })
                   )
                   (for {
+                    currentSequence <- seqNumberManager.getAndIncrease
+                    prePrepareRequest = prePrepareRequestNoSeq.withSequenceNumber(
+                      currentSequence
+                    )
                     signedPrePreparedBytes <- BridgeCryptoUtils.signBytes[IO](
                       keyPair.getPrivate(),
                       prePrepareRequest.signableBytes
                     )
-                    signedPreparedBytes <- BridgeCryptoUtils.signBytes[IO](
-                      keyPair.getPrivate(),
-                      prepareRequest.signableBytes
-                    )
                     signedprePrepareRequest = prePrepareRequest.withSignature(
                       ByteString.copyFrom(signedPrePreparedBytes)
-                    )
-                    signedPrepareRequest = prepareRequest.withSignature(
-                      ByteString.copyFrom(signedPreparedBytes)
                     )
                     _ <- pbftProtocolClientGrpc.prePrepare(
                       signedprePrepareRequest

@@ -1,127 +1,76 @@
 package xyz.stratalab.bridge.shared
 
-import cats.effect.kernel.Async
-import cats.effect.kernel.Ref
-import cats.effect.kernel.Sync
-import xyz.stratalab.bridge.shared.MintingStatusOperation
-import xyz.stratalab.bridge.shared.StartSessionOperation
-import xyz.stratalab.bridge.shared.StateMachineRequest
-import xyz.stratalab.bridge.consensus.service.StateMachineServiceFs2Grpc
-import xyz.stratalab.bridge.shared.BridgeCryptoUtils
-import xyz.stratalab.bridge.shared.BridgeError
-import xyz.stratalab.bridge.shared.BridgeResponse
-import xyz.stratalab.bridge.shared.ReplicaCount
-import xyz.stratalab.bridge.shared.ReplicaNode
-import xyz.stratalab.bridge.shared.TimeoutError
+import cats.effect.kernel.{Async, Ref, Sync}
+import cats.effect.std.Mutex
 import com.google.protobuf.ByteString
 import fs2.grpc.syntax.all._
-import io.grpc.ManagedChannelBuilder
-import io.grpc.Metadata
+import io.grpc.{ManagedChannelBuilder, Metadata}
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
+import xyz.stratalab.bridge.consensus.service.{MintingStatusReply, StateMachineServiceFs2Grpc}
+import xyz.stratalab.bridge.shared.{
+  BridgeCryptoUtils,
+  BridgeError,
+  BridgeResponse,
+  MintingStatusOperation,
+  PostClaimTxOperation,
+  PostDepositBTCOperation,
+  PostRedemptionTxOperation,
+  ReplicaCount,
+  ReplicaNode,
+  StartSessionOperation,
+  StateMachineRequest,
+  TimeoutDepositBTCOperation,
+  TimeoutError,
+  TimeoutTBTCMintOperation
+}
 
 import java.security.KeyPair
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
-import cats.effect.std.Mutex
-import xyz.stratalab.bridge.shared.PostDepositBTCOperation
-import xyz.stratalab.bridge.shared.TimeoutDepositBTCOperation
-import xyz.stratalab.bridge.shared.UndoDepositBTCOperation
-import xyz.stratalab.bridge.shared.ConfirmDepositBTCOperation
-import xyz.stratalab.bridge.shared.PostTBTCMintOperation
-import xyz.stratalab.bridge.shared.TimeoutTBTCMintOperation
-import xyz.stratalab.bridge.shared.UndoTBTCMintOperation
-import xyz.stratalab.bridge.shared.ConfirmTBTCMintOperation
-import xyz.stratalab.bridge.shared.PostRedemptionTxOperation
-import xyz.stratalab.bridge.shared.PostClaimTxOperation
-import xyz.stratalab.bridge.shared.ConfirmClaimTxOperation
-import xyz.stratalab.bridge.shared.UndoClaimTxOperation
-import xyz.stratalab.bridge.consensus.service.MintingStatusReply
 
 trait StateMachineServiceGrpcClient[F[_]] {
 
   def startPegin(
-      startSessionOperation: StartSessionOperation
+    startSessionOperation: StartSessionOperation
   )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
   def postDepositBTC(
-      postDepositBTCOperation: PostDepositBTCOperation
+    postDepositBTCOperation: PostDepositBTCOperation
   )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
   def timeoutDepositBTC(
-      timeoutDepositBTCOperation: TimeoutDepositBTCOperation
+    timeoutDepositBTCOperation: TimeoutDepositBTCOperation
   )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def undoDepositBTC(
-      undoDepositBTCOperation: UndoDepositBTCOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def confirmDepositBTC(
-      confirmDepositBTCOperation: ConfirmDepositBTCOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def postTBTCMint(
-      postTBTCMintOperation: PostTBTCMintOperation
-  )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
   def timeoutTBTCMint(
-      timeoutTBTCMintOperation: TimeoutTBTCMintOperation
+    timeoutTBTCMintOperation: TimeoutTBTCMintOperation
   )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def undoTBTCMint(
-      undoTBTCMintOperation: UndoTBTCMintOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def confirmTBTCMint(
-      confirmTBTCMintOperation: ConfirmTBTCMintOperation
-  )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
   def postRedemptionTx(
-      postRedemptionTxOperation: PostRedemptionTxOperation
+    postRedemptionTxOperation: PostRedemptionTxOperation
   )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
   def postClaimTx(
-      postClaimTxOperation: PostClaimTxOperation
+    postClaimTxOperation: PostClaimTxOperation
   )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def confirmClaimTx(
-      confirmClaimTxOperation: ConfirmClaimTxOperation
-  )(implicit
-      clientNumber: ClientId
-  ): F[Either[BridgeError, BridgeResponse]]
-
-  def undoClaimTx(
-      undoClaimTxOperation: UndoClaimTxOperation
-  )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 
   def mintingStatus(
-      mintingStatusOperation: MintingStatusOperation
+    mintingStatusOperation: MintingStatusOperation
   )(implicit
-      clientNumber: ClientId
+    clientNumber: ClientId
   ): F[Either[BridgeError, BridgeResponse]]
 }
 
@@ -132,76 +81,46 @@ object StateMachineServiceGrpcClientImpl {
   import scala.concurrent.duration._
 
   def makeContainer[F[_]: Async: Logger](
-      currentViewRef: Ref[F, Long],
-      keyPair: KeyPair,
-      mutex: Mutex[F],
-      replicaNodes: List[ReplicaNode[F]],
-      messageVotersMap: ConcurrentHashMap[
-        ConsensusClientMessageId,
-        ConcurrentHashMap[Int, Int]
-      ],
-      messageResponseMap: ConcurrentHashMap[
-        ConsensusClientMessageId,
-        ConcurrentHashMap[Either[
-          BridgeError,
-          BridgeResponse
-        ], LongAdder]
-      ]
+    currentViewRef: Ref[F, Long],
+    keyPair:        KeyPair,
+    mutex:          Mutex[F],
+    replicaNodes:   List[ReplicaNode[F]],
+    messageVotersMap: ConcurrentHashMap[
+      ConsensusClientMessageId,
+      ConcurrentHashMap[Int, Int]
+    ],
+    messageResponseMap: ConcurrentHashMap[
+      ConsensusClientMessageId,
+      ConcurrentHashMap[Either[
+        BridgeError,
+        BridgeResponse
+      ], LongAdder]
+    ]
   )(implicit replicaCount: ReplicaCount) = {
     for {
       idClientList <- (for {
         replicaNode <- replicaNodes
-      } yield {
-        for {
-          channel <-
-            (if (replicaNode.backendSecure)
-               ManagedChannelBuilder
-                 .forAddress(replicaNode.backendHost, replicaNode.backendPort)
-                 .useTransportSecurity()
-             else
-               ManagedChannelBuilder
-                 .forAddress(replicaNode.backendHost, replicaNode.backendPort)
-                 .usePlaintext()).resource[F]
-          consensusClient <- StateMachineServiceFs2Grpc.stubResource(
-            channel
-          )
-        } yield (replicaNode.id -> consensusClient)
-      }).sequence
+      } yield for {
+        channel <-
+          (if (replicaNode.backendSecure)
+             ManagedChannelBuilder
+               .forAddress(replicaNode.backendHost, replicaNode.backendPort)
+               .useTransportSecurity()
+           else
+             ManagedChannelBuilder
+               .forAddress(replicaNode.backendHost, replicaNode.backendPort)
+               .usePlaintext()).resource[F]
+        consensusClient <- StateMachineServiceFs2Grpc.stubResource(
+          channel
+        )
+      } yield (replicaNode.id -> consensusClient)).sequence
       replicaMap = idClientList.toMap
     } yield new StateMachineServiceGrpcClient[F] {
 
-      def undoClaimTx(
-          undoClaimTxOperation: UndoClaimTxOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] =
-        mutex.lock.surround(for {
-          request <- prepareRequest(
-            StateMachineRequest.Operation.UndoClaimTx(
-              undoClaimTxOperation
-            )
-          )
-          response <- executeRequest(request)
-        } yield response)
-
-      def confirmClaimTx(
-          confirmClaimTxOperation: ConfirmClaimTxOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] =
-        mutex.lock.surround(for {
-          request <- prepareRequest(
-            StateMachineRequest.Operation.ConfirmClaimTx(
-              confirmClaimTxOperation
-            )
-          )
-          response <- executeRequest(request)
-        } yield response)
-
       def postClaimTx(
-          postClaimTxOperation: PostClaimTxOperation
+        postClaimTxOperation: PostClaimTxOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] =
         mutex.lock.surround(for {
           request <- prepareRequest(
@@ -213,9 +132,9 @@ object StateMachineServiceGrpcClientImpl {
         } yield response)
 
       def postRedemptionTx(
-          postRedemptionTxOperation: PostRedemptionTxOperation
+        postRedemptionTxOperation: PostRedemptionTxOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] =
         mutex.lock.surround(for {
           request <- prepareRequest(
@@ -226,36 +145,10 @@ object StateMachineServiceGrpcClientImpl {
           response <- executeRequest(request)
         } yield response)
 
-      def confirmTBTCMint(
-          confirmTBTCMintOperation: ConfirmTBTCMintOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.ConfirmTBTCMint(
-            confirmTBTCMintOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
-      def undoTBTCMint(
-          undoTBTCMintOperation: UndoTBTCMintOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.UndoTBTCMint(
-            undoTBTCMintOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
       def timeoutTBTCMint(
-          timeoutTBTCMintOperation: TimeoutTBTCMintOperation
+        timeoutTBTCMintOperation: TimeoutTBTCMintOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
         request <- prepareRequest(
           StateMachineRequest.Operation.TimeoutTBTCMint(
@@ -265,49 +158,10 @@ object StateMachineServiceGrpcClientImpl {
         response <- executeRequest(request)
       } yield response)
 
-      def postTBTCMint(
-          postTBTCMintOperation: PostTBTCMintOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.PostTBTCMint(
-            postTBTCMintOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
-      def confirmDepositBTC(
-          confirmDepositBTCOperation: ConfirmDepositBTCOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.ConfirmDepositBTC(
-            confirmDepositBTCOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
-      override def undoDepositBTC(
-          undoDepositBTCOperation: UndoDepositBTCOperation
-      )(implicit
-          clientNumber: ClientId
-      ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
-        request <- prepareRequest(
-          StateMachineRequest.Operation.UndoDepositBTC(
-            undoDepositBTCOperation
-          )
-        )
-        response <- executeRequest(request)
-      } yield response)
-
       override def timeoutDepositBTC(
-          timeoutDepositBTCOperation: TimeoutDepositBTCOperation
+        timeoutDepositBTCOperation: TimeoutDepositBTCOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] =
         mutex.lock.surround(for {
           request <- prepareRequest(
@@ -319,9 +173,9 @@ object StateMachineServiceGrpcClientImpl {
         } yield response)
 
       override def postDepositBTC(
-          postDepositBTCOperation: PostDepositBTCOperation
+        postDepositBTCOperation: PostDepositBTCOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] = mutex.lock.surround(for {
         request <- prepareRequest(
           StateMachineRequest.Operation.PostDepositBTC(postDepositBTCOperation)
@@ -330,9 +184,9 @@ object StateMachineServiceGrpcClientImpl {
       } yield response)
 
       def startPegin(
-          startSessionOperation: StartSessionOperation
+        startSessionOperation: StartSessionOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] =
         mutex.lock.surround(for {
           request <- prepareRequest(
@@ -342,16 +196,16 @@ object StateMachineServiceGrpcClientImpl {
         } yield response)
 
       def mintingStatus(
-          mintingStatusOperation: MintingStatusOperation
+        mintingStatusOperation: MintingStatusOperation
       )(implicit
-          clientNumber: ClientId
+        clientNumber: ClientId
       ): F[Either[BridgeError, BridgeResponse]] = {
         import cats.implicits._
         mutex.lock.surround(
           for {
             currentView <- currentViewRef.get
-            _ <- info"Current view is $currentView"
-            _ <- info"Replica count is ${replicaCount.value}"
+            _           <- info"Current view is $currentView"
+            _           <- info"Replica count is ${replicaCount.value}"
             currentPrimary = (currentView % replicaCount.value).toInt
             response <- replicaMap(currentPrimary)
               .mintingStatus(mintingStatusOperation, new Metadata())
@@ -377,8 +231,8 @@ object StateMachineServiceGrpcClientImpl {
       }
 
       private def clearVoteTable(
-          timestamp: Long
-      ): F[Unit] = {
+        timestamp: Long
+      ): F[Unit] =
         for {
           _ <- Async[F].delay(
             messageResponseMap.remove(
@@ -391,10 +245,9 @@ object StateMachineServiceGrpcClientImpl {
             )
           )
         } yield ()
-      }
 
       private def checkVoteResult(
-          timestamp: Long
+        timestamp: Long
       ): F[Either[BridgeError, BridgeResponse]] = {
         import scala.jdk.CollectionConverters._
         for {
@@ -413,13 +266,12 @@ object StateMachineServiceGrpcClientImpl {
           )
           winner <- (someVotationWinner match {
             case Some(winner) => // there are votes, check winner
-              if (
-                winner.getValue.longValue() < (replicaCount.maxFailures + 1)
-              ) {
-                trace"Waiting for more votes" >> Async[F].sleep(
+              if (winner.getValue.longValue() < (replicaCount.maxFailures + 1)) {
+                trace"Waiting for more votes: ${winner.getValue.longValue()}" >> Async[F].sleep(
                   2.second
                 ) >> checkVoteResult(timestamp)
               } else
+                debug"We have a winner for ${timestamp}: ${winner.getKey()}" >>
                 clearVoteTable(timestamp) >> Async[F].delay(winner.getKey())
             case None => // there are no votes
               trace"No votes yet" >> Async[F].sleep(
@@ -430,7 +282,7 @@ object StateMachineServiceGrpcClientImpl {
       }
 
       def executeRequest(
-          request: StateMachineRequest
+        request: StateMachineRequest
       ): F[Either[BridgeError, BridgeResponse]] =
         for {
           _ <- info"Sending request to backend"
@@ -452,11 +304,10 @@ object StateMachineServiceGrpcClientImpl {
             )
           )
           currentView <- currentViewRef.get
-          _ <- info"Current view is $currentView"
-          _ <- info"Replica count is ${replicaCount.value}"
+          _           <- info"Current view is $currentView"
+          _           <- info"Replica count is ${replicaCount.value}"
           currentPrimary = (currentView % replicaCount.value).toInt
           _ <- info"Current primary is $currentPrimary"
-          _ <- info"Replica map: $replicaMap"
           _ <- replicaMap(currentPrimary).executeRequest(
             request,
             new Metadata()
@@ -464,22 +315,21 @@ object StateMachineServiceGrpcClientImpl {
           _ <- trace"Waiting for response from backend"
           someResponse <- Async[F].race(
             Async[F].sleep(10.second) >> // wait for response
-              replicaMap
-                .filter(x =>
-                  x._1 != currentPrimary
-                ) // send to all replicas except primary
-                .map(_._2.executeRequest(request, new Metadata()))
-                .toList
-                .sequence >>
-              Async[F].sleep(10.second) >> // wait for response
-              (TimeoutError("Timeout waiting for response"): BridgeError)
-                .pure[F],
+            error"The request ${request.timestamp} timed out, contacting other replicas" >> // timeout
+            replicaMap
+              .filter(x => x._1 != currentPrimary) // send to all replicas except primary
+              .map(_._2.executeRequest(request, new Metadata()))
+              .toList
+              .sequence >>
+            Async[F].sleep(10.second) >> // wait for response
+            (TimeoutError("Timeout waiting for response"): BridgeError)
+              .pure[F],
             checkVoteResult(request.timestamp)
           )
         } yield someResponse.flatten
 
       def prepareRequest(
-          operation: StateMachineRequest.Operation
+        operation: StateMachineRequest.Operation
       )(implicit clientNumber: ClientId): F[StateMachineRequest] =
         for {
           timestamp <- Async[F].delay(System.currentTimeMillis())

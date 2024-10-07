@@ -7,7 +7,6 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.syntax._
 import xyz.stratalab.bridge.consensus.shared.{
   BTCConfirmationThreshold,
-  BTCRetryThreshold,
   StrataConfirmationThreshold,
   StrataWaitExpirationTime
 }
@@ -16,26 +15,18 @@ import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   MConfirmingTBTCMint,
   MMintingTBTC,
   MWaitingForBTCDeposit,
-  MWaitingForClaim,
   MWaitingForRedemption,
   PeginStateMachineState
 }
 import xyz.stratalab.bridge.shared.{
   ClientId,
-  ConfirmClaimTxOperation,
-  ConfirmDepositBTCOperation,
-  ConfirmTBTCMintOperation,
   PostClaimTxOperation,
   PostDepositBTCOperation,
   PostRedemptionTxOperation,
-  PostTBTCMintOperation,
   SessionId,
   StateMachineServiceGrpcClient,
   TimeoutDepositBTCOperation,
-  TimeoutTBTCMintOperation,
-  UndoClaimTxOperation,
-  UndoDepositBTCOperation,
-  UndoTBTCMintOperation
+  TimeoutTBTCMintOperation
 }
 
 trait TransitionToEffect {
@@ -60,7 +51,6 @@ trait TransitionToEffect {
     session:                   SessionId,
     consensusClient:           StateMachineServiceGrpcClient[F],
     toplWaitExpirationTime:    StrataWaitExpirationTime,
-    btcRetryThreshold:         BTCRetryThreshold,
     toplConfirmationThreshold: StrataConfirmationThreshold,
     btcConfirmationThreshold:  BTCConfirmationThreshold
   ) =
@@ -77,23 +67,6 @@ trait TransitionToEffect {
         Async[F].unit
     }) >>
     ((currentState, blockchainEvent) match {
-      case (
-            _: MWaitingForBTCDeposit,
-            ev: BTCFundsDeposited
-          ) =>
-        Async[F]
-          .start(
-            consensusClient.postDepositBTC(
-              PostDepositBTCOperation(
-                session.id,
-                ev.fundsDepositedHeight,
-                ev.txId,
-                ev.vout,
-                ByteString.copyFrom(ev.amount.satoshis.toBigInt.toByteArray)
-              )
-            )
-          )
-          .void
       case (
             _: MWaitingForBTCDeposit,
             ev: NewBTCBlock
@@ -115,45 +88,20 @@ trait TransitionToEffect {
         if (isAboveConfirmationThresholdBTC(ev.height, cs.depositBTCBlockHeight)) {
           Async[F]
             .start(
-              consensusClient.confirmDepositBTC(
-                ConfirmDepositBTCOperation(
+              consensusClient.postDepositBTC(
+                PostDepositBTCOperation(
                   session.id,
-                  ByteString
-                    .copyFrom(cs.amount.satoshis.toBigInt.toByteArray),
-                  ev.height
+                  ev.height,
+                  cs.btcTxId,
+                  cs.btcVout,
+                  ByteString.copyFrom(cs.amount.satoshis.toBigInt.toByteArray)
                 )
               )
             )
             .void
         } else {
-          Async[F]
-            .start(
-              consensusClient.undoDepositBTC(
-                UndoDepositBTCOperation(
-                  session.id
-                )
-              )
-            )
-            .void
+          Async[F].unit
         }
-      case (
-            _: MMintingTBTC,
-            be: BifrostFundsDeposited
-          ) =>
-        Async[F]
-          .start(
-            consensusClient
-              .postTBTCMint(
-                PostTBTCMintOperation(
-                  session.id,
-                  be.currentStrataBlockHeight,
-                  be.utxoTxId,
-                  be.utxoIndex,
-                  ByteString.copyFrom(be.amount.amount.value.toByteArray)
-                )
-              )
-          )
-          .void
       case (
             _: MMintingTBTC,
             ev: NewBTCBlock
@@ -168,19 +116,6 @@ trait TransitionToEffect {
             )
           )
           .void
-      case ( // TODO: make sure that by the time we are here, the funds are already locked
-            _: MConfirmingTBTCMint,
-            _: NewBTCBlock
-          ) =>
-        Async[F]
-          .start(
-            consensusClient.undoTBTCMint(
-              UndoTBTCMintOperation(
-                session.id
-              )
-            )
-          )
-          .void
       case (
             cs: MConfirmingTBTCMint,
             be: NewStrataBlock
@@ -191,16 +126,7 @@ trait TransitionToEffect {
             cs.depositTBTCBlockHeight
           )
         ) {
-          Async[F]
-            .start(
-              consensusClient.confirmTBTCMint(
-                ConfirmTBTCMintOperation(
-                  session.id,
-                  be.height
-                )
-              )
-            )
-            .void
+          Async[F].unit
         } else if ( // FIXME: check that this is the right time to wait
           toplWaitExpirationTime.underlying < (be.height - cs.depositTBTCBlockHeight)
         )
@@ -214,39 +140,33 @@ trait TransitionToEffect {
             )
             .void
         else if (be.height <= cs.depositTBTCBlockHeight)
+          Async[F].unit
+        else
+          Async[F].unit
+      case (
+            cs: MConfirmingRedemption,
+            ev: NewStrataBlock
+          ) =>
+        import co.topl.brambl.syntax._
+        if (isAboveConfirmationThresholdStrata(ev.height, cs.currentTolpBlockHeight))
           Async[F]
             .start(
-              consensusClient.undoTBTCMint(
-                UndoTBTCMintOperation(
-                  session.id
+              debug"Posting redemption transaction to network" >>
+              consensusClient.postRedemptionTx(
+                PostRedemptionTxOperation(
+                  session.id,
+                  cs.secret,
+                  cs.currentTolpBlockHeight,
+                  cs.utxoTxId,
+                  cs.utxoIndex,
+                  cs.btcTxId,
+                  cs.btcVout,
+                  ByteString.copyFrom(int128AsBigInt(cs.amount.amount).toByteArray)
                 )
               )
             )
             .void
-        else
-          Async[F].unit
-      case (
-            cs: MWaitingForRedemption,
-            ev: BifrostFundsWithdrawn
-          ) =>
-        import co.topl.brambl.syntax._
-        Async[F]
-          .start(
-            consensusClient.postRedemptionTx(
-              PostRedemptionTxOperation(
-                session.id,
-                ev.secret,
-                ev.fundsWithdrawnHeight,
-                cs.utxoTxId,
-                cs.utxoIndex,
-                cs.btcTxId,
-                cs.btcVout,
-                ByteString
-                  .copyFrom(int128AsBigInt(ev.amount.amount).toByteArray)
-              )
-            )
-          )
-          .void
+        else Async[F].unit
       case (
             _: MWaitingForRedemption,
             ev: NewStrataBlock
@@ -267,71 +187,24 @@ trait TransitionToEffect {
           )
           .void
       case (
-            _: MWaitingForClaim,
-            ev: BTCFundsDeposited
-          ) =>
-        Async[F]
-          .start(
-            consensusClient.postClaimTx(
-              PostClaimTxOperation(
-                session.id,
-                ev.fundsDepositedHeight,
-                ev.txId,
-                ev.vout
-              )
-            )
-          )
-          .void
-      case (
             cs: MConfirmingBTCClaim,
             ev: NewBTCBlock
           ) =>
         if (isAboveConfirmationThresholdBTC(ev.height, cs.claimBTCBlockHeight))
           Async[F]
             .start(
-              consensusClient.confirmClaimTx(
-                ConfirmClaimTxOperation(
+              consensusClient.postClaimTx(
+                PostClaimTxOperation(
                   session.id,
-                  ev.height
+                  ev.height,
+                  cs.btcTxId,
+                  cs.btcVout
                 )
               )
             )
             .void
         else
-          Async[F]
-            .start(
-              consensusClient.undoClaimTx(
-                UndoClaimTxOperation(
-                  session.id
-                )
-              )
-            )
-            .void
-      case (
-            cs: MWaitingForClaim,
-            ev: NewBTCBlock
-          ) =>
-        // if we the someStartBtcBlockHeight is empty, we need to set it
-        // if it is not empty, we need to check if the number of blocks since waiting is bigger than the threshold
-        cs.someStartBtcBlockHeight match {
-          case None =>
-            Async[F].unit
-          case Some(startBtcBlockHeight) =>
-            if (btcRetryThreshold.underlying < (ev.height - startBtcBlockHeight))
-              Async[F]
-                .start(
-                  warn"Confirming claim tx" >>
-                  consensusClient.confirmClaimTx(
-                    ConfirmClaimTxOperation(
-                      session.id,
-                      ev.height
-                    )
-                  )
-                )
-                .void
-            else
-              Async[F].unit
-        }
+          Async[F].unit
       case (_, _) => Async[F].unit
     })
 

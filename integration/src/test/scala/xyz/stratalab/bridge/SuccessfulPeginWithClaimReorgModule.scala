@@ -1,4 +1,5 @@
 package xyz.stratalab.bridge
+
 import cats.effect.IO
 
 import scala.concurrent.duration._
@@ -18,13 +19,13 @@ trait SuccessfulPeginWithClaimReorgModule {
         // parse
         ipBitcoin02 <- extractIpBtc(2, bridgeNetwork._1)
         // parse
-        ipBitcoin01 <- extractIpBtc(1, bridgeNetwork._1)
-        _ <- pwd
-        _ <- initStrataWallet(2)
-        _ <- addFellowship(2)
-        _ <- addSecret(2)
-        newAddress <- getNewAddress
-        _ <- generateToAddress(1, 1, newAddress)
+        ipBitcoin01      <- extractIpBtc(1, bridgeNetwork._1)
+        _                <- pwd
+        _                <- initStrataWallet(2)
+        _                <- addFellowship(2)
+        _                <- addSecret(2)
+        newAddress       <- getNewAddress
+        _                <- generateToAddress(1, 1, newAddress)
         txIdAndBTCAmount <- extractGetTxIdAndAmount
         (txId, btcAmount, btcAmountLong) = txIdAndBTCAmount
         startSessionResponse <- startSession(2)
@@ -40,16 +41,16 @@ trait SuccessfulPeginWithClaimReorgModule {
           btcAmount
         )
         signedTxHex <- signTransaction(bitcoinTx)
-        _ <- sendTransaction(signedTxHex)
-        _ <- generateToAddress(1, 10, newAddress)
+        _           <- sendTransaction(signedTxHex)
+        _           <- generateToAddress(1, 10, newAddress)
         mintingStatusResponse <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)
-            _ <- info"Current minting status: ${status.mintingStatus}"
-          _ <- mintStrataBlock(1, 1)
-          _ <- IO.sleep(1.second)
+          _      <- info"Current minting status: ${status.mintingStatus}"
+          _      <- mintStrataBlock(1, 1)
+          _      <- IO.sleep(1.second)
         } yield status)
           .iterateUntil(
-            _.mintingStatus == "PeginSessionWaitingForRedemption"
+            _.mintingStatus == "PeginSessionStateMintingTBTC"
           )
         _ <- mintStrataBlock(1, 1)
         _ <- createVkFile(vkFile)
@@ -93,14 +94,7 @@ trait SuccessfulPeginWithClaimReorgModule {
         _ <- getCurrentUtxosFromAddress(2, currentAddress)
           .iterateUntil(_.contains("Asset"))
         _ <- mintStrataBlock(1, 7)
-        _ <- (for {
-          status <- checkMintingStatus(startSessionResponse.sessionID)
-          _ <- generateToAddress(1, 1, newAddress)
-          _ <- IO.sleep(1.second)
-        } yield status)
-          .iterateUntil(
-            _.mintingStatus == "PeginSessionWaitingForClaimBTCConfirmation"
-          )
+        _ <- generateToAddress(1, 3, newAddress)
         _ <- generateToAddress(2, 8, newAddress)
         // reconnect networks
         _ <- setNetworkActive(2, true)
@@ -110,8 +104,8 @@ trait SuccessfulPeginWithClaimReorgModule {
         _ <- forceConnection(2, ipBitcoin01, 18444)
         _ <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)
-            _ <- info"Current minting status: ${status.mintingStatus}"
-          _ <- IO.sleep(1.second)
+          _      <- info"Current minting status: ${status.mintingStatus}"
+          _      <- IO.sleep(1.second)
         } yield status)
           .iterateUntil(
             _.mintingStatus == "PeginSessionWaitingForClaim"

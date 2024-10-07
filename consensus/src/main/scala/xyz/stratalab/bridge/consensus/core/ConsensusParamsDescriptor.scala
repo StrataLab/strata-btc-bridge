@@ -179,17 +179,13 @@ trait ConsensusParamsDescriptor {
         .action((x, c) => c.copy(configurationFile = x))
         .validate(x =>
           if (x.exists) success
-          else failure("Configuration file does not exist")
+          else failure(s"Configuration file does not exist: ${x.getAbsolutePath}")
         )
         .text(
           "Configuration file for the consensus service"
         ),
       opt[File]("db-file")
         .action((x, c) => c.copy(dbFile = x))
-        .validate(x =>
-          if (x.exists) success
-          else failure("Database file does not exist")
-        )
         .text(
           "Database file for the consensus service"
         )

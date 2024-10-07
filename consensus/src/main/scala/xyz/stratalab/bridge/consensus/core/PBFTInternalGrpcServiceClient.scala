@@ -1,6 +1,7 @@
 package xyz.stratalab.consensus.core
 
 import cats.effect.kernel.Async
+import com.google.protobuf.ByteString
 import fs2.grpc.syntax.all._
 import io.grpc.{ManagedChannelBuilder, Metadata}
 import org.typelevel.log4cats.Logger
@@ -14,7 +15,9 @@ import xyz.stratalab.bridge.consensus.pbft.{
   PrepareRequest,
   ViewChangeRequest
 }
-import xyz.stratalab.bridge.shared.{Empty, ReplicaNode}
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, ReplicaNode}
+
+import java.security.KeyPair
 
 trait PBFTInternalGrpcServiceClient[F[_]] {
 
@@ -49,6 +52,7 @@ object PBFTInternalGrpcServiceClientImpl {
   import cats.implicits._
 
   def make[F[_]: Async: Logger](
+    keyPair:      KeyPair,
     replicaNodes: List[ReplicaNode[F]]
   ) =
     for {
@@ -71,19 +75,39 @@ object PBFTInternalGrpcServiceClientImpl {
       backupMap = idBackupMap.toMap
     } yield new PBFTInternalGrpcServiceClient[F] {
 
+      import xyz.stratalab.bridge.shared.implicits._
+
       override def viewChange(request: ViewChangeRequest): F[Empty] =
         for {
-          _ <- trace"Sending CommitRequest to all replicas"
+          _ <- trace"Sending ViewChange to all replicas"
+          signedBytes <- BridgeCryptoUtils.signBytes[F](
+            keyPair.getPrivate(),
+            request.signableBytes
+          )
           _ <- backupMap.toList.traverse { case (_, backup) =>
-            backup.viewChange(request, new Metadata())
+            backup.viewChange(
+              request.withSignature(
+                ByteString.copyFrom(signedBytes)
+              ),
+              new Metadata()
+            )
           }
         } yield Empty()
 
       override def commit(request: CommitRequest): F[Empty] =
         for {
           _ <- trace"Sending CommitRequest to all replicas"
+          signedBytes <- BridgeCryptoUtils.signBytes[F](
+            keyPair.getPrivate(),
+            request.signableBytes
+          )
           _ <- backupMap.toList.traverse { case (_, backup) =>
-            backup.commit(request, new Metadata())
+            backup.commit(
+              request.withSignature(
+                ByteString.copyFrom(signedBytes)
+              ),
+              new Metadata()
+            )
           }
         } yield Empty()
 
@@ -100,8 +124,17 @@ object PBFTInternalGrpcServiceClientImpl {
       ): F[Empty] =
         for {
           _ <- trace"Sending PrepareRequest to all replicas"
+          signedBytes <- BridgeCryptoUtils.signBytes[F](
+            keyPair.getPrivate(),
+            request.signableBytes
+          )
           _ <- backupMap.toList.traverse { case (_, backup) =>
-            backup.prepare(request, new Metadata())
+            backup.prepare(
+              request.withSignature(
+                ByteString.copyFrom(signedBytes)
+              ),
+              new Metadata()
+            )
           }
         } yield Empty()
 
@@ -118,8 +151,17 @@ object PBFTInternalGrpcServiceClientImpl {
         request: NewViewRequest
       ): F[Empty] = for {
         _ <- trace"Sending NewViewRequest to all replicas"
+        signedBytes <- BridgeCryptoUtils.signBytes[F](
+          keyPair.getPrivate(),
+          request.signableBytes
+        )
         _ <- backupMap.toList.traverse { case (_, backup) =>
-          backup.newView(request, new Metadata())
+          backup.newView(
+            request.withSignature(
+              ByteString.copyFrom(signedBytes)
+            ),
+            new Metadata()
+          )
         }
       } yield Empty()
 

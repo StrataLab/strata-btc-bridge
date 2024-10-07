@@ -84,6 +84,8 @@ object Main extends IOApp with PublicApiParamsDescriptor {
   }
 
   def setupServices(
+    apiHost:        String,
+    apiPort:        Int,
     clientHost:     String,
     clientPort:     Int,
     privateKeyFile: String,
@@ -121,8 +123,8 @@ object Main extends IOApp with PublicApiParamsDescriptor {
       _ <- EmberServerBuilder
         .default[IO]
         .withIdleTimeout(ServerConfig.idleTimeOut)
-        .withHost(ServerConfig.host)
-        .withPort(ServerConfig.port)
+        .withHost(ServerConfig.host(apiHost))
+        .withPort(ServerConfig.port(apiPort.toString()))
         .withHttpApp(
           CORS.policy.withAllowOriginAll.withAllowMethodsAll
             .withAllowHeadersAll(app)
@@ -209,6 +211,12 @@ object Main extends IOApp with PublicApiParamsDescriptor {
           clientPort <- IO(
             conf.getInt("bridge.client.responses.port")
           )
+          apiHost <- IO(
+            conf.getString("bridge.client.api.host")
+          )
+          apiPort <- IO(
+            conf.getInt("bridge.client.api.port")
+          )
           privateKeyFile <- IO(
             conf.getString("bridge.client.security.privateKeyFile")
           )
@@ -220,6 +228,8 @@ object Main extends IOApp with PublicApiParamsDescriptor {
           replicaNodes   <- loadReplicaNodeFromConfig[IO](conf)
           currentView    <- Ref.of[IO, Long](0)
           _ <- setupServices(
+            apiHost,
+            apiPort,
             clientHost,
             clientPort,
             privateKeyFile,

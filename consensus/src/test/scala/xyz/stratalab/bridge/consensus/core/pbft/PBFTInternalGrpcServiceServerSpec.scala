@@ -163,11 +163,7 @@ class PBFTInternalGrpcServiceServerSpec extends CatsEffectSuite with PBFTInterna
               loggedWarning.update(_ :+ message)
           }
         for {
-          replicaKeyPair <- BridgeCryptoUtils
-            .getKeyPair[IO](privateKeyFile)
-            .use(IO.pure)
-            .toResource
-          serverUnderTest <- createSimpleInternalServer(replicaKeyPair)
+          serverUnderTest <- createSimpleInternalServer()
         } yield (serverUnderTest, loggedError, loggedWarning)
       }).flatten
     }
