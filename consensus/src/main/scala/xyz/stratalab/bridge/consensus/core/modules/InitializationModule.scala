@@ -1,17 +1,17 @@
 package xyz.stratalab.bridge.consensus.core.modules
 
 import cats.effect.kernel.{Async, Ref}
-import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.dataApi.{IndexerQueryAlgebra, WalletStateAlgebra}
-import xyz.stratalab.sdk.models.{GroupId, SeriesId}
-import xyz.stratalab.sdk.syntax._
-import xyz.stratalab.sdk.utils.Encoding
-import xyz.stratalab.indexer.services.Txo
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.typelevel.log4cats.Logger
 import quivr.models.Int128
 import xyz.stratalab.bridge.consensus.core.managers.WalletApiHelpers
 import xyz.stratalab.bridge.consensus.core.{Fellowship, SystemGlobalState, Template}
+import xyz.stratalab.indexer.services.Txo
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{IndexerQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.syntax._
+import xyz.stratalab.sdk.utils.Encoding
 
 import scala.concurrent.duration._
 

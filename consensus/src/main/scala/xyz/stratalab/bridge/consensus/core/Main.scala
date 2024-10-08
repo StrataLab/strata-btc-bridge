@@ -3,10 +3,6 @@ package xyz.stratalab.bridge.consensus.core
 import cats.effect.kernel.{Async, Ref, Sync}
 import cats.effect.std.{Mutex, Queue}
 import cats.effect.{ExitCode, IO, IOApp}
-import xyz.stratalab.sdk.dataApi.NodeQueryAlgebra
-import xyz.stratalab.sdk.models.{GroupId, SeriesId}
-import xyz.stratalab.sdk.monitoring.{NodeMonitor, BitcoinMonitor}
-import xyz.stratalab.sdk.utils.Encoding
 import com.google.protobuf.ByteString
 import com.typesafe.config.{Config, ConfigFactory}
 import io.grpc.netty.NettyServerBuilder
@@ -46,6 +42,10 @@ import xyz.stratalab.bridge.shared.{
   StateMachineServiceGrpcClientImpl
 }
 import xyz.stratalab.consensus.core.{PBFTInternalGrpcServiceClient, PBFTInternalGrpcServiceClientImpl}
+import xyz.stratalab.sdk.dataApi.NodeQueryAlgebra
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.monitoring.{BitcoinMonitor, NodeMonitor}
+import xyz.stratalab.sdk.utils.Encoding
 
 import java.net.InetSocketAddress
 import java.security.{KeyPair => JKeyPair, PublicKey, Security}

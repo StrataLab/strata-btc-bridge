@@ -1,16 +1,6 @@
 package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.{Async, Ref, Resource, Sync}
-import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.dataApi.{
-  FellowshipStorageAlgebra,
-  IndexerQueryAlgebra,
-  TemplateStorageAlgebra,
-  WalletStateAlgebra
-}
-import xyz.stratalab.sdk.models.{GroupId, SeriesId}
-import xyz.stratalab.sdk.utils.Encoding
-import xyz.stratalab.sdk.wallet.WalletApi
 import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
 import org.bitcoins.core.currency.{CurrencyUnit, Satoshis}
@@ -94,6 +84,16 @@ import xyz.stratalab.bridge.shared.{
   StateMachineRequest
 }
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{
+  FellowshipStorageAlgebra,
+  IndexerQueryAlgebra,
+  TemplateStorageAlgebra,
+  WalletStateAlgebra
+}
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.utils.Encoding
+import xyz.stratalab.sdk.wallet.WalletApi
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID

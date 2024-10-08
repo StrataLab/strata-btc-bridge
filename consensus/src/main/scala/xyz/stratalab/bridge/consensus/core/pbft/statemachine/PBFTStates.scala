@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import org.bitcoins.core.currency.CurrencyUnit
-import xyz.stratalab.bridge.consensus.shared.{AssetToken, NodeCurrencyUnit, GroupToken, Lvl, SeriesToken}
+import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, NodeCurrencyUnit, SeriesToken}
 
 sealed trait PBFTState {
   def toBytes: Array[Byte]

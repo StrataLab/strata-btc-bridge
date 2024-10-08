@@ -1,7 +1,5 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
-import xyz.stratalab.sdk.models.{GroupId, SeriesId}
-import xyz.stratalab.sdk.utils.Encoding
 import xyz.stratalab.bridge.consensus.shared.{
   AssetToken,
   BTCWaitExpirationTime,
@@ -18,6 +16,8 @@ import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   MWaitingForRedemption,
   PeginStateMachineState
 }
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.utils.Encoding
 
 trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
 

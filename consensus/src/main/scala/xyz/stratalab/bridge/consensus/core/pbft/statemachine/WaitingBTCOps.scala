@@ -2,18 +2,18 @@ package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
-import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.dataApi.{IndexerQueryAlgebra, WalletStateAlgebra}
-import xyz.stratalab.sdk.models.LockAddress
-import xyz.stratalab.sdk.models.box.AssetMintingStatement
-import xyz.stratalab.sdk.wallet.WalletApi
-import xyz.stratalab.indexer.services.Txo
 import io.grpc.ManagedChannel
 import org.typelevel.log4cats.Logger
 import quivr.models.{Int128, KeyPair}
 import xyz.stratalab.bridge.consensus.core.managers.{StrataWalletAlgebra, TransactionAlgebra, WalletApiHelpers}
 import xyz.stratalab.bridge.consensus.core.{Fellowship, StrataKeypair, Template}
 import xyz.stratalab.bridge.consensus.shared.Lvl
+import xyz.stratalab.indexer.services.Txo
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{IndexerQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.models.LockAddress
+import xyz.stratalab.sdk.models.box.AssetMintingStatement
+import xyz.stratalab.sdk.wallet.WalletApi
 
 object WaitingBTCOps {
 

@@ -2,6 +2,13 @@ package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.data.OptionT
 import cats.effect.kernel.Sync
+import com.google.protobuf.ByteString
+import io.circe.Json
+import quivr.models.{KeyPair, VerificationKey}
+import xyz.stratalab.bridge.consensus.core.{Fellowship, StrataNetworkIdentifiers, Template}
+import xyz.stratalab.bridge.consensus.shared.Lvl
+import xyz.stratalab.bridge.shared.{InvalidHash, InvalidInput, InvalidKey}
+import xyz.stratalab.indexer.services.Txo
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
 import xyz.stratalab.sdk.codecs.AddressCodecs
 import xyz.stratalab.sdk.constants.NetworkConstants
@@ -18,13 +25,6 @@ import xyz.stratalab.sdk.models.transaction.IoTransaction
 import xyz.stratalab.sdk.models.{LockAddress, LockId}
 import xyz.stratalab.sdk.utils.Encoding
 import xyz.stratalab.sdk.wallet.WalletApi
-import xyz.stratalab.indexer.services.Txo
-import com.google.protobuf.ByteString
-import io.circe.Json
-import quivr.models.{KeyPair, VerificationKey}
-import xyz.stratalab.bridge.consensus.core.{Fellowship, StrataNetworkIdentifiers, Template}
-import xyz.stratalab.bridge.consensus.shared.Lvl
-import xyz.stratalab.bridge.shared.{InvalidHash, InvalidInput, InvalidKey}
 
 object StrataWalletAlgebra {
 

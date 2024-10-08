@@ -3,18 +3,6 @@ package xyz.stratalab.bridge.consensus.core.modules
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.std.Queue
-import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.constants.NetworkConstants
-import xyz.stratalab.sdk.dataApi.IndexerQueryAlgebra
-import xyz.stratalab.sdk.models.{GroupId, SeriesId}
-import xyz.stratalab.sdk.servicekit.{
-  FellowshipStorageApi,
-  TemplateStorageApi,
-  WalletKeyApi,
-  WalletStateApi,
-  WalletStateResource
-}
-import xyz.stratalab.sdk.wallet.WalletApi
 import io.grpc.Metadata
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.http4s.dsl.io._
@@ -60,6 +48,18 @@ import xyz.stratalab.bridge.consensus.shared.{
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{MonitorStateMachine, SessionEvent, SessionManagerImpl}
 import xyz.stratalab.bridge.shared.{ClientId, ReplicaCount, ReplicaId, StateMachineServiceGrpcClient}
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.constants.NetworkConstants
+import xyz.stratalab.sdk.dataApi.IndexerQueryAlgebra
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.servicekit.{
+  FellowshipStorageApi,
+  TemplateStorageApi,
+  WalletKeyApi,
+  WalletStateApi,
+  WalletStateResource
+}
+import xyz.stratalab.sdk.wallet.WalletApi
 
 import java.security.{KeyPair => JKeyPair, PublicKey}
 import java.util.concurrent.ConcurrentHashMap

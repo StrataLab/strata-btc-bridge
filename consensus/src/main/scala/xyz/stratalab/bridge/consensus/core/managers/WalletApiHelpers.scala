@@ -1,11 +1,11 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.Monad
+import xyz.stratalab.bridge.consensus.core.{Fellowship, Template}
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
 import xyz.stratalab.sdk.dataApi.WalletStateAlgebra
 import xyz.stratalab.sdk.models.box.Lock
 import xyz.stratalab.sdk.models.{Indices, LockAddress}
-import xyz.stratalab.bridge.consensus.core.{Fellowship, Template}
 
 object WalletApiHelpers {
 

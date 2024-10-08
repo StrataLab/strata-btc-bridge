@@ -2,33 +2,13 @@ package xyz.stratalab.bridge.consensus.monitor
 
 import cats.effect.IO
 import cats.effect.kernel.Async
-import xyz.stratalab.sdk.syntax._
-import xyz.stratalab.sdk.utils.Encoding
 import munit.CatsEffectSuite
 import org.bitcoins.core.protocol.Bech32Address
 import xyz.stratalab.bridge.consensus.core.controllers.SharedData
 import xyz.stratalab.bridge.consensus.shared.AssetToken
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{
-  BTCFundsDeposited,
-  BTCFundsWithdrawn,
-  NodeFundsDeposited,
-  NodeFundsWithdrawn,
-  BlockchainEvent,
-  EndTransition,
-  FSMTransitionTo,
-  MConfirmingBTCClaim,
-  MConfirmingBTCDeposit,
-  MConfirmingRedemption,
-  MConfirmingTBTCMint,
-  MMintingTBTC,
-  MWaitingForBTCDeposit,
-  MWaitingForClaim,
-  MWaitingForRedemption,
-  MonitorTransitionRelation,
-  NewBTCBlock,
-  NewStrataBlock,
-  PeginStateMachineState
-}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{BTCFundsDeposited, BTCFundsWithdrawn, BlockchainEvent, EndTransition, FSMTransitionTo, MConfirmingBTCClaim, MConfirmingBTCDeposit, MConfirmingRedemption, MConfirmingTBTCMint, MMintingTBTC, MWaitingForBTCDeposit, MWaitingForClaim, MWaitingForRedemption, MonitorTransitionRelation, NewBTCBlock, NewStrataBlock, NodeFundsDeposited, NodeFundsWithdrawn, PeginStateMachineState}
+import xyz.stratalab.sdk.syntax._
+import xyz.stratalab.sdk.utils.Encoding
 
 import scala.annotation.nowarn
 

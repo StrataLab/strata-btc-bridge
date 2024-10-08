@@ -1,6 +1,10 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.effect.kernel.{Resource, Sync}
+import io.grpc.ManagedChannel
+import quivr.models.KeyPair
+import xyz.stratalab.crypto.signing.ExtendedEd25519
+import xyz.stratalab.quivr.runtime.{QuivrRuntimeError, QuivrRuntimeErrors}
 import xyz.stratalab.sdk.Context
 import xyz.stratalab.sdk.dataApi.{NodeQueryAlgebra, WalletStateAlgebra}
 import xyz.stratalab.sdk.models.transaction.IoTransaction
@@ -14,10 +18,6 @@ import xyz.stratalab.sdk.validation.{
   TransactionSyntaxInterpreter
 }
 import xyz.stratalab.sdk.wallet.{CredentiallerInterpreter, WalletApi}
-import xyz.stratalab.crypto.signing.ExtendedEd25519
-import xyz.stratalab.quivr.runtime.{QuivrRuntimeError, QuivrRuntimeErrors}
-import io.grpc.ManagedChannel
-import quivr.models.KeyPair
 
 object TransactionAlgebra {
 

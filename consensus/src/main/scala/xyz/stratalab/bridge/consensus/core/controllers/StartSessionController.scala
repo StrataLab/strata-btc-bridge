@@ -1,9 +1,6 @@
 package xyz.stratalab.bridge.consensus.core.controllers
 
 import cats.effect.kernel.{Async, Sync}
-import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.dataApi.{FellowshipStorageAlgebra, TemplateStorageAlgebra, WalletStateAlgebra}
-import xyz.stratalab.sdk.wallet.WalletApi
 import org.bitcoins.core.protocol.Bech32Address
 import org.bitcoins.core.protocol.script.{P2WPKHWitnessSPKV0, WitnessScriptPubKey}
 import org.bitcoins.core.script.constant.{OP_0, ScriptConstant}
@@ -34,6 +31,9 @@ import xyz.stratalab.bridge.shared.{
   StartPeginSessionResponse,
   StartSessionOperation
 }
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{FellowshipStorageAlgebra, TemplateStorageAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.wallet.WalletApi
 
 import java.util.UUID
 

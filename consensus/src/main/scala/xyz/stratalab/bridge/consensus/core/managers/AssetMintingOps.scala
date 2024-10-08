@@ -1,6 +1,12 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.effect.kernel.Sync
+import com.google.protobuf.ByteString
+import com.google.protobuf.struct.Struct
+import io.circe.Json
+import quivr.models.KeyPair
+import xyz.stratalab.bridge.consensus.shared.Lvl
+import xyz.stratalab.indexer.services.Txo
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
 import xyz.stratalab.sdk.dataApi.WalletStateAlgebra
 import xyz.stratalab.sdk.models.box.{AssetMintingStatement, Lock}
@@ -8,12 +14,6 @@ import xyz.stratalab.sdk.models.transaction.IoTransaction
 import xyz.stratalab.sdk.models.{Indices, LockAddress}
 import xyz.stratalab.sdk.utils.Encoding
 import xyz.stratalab.sdk.wallet.WalletApi
-import xyz.stratalab.indexer.services.Txo
-import com.google.protobuf.ByteString
-import com.google.protobuf.struct.Struct
-import io.circe.Json
-import quivr.models.KeyPair
-import xyz.stratalab.bridge.consensus.shared.Lvl
 
 import TransactionBuilderApi.implicits._
 

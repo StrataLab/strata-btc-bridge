@@ -1,6 +1,9 @@
 package xyz.stratalab.bridge.consensus.core.modules
 
 import cats.effect.kernel.Sync
+import quivr.models.KeyPair
+import xyz.stratalab.bridge.consensus.core.managers.CreateTxError
+import xyz.stratalab.indexer.services.Txo
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
 import xyz.stratalab.sdk.dataApi.WalletStateAlgebra
 import xyz.stratalab.sdk.models.box.Lock
@@ -8,9 +11,6 @@ import xyz.stratalab.sdk.models.transaction.IoTransaction
 import xyz.stratalab.sdk.models.{Event, Indices, LockAddress}
 import xyz.stratalab.sdk.utils.Encoding
 import xyz.stratalab.sdk.wallet.WalletApi
-import xyz.stratalab.indexer.services.Txo
-import quivr.models.KeyPair
-import xyz.stratalab.bridge.consensus.core.managers.CreateTxError
 
 import TransactionBuilderApi.implicits._
 

@@ -1,16 +1,15 @@
 package xyz.stratalab.sdk.cli.mockbase
 
+import com.google.protobuf.ByteString
+import com.google.protobuf.struct.Struct
+import quivr.models.Int128
+import xyz.stratalab.indexer.services.Txo
 import xyz.stratalab.sdk.builders.{BuilderError, TransactionBuilderApi}
 import xyz.stratalab.sdk.models.Event.{GroupPolicy, SeriesPolicy}
 import xyz.stratalab.sdk.models.box.{AssetMintingStatement, Attestation, FungibilityType, Lock, QuantityDescriptorType}
 import xyz.stratalab.sdk.models.transaction.{IoTransaction, UnspentTransactionOutput}
-import xyz.stratalab.sdk.models.{Datum, GroupId, LockAddress, SeriesId}
+import xyz.stratalab.sdk.models.{Datum, GroupId, LockAddress, SeriesId, TransactionOutputAddress}
 import xyz.stratalab.sdk.syntax.ValueTypeIdentifier
-import xyz.stratalab.indexer.services.Txo
-import com.google.protobuf.ByteString
-import com.google.protobuf.struct.Struct
-import quivr.models.Int128
-import xyz.stratalab.sdk.models.TransactionOutputAddress
 
 class BaseTransactionBuilderApi[F[_]] extends TransactionBuilderApi[F] {
 

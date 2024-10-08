@@ -3,39 +3,16 @@ package xyz.stratalab.bridge.consensus.shared.persistence
 import org.bitcoins.core.currency.Satoshis
 import quivr.models.Int128
 import scodec.bits.ByteVector
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{BtcFundsDeposited => BtcFundsDepositedEvent, BtcFundsWithdrawn, Empty, NewBTCBlock => NewBTCBlockEvent, NewStrataBlock => NewStrataBlockEvent, NodeFundsDeposited => NodeFundsDepositedEvent, NodeFundsWithdrawn => NodeFundsWithdrawnEvent, SkippedBTCBlock => SkippedBTCBlockEvent, SkippedStrataBlock => SkippedStrataBlockEvent}
 import xyz.stratalab.bridge.consensus.protobuf.NodeCurrencyUnit.Currency.{
   AssetToken => AssetTokenCurrency,
   GroupToken => GroupTokenCurrency,
   Lvl => LvlCurrency,
   SeriesToken => SeriesTokenCurrency
 }
-import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  NodeFundsDeposited => NodeFundsDepositedEvent,
-  NodeFundsWithdrawn => NodeFundsWithdrawnEvent,
-  BtcFundsDeposited => BtcFundsDepositedEvent,
-  BtcFundsWithdrawn,
-  Empty,
-  NewBTCBlock => NewBTCBlockEvent,
-  NewStrataBlock => NewStrataBlockEvent,
-  SkippedBTCBlock => SkippedBTCBlockEvent,
-  SkippedStrataBlock => SkippedStrataBlockEvent
-}
-import xyz.stratalab.bridge.consensus.protobuf.{
-  NodeCurrencyUnit => NodeCurrencyUnitPb,
-  BlockchainEvent => BlockchainEventPb
-}
+import xyz.stratalab.bridge.consensus.protobuf.{BlockchainEvent => BlockchainEventPb, NodeCurrencyUnit => NodeCurrencyUnitPb}
 import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, SeriesToken}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{
-  BTCFundsDeposited,
-  BTCFundsWithdrawn,
-  NodeFundsDeposited,
-  NodeFundsWithdrawn,
-  BlockchainEvent,
-  NewBTCBlock,
-  NewStrataBlock,
-  SkippedBTCBlock,
-  SkippedStrataBlock
-}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{BTCFundsDeposited, BTCFundsWithdrawn, BlockchainEvent, NewBTCBlock, NewStrataBlock, NodeFundsDeposited, NodeFundsWithdrawn, SkippedBTCBlock, SkippedStrataBlock}
 
 trait DeserializationOps {
 

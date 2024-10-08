@@ -2,6 +2,10 @@ package xyz.stratalab.bridge.stubs
 
 import cats.Monad
 import cats.effect.IO
+import com.google.protobuf.ByteString
+import quivr.models.{Int128, Proposition}
+import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
+import xyz.stratalab.indexer.services.{Txo, TxoState}
 import xyz.stratalab.sdk.codecs.AddressCodecs
 import xyz.stratalab.sdk.dataApi.IndexerQueryAlgebra
 import xyz.stratalab.sdk.models.box.{Attestation, Challenge, FungibilityType, Lock, QuantityDescriptorType, Value}
@@ -10,10 +14,6 @@ import xyz.stratalab.sdk.models.{Datum, GroupId, LockAddress, SeriesId, Transact
 import xyz.stratalab.sdk.servicekit.WalletKeyApi
 import xyz.stratalab.sdk.utils.Encoding
 import xyz.stratalab.sdk.wallet.WalletApi
-import xyz.stratalab.indexer.services.{Txo, TxoState}
-import com.google.protobuf.ByteString
-import quivr.models.{Int128, Proposition}
-import xyz.stratalab.bridge.consensus.core.managers.WalletManagementUtils
 
 object UnitTestStubs {
 
