@@ -1,16 +1,50 @@
 package xyz.stratalab.bridge.consensus.shared.persistence
 
 import com.google.protobuf.ByteString
-import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{BtcFundsDeposited => BtcFundsDepositedEvent, BtcFundsWithdrawn => BtcFundsWithdrawnEvent, NewBTCBlock => NewBTCBlockEvent, NewStrataBlock => NewStrataBlockEvent, NodeFundsDeposited => NodeFundsDepositedEvent, NodeFundsWithdrawn => NodeFundsWithdrawnEvent, SkippedBTCBlock => SkippedBTCBlockEvent, SkippedStrataBlock => SkippedStrataBlockEvent}
+import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
+  BtcFundsDeposited => BtcFundsDepositedEvent,
+  BtcFundsWithdrawn => BtcFundsWithdrawnEvent,
+  NewBTCBlock => NewBTCBlockEvent,
+  NewStrataBlock => NewStrataBlockEvent,
+  NodeFundsDeposited => NodeFundsDepositedEvent,
+  NodeFundsWithdrawn => NodeFundsWithdrawnEvent,
+  SkippedBTCBlock => SkippedBTCBlockEvent,
+  SkippedStrataBlock => SkippedStrataBlockEvent
+}
 import xyz.stratalab.bridge.consensus.protobuf.NodeCurrencyUnit.Currency.{
   AssetToken => AssetTokenCurrency,
   GroupToken => GroupTokenCurrency,
   Lvl => LvlCurrency,
   SeriesToken => SeriesTokenCurrency
 }
-import xyz.stratalab.bridge.consensus.protobuf.{AssetToken => AssetTokenPb, BTCFundsDeposited => BTCFundsDepositedPb, BTCFundsWithdrawn => BTCFundsWithdrawnPb, BlockchainEvent => BlockchainEventPb, GroupToken => GroupTokenPb, Lvl => LvlPb, NewBTCBlock => NewBTCBlockPb, NewStrataBlock => NewStrataBlockPb, NodeCurrencyUnit => NodeCurrencyUnitPb, NodeFundsDeposited => NodeFundsDepositedPb, NodeFundsWithdrawn => NodeFundsWithdrawnPb, SeriesToken => SeriesTokenPb, SkippedBTCBlock => SkippedBTCBlockPb, SkippedStrataBlock => SkippedStrataBlockPb}
+import xyz.stratalab.bridge.consensus.protobuf.{
+  AssetToken => AssetTokenPb,
+  BTCFundsDeposited => BTCFundsDepositedPb,
+  BTCFundsWithdrawn => BTCFundsWithdrawnPb,
+  BlockchainEvent => BlockchainEventPb,
+  GroupToken => GroupTokenPb,
+  Lvl => LvlPb,
+  NewBTCBlock => NewBTCBlockPb,
+  NewStrataBlock => NewStrataBlockPb,
+  NodeCurrencyUnit => NodeCurrencyUnitPb,
+  NodeFundsDeposited => NodeFundsDepositedPb,
+  NodeFundsWithdrawn => NodeFundsWithdrawnPb,
+  SeriesToken => SeriesTokenPb,
+  SkippedBTCBlock => SkippedBTCBlockPb,
+  SkippedStrataBlock => SkippedStrataBlockPb
+}
 import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, NodeCurrencyUnit, SeriesToken}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{BTCFundsDeposited, BTCFundsWithdrawn, BlockchainEvent, NewBTCBlock, NewStrataBlock, NodeFundsDeposited, NodeFundsWithdrawn, SkippedBTCBlock, SkippedStrataBlock}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  BTCFundsDeposited,
+  BTCFundsWithdrawn,
+  BlockchainEvent,
+  NewBTCBlock,
+  NewStrataBlock,
+  NodeFundsDeposited,
+  NodeFundsWithdrawn,
+  SkippedBTCBlock,
+  SkippedStrataBlock
+}
 
 trait SerializationOps {
 

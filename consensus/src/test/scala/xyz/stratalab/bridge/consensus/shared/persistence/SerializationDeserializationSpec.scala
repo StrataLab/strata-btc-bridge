@@ -4,7 +4,16 @@ import munit.CatsEffectSuite
 import org.bitcoins.core.currency.Satoshis
 import xyz.stratalab.bridge.consensus.shared.persistence.{DeserializationOps, SerializationOps}
 import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, SeriesToken}
-import xyz.stratalab.bridge.consensus.subsystems.monitor.{BTCFundsDeposited, BTCFundsWithdrawn, NewBTCBlock, NewStrataBlock, NodeFundsDeposited, NodeFundsWithdrawn, SkippedBTCBlock, SkippedStrataBlock}
+import xyz.stratalab.bridge.consensus.subsystems.monitor.{
+  BTCFundsDeposited,
+  BTCFundsWithdrawn,
+  NewBTCBlock,
+  NewStrataBlock,
+  NodeFundsDeposited,
+  NodeFundsWithdrawn,
+  SkippedBTCBlock,
+  SkippedStrataBlock
+}
 
 class SerializationDeserializationSpec extends CatsEffectSuite with SerializationOps with DeserializationOps {
 
