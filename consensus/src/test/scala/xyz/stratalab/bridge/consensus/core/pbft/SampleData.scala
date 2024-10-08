@@ -1,8 +1,8 @@
 package xyz.stratalab.bridge.consensus.core.pbft
 
-import co.topl.brambl.models.{GroupId, SeriesId}
-import co.topl.brambl.syntax._
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.syntax._
+import xyz.stratalab.sdk.utils.Encoding
 import com.google.protobuf.ByteString
 import com.typesafe.config.ConfigFactory
 import org.bitcoins.core.config.RegTest

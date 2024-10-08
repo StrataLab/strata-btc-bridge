@@ -23,6 +23,7 @@ lazy val commonSettings = Seq(
   fork := true,
   scalacOptions ++= commonScalacOptions,
   semanticdbEnabled := true, // enable SemanticDB for Scalafix
+  PB.protocExecutable := "/nix/store/53gyjpxxkzrih1bj388ddw0kg8y0qz8j-protobuf-25.4/bin/protoc",
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaCheck, "-verbosity", "2"),
     Tests.Argument(
@@ -221,5 +222,3 @@ lazy val root = project
   .settings(noPublish)
   .aggregate(consensus, publicApi, strataBtcCli)
 
-addCommandAlias("checkFormat", s"; scalafixAll --check; scalafmtCheckAll")
-addCommandAlias("format", s"; scalafmtAll; scalafixAll; ")

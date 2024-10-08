@@ -2,7 +2,7 @@ package xyz.stratalab.bridge.consensus.core.pbft.activities
 
 import cats.effect.kernel.Async
 import cats.implicits._
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.utils.Encoding
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.core.pbft.{Commited, PBFTInternalEvent, RequestIdentifier, ViewManager}
 import xyz.stratalab.bridge.consensus.pbft.CommitRequest

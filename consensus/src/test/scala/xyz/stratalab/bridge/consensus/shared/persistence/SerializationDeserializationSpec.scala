@@ -48,7 +48,7 @@ class SerializationDeserializationSpec extends CatsEffectSuite with Serializatio
   }
 
   test("Serialization and Deserialization of BifrostFundsDeposited") {
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     val eventLvl = BifrostFundsDeposited(1, "address", "utxoTxId", 1, Lvl(1L))
     assertEquals(fromProtobuf(toProtobuf(eventLvl)), eventLvl)
     val eventSeriesToken =
@@ -68,7 +68,7 @@ class SerializationDeserializationSpec extends CatsEffectSuite with Serializatio
   }
 
   test("Serialization and Deserialization of BifrostFundsWithdrawn") {
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     val eventLvl = BifrostFundsWithdrawn(1L, "txId", 1, "secret", Lvl(1))
     assertEquals(fromProtobuf(toProtobuf(eventLvl)), eventLvl)
     val eventSeriesToken =

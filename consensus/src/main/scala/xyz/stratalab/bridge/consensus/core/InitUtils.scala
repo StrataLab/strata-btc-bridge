@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.consensus.core
 
 import cats.effect.kernel.Sync
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.utils.Encoding
 import com.typesafe.config.Config
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.shared.ReplicaId

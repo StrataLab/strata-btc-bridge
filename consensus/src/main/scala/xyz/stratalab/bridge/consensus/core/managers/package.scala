@@ -1,6 +1,6 @@
 package xyz.stratalab.bridge.consensus.core
 
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.utils.Encoding
 import com.google.protobuf.struct.{ListValue, NullValue, Struct, Value}
 import io.circe.Json
 

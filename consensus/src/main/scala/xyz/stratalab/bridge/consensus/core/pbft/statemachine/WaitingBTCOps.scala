@@ -2,12 +2,12 @@ package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
-import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
-import co.topl.brambl.models.LockAddress
-import co.topl.brambl.models.box.AssetMintingStatement
-import co.topl.brambl.wallet.WalletApi
-import co.topl.genus.services.Txo
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.models.LockAddress
+import xyz.stratalab.sdk.models.box.AssetMintingStatement
+import xyz.stratalab.sdk.wallet.WalletApi
+import xyz.stratalab.indexer.services.Txo
 import io.grpc.ManagedChannel
 import org.typelevel.log4cats.Logger
 import quivr.models.{Int128, KeyPair}

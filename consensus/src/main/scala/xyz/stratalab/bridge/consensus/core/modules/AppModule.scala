@@ -3,18 +3,18 @@ package xyz.stratalab.bridge.consensus.core.modules
 import cats.effect.IO
 import cats.effect.kernel.Ref
 import cats.effect.std.Queue
-import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.constants.NetworkConstants
-import co.topl.brambl.dataApi.GenusQueryAlgebra
-import co.topl.brambl.models.{GroupId, SeriesId}
-import co.topl.brambl.servicekit.{
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.constants.NetworkConstants
+import xyz.stratalab.sdk.dataApi.GenusQueryAlgebra
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.servicekit.{
   FellowshipStorageApi,
   TemplateStorageApi,
   WalletKeyApi,
   WalletStateApi,
   WalletStateResource
 }
-import co.topl.brambl.wallet.WalletApi
+import xyz.stratalab.sdk.wallet.WalletApi
 import io.grpc.Metadata
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.http4s.dsl.io._
@@ -124,7 +124,7 @@ trait AppModule extends WalletStateResource {
       walletApi,
       walletKeyApi
     )
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     implicit val defaultMintingFee = Lvl(params.mintingFee)
     implicit val asyncForIO = IO.asyncForIO
     implicit val l = logger

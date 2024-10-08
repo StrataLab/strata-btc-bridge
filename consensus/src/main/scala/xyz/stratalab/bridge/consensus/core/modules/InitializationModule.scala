@@ -1,12 +1,12 @@
 package xyz.stratalab.bridge.consensus.core.modules
 
 import cats.effect.kernel.{Async, Ref}
-import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
-import co.topl.brambl.models.{GroupId, SeriesId}
-import co.topl.brambl.syntax._
-import co.topl.brambl.utils.Encoding
-import co.topl.genus.services.Txo
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.syntax._
+import xyz.stratalab.sdk.utils.Encoding
+import xyz.stratalab.indexer.services.Txo
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.typelevel.log4cats.Logger
 import quivr.models.Int128

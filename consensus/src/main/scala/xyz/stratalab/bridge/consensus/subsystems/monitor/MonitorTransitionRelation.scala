@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import cats.effect.kernel.Async
-import co.topl.brambl.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
 import org.typelevel.log4cats.Logger
 import xyz.stratalab.bridge.consensus.shared.{
   BTCConfirmationThreshold,

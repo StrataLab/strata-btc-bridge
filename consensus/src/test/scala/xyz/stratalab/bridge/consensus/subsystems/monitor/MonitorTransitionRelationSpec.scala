@@ -1,9 +1,9 @@
-package co.topl.bridge.consensus.monitor
+package xyz.stratalab.bridge.consensus.monitor
 
 import cats.effect.IO
 import cats.effect.kernel.Async
-import co.topl.brambl.syntax._
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.syntax._
+import xyz.stratalab.sdk.utils.Encoding
 import munit.CatsEffectSuite
 import org.bitcoins.core.protocol.Bech32Address
 import xyz.stratalab.bridge.consensus.core.controllers.SharedData
@@ -132,7 +132,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
   test(
     "PeginTransitionRelation should not transition from MWaitingForBTCDeposit on Bifrost events"
   ) {
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     assert(
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
@@ -236,7 +236,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
   test(
     "PeginTransitionRelation should NOT transition from WaitingForRedemption to BifrostFundsWithdrawn if guard fails"
   ) {
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     assert(
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
@@ -447,7 +447,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
   test(
     "PeginTransitionRelation should not transition from WaitingForClaim on Bifrost events"
   ) {
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     assert(
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
@@ -535,7 +535,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
     "PeginTransitionRelation should transition from MintingTBTC to MintingTBTCConfirmation"
   ) {
 
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     assert(
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](
@@ -572,7 +572,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
   test(
     "PeginTransitionRelation should not transition from MintingTBTC to WaitingForRedemption"
   ) {
-    import co.topl.brambl.syntax._
+    import xyz.stratalab.sdk.syntax._
     assert(
       MonitorTransitionRelation
         .handleBlockchainEvent[IO](

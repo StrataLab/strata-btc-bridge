@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.consensus.core.pbft
 
 import cats.effect.kernel.{Async, Ref}
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.utils.Encoding
 import xyz.stratalab.bridge.consensus.pbft.CheckpointRequest
 
 private[pbft] case class CheckpointIdentifier(

@@ -1,10 +1,10 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
-import co.topl.brambl.codecs.AddressCodecs
-import co.topl.brambl.models.box.Attestation
-import co.topl.brambl.monitoring.BifrostMonitor
-import co.topl.brambl.monitoring.BitcoinMonitor.BitcoinBlockSync
-import co.topl.brambl.utils.Encoding
+import xyz.stratalab.sdk.codecs.AddressCodecs
+import xyz.stratalab.sdk.models.box.Attestation
+import xyz.stratalab.sdk.monitoring.BifrostMonitor
+import xyz.stratalab.sdk.monitoring.BitcoinMonitor.BitcoinBlockSync
+import xyz.stratalab.sdk.utils.Encoding
 
 import scala.util.Try
 

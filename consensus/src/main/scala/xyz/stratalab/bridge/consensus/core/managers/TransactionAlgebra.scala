@@ -1,17 +1,21 @@
 package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.effect.kernel.{Resource, Sync}
-import co.topl.brambl.Context
-import co.topl.brambl.dataApi.{BifrostQueryAlgebra, WalletStateAlgebra}
-import co.topl.brambl.models.transaction.IoTransaction
-import co.topl.brambl.models.{Datum, Event}
-import co.topl.brambl.syntax.cryptoToPbKeyPair
-import co.topl.brambl.utils.Encoding
-import co.topl.brambl.validation.TransactionSyntaxError.{EmptyInputs, InvalidDataLength}
-import co.topl.brambl.validation.{TransactionAuthorizationError, TransactionSyntaxError, TransactionSyntaxInterpreter}
-import co.topl.brambl.wallet.{CredentiallerInterpreter, WalletApi}
-import co.topl.crypto.signing.ExtendedEd25519
-import co.topl.quivr.runtime.{QuivrRuntimeError, QuivrRuntimeErrors}
+import xyz.stratalab.sdk.Context
+import xyz.stratalab.sdk.dataApi.{BifrostQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.models.transaction.IoTransaction
+import xyz.stratalab.sdk.models.{Datum, Event}
+import xyz.stratalab.sdk.syntax.cryptoToPbKeyPair
+import xyz.stratalab.sdk.utils.Encoding
+import xyz.stratalab.sdk.validation.TransactionSyntaxError.{EmptyInputs, InvalidDataLength}
+import xyz.stratalab.sdk.validation.{
+  TransactionAuthorizationError,
+  TransactionSyntaxError,
+  TransactionSyntaxInterpreter
+}
+import xyz.stratalab.sdk.wallet.{CredentiallerInterpreter, WalletApi}
+import xyz.stratalab.crypto.signing.ExtendedEd25519
+import xyz.stratalab.quivr.runtime.{QuivrRuntimeError, QuivrRuntimeErrors}
 import io.grpc.ManagedChannel
 import quivr.models.KeyPair
 
@@ -70,7 +74,7 @@ object TransactionAlgebra {
     } yield response).attempt.map(e =>
       e match {
         case Right(tx) =>
-          import co.topl.brambl.syntax._
+          import xyz.stratalab.sdk.syntax._
           Encoding.encodeToBase58(tx.id.value.toByteArray()).asRight
         case Left(e: SimpleTransactionAlgebraError) => e.asLeft
         case Left(e)                                => UnexpectedError(e.getMessage()).asLeft

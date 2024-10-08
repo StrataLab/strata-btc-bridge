@@ -2,10 +2,10 @@ package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.data.OptionT
 import cats.effect.kernel.Sync
-import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.codecs.AddressCodecs
-import co.topl.brambl.constants.NetworkConstants
-import co.topl.brambl.dataApi.{
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.codecs.AddressCodecs
+import xyz.stratalab.sdk.constants.NetworkConstants
+import xyz.stratalab.sdk.dataApi.{
   FellowshipStorageAlgebra,
   GenusQueryAlgebra,
   TemplateStorageAlgebra,
@@ -13,12 +13,12 @@ import co.topl.brambl.dataApi.{
   WalletStateAlgebra,
   WalletTemplate
 }
-import co.topl.brambl.models.box.AssetMintingStatement
-import co.topl.brambl.models.transaction.IoTransaction
-import co.topl.brambl.models.{LockAddress, LockId}
-import co.topl.brambl.utils.Encoding
-import co.topl.brambl.wallet.WalletApi
-import co.topl.genus.services.Txo
+import xyz.stratalab.sdk.models.box.AssetMintingStatement
+import xyz.stratalab.sdk.models.transaction.IoTransaction
+import xyz.stratalab.sdk.models.{LockAddress, LockId}
+import xyz.stratalab.sdk.utils.Encoding
+import xyz.stratalab.sdk.wallet.WalletApi
+import xyz.stratalab.indexer.services.Txo
 import com.google.protobuf.ByteString
 import io.circe.Json
 import quivr.models.{KeyPair, VerificationKey}
@@ -238,8 +238,8 @@ object StrataWalletAlgebra {
   ): F[Option[String]] = {
 
     import cats.implicits._
-    import co.topl.brambl.common.ContainsEvidence.Ops
-    import co.topl.brambl.common.ContainsImmutable.instances._
+    import xyz.stratalab.sdk.common.ContainsEvidence.Ops
+    import xyz.stratalab.sdk.common.ContainsImmutable.instances._
     import TransactionBuilderApi.implicits._
     implicit class ImplicitConversion[A](x: F[A]) {
       def optionT = OptionT(x.map(_.some))

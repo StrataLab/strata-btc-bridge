@@ -229,7 +229,7 @@ trait TransitionToEffect {
             cs: MWaitingForRedemption,
             ev: BifrostFundsWithdrawn
           ) =>
-        import co.topl.brambl.syntax._
+        import xyz.stratalab.sdk.syntax._
         Async[F]
           .start(
             consensusClient.postRedemptionTx(

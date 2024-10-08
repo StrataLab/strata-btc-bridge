@@ -1,12 +1,12 @@
-package co.topl.brambl.cli.mockbase
+package xyz.stratalab.sdk.cli.mockbase
 
-import co.topl.brambl.builders.{BuilderError, TransactionBuilderApi}
-import co.topl.brambl.models.Event.{GroupPolicy, SeriesPolicy}
-import co.topl.brambl.models.box.{AssetMintingStatement, Attestation, FungibilityType, Lock, QuantityDescriptorType}
-import co.topl.brambl.models.transaction.{IoTransaction, UnspentTransactionOutput}
-import co.topl.brambl.models.{Datum, GroupId, LockAddress, SeriesId}
-import co.topl.brambl.syntax.ValueTypeIdentifier
-import co.topl.genus.services.Txo
+import xyz.stratalab.sdk.builders.{BuilderError, TransactionBuilderApi}
+import xyz.stratalab.sdk.models.Event.{GroupPolicy, SeriesPolicy}
+import xyz.stratalab.sdk.models.box.{AssetMintingStatement, Attestation, FungibilityType, Lock, QuantityDescriptorType}
+import xyz.stratalab.sdk.models.transaction.{IoTransaction, UnspentTransactionOutput}
+import xyz.stratalab.sdk.models.{Datum, GroupId, LockAddress, SeriesId}
+import xyz.stratalab.sdk.syntax.ValueTypeIdentifier
+import xyz.stratalab.indexer.services.Txo
 import com.google.protobuf.ByteString
 import com.google.protobuf.struct.Struct
 import quivr.models.Int128
