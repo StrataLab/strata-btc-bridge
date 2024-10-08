@@ -5,7 +5,7 @@ import cats.effect.kernel.Ref
 import cats.effect.std.Queue
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
 import xyz.stratalab.sdk.constants.NetworkConstants
-import xyz.stratalab.sdk.dataApi.GenusQueryAlgebra
+import xyz.stratalab.sdk.dataApi.IndexerQueryAlgebra
 import xyz.stratalab.sdk.models.{GroupId, SeriesId}
 import xyz.stratalab.sdk.servicekit.{
   FellowshipStorageApi,
@@ -109,7 +109,7 @@ trait AppModule extends WalletStateResource {
       params.toplNetwork.networkId,
       NetworkConstants.MAIN_LEDGER_ID
     )
-    implicit val genusQueryAlgebra = GenusQueryAlgebra.make[IO](
+    implicit val genusQueryAlgebra = IndexerQueryAlgebra.make[IO](
       channelResource(
         params.toplHost,
         params.toplPort,

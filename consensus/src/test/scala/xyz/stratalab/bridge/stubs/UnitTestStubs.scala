@@ -3,7 +3,7 @@ package xyz.stratalab.bridge.stubs
 import cats.Monad
 import cats.effect.IO
 import xyz.stratalab.sdk.codecs.AddressCodecs
-import xyz.stratalab.sdk.dataApi.GenusQueryAlgebra
+import xyz.stratalab.sdk.dataApi.IndexerQueryAlgebra
 import xyz.stratalab.sdk.models.box.{Attestation, Challenge, FungibilityType, Lock, QuantityDescriptorType, Value}
 import xyz.stratalab.sdk.models.transaction.{SpentTransactionOutput, UnspentTransactionOutput}
 import xyz.stratalab.sdk.models.{Datum, GroupId, LockAddress, SeriesId, TransactionId, TransactionOutputAddress}
@@ -184,8 +184,8 @@ object UnitTestStubs {
     transactionOutputAddress03
   )
 
-  def makeGenusQueryAlgebraMockWithAddress[F[_]: Monad] =
-    new GenusQueryAlgebra[F] {
+  def makeIndexerQueryAlgebraMockWithAddress[F[_]: Monad] =
+    new IndexerQueryAlgebra[F] {
 
       override def queryUtxo(
         fromAddress: LockAddress,

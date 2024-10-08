@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.consensus.shared.persistence
 
 import com.google.protobuf.ByteString
-import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.NodeCurrencyUnit.Currency.{
   AssetToken => AssetTokenCurrency,
   GroupToken => GroupTokenCurrency,
   Lvl => LvlCurrency,
@@ -21,7 +21,7 @@ import xyz.stratalab.bridge.consensus.protobuf.{
   AssetToken => AssetTokenPb,
   BTCFundsDeposited => BTCFundsDepositedPb,
   BTCFundsWithdrawn => BTCFundsWithdrawnPb,
-  BifrostCurrencyUnit => BifrostCurrencyUnitPb,
+  NodeCurrencyUnit => NodeCurrencyUnitPb,
   BifrostFundsDeposited => BifrostFundsDepositedPb,
   BifrostFundsWithdrawn => BifrostFundsWithdrawnPb,
   BlockchainEvent => BlockchainEventPb,
@@ -33,7 +33,7 @@ import xyz.stratalab.bridge.consensus.protobuf.{
   SkippedBTCBlock => SkippedBTCBlockPb,
   SkippedStrataBlock => SkippedStrataBlockPb
 }
-import xyz.stratalab.bridge.consensus.shared.{AssetToken, BifrostCurrencyUnit, GroupToken, Lvl, SeriesToken}
+import xyz.stratalab.bridge.consensus.shared.{AssetToken, NodeCurrencyUnit, GroupToken, Lvl, SeriesToken}
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   BTCFundsDeposited,
   BTCFundsWithdrawn,
@@ -48,10 +48,10 @@ import xyz.stratalab.bridge.consensus.subsystems.monitor.{
 
 trait SerializationOps {
 
-  def toProtobuf(amount: BifrostCurrencyUnit) = amount match {
+  def toProtobuf(amount: NodeCurrencyUnit) = amount match {
     case Lvl(amount) =>
       Some(
-        BifrostCurrencyUnitPb(
+        NodeCurrencyUnitPb(
           LvlCurrency(
             LvlPb(amount.value)
           )
@@ -59,7 +59,7 @@ trait SerializationOps {
       )
     case SeriesToken(id, amount) =>
       Some(
-        BifrostCurrencyUnitPb(
+        NodeCurrencyUnitPb(
           SeriesTokenCurrency(
             SeriesTokenPb(id, amount.value)
           )
@@ -67,7 +67,7 @@ trait SerializationOps {
       )
     case GroupToken(id, amount) =>
       Some(
-        BifrostCurrencyUnitPb(
+        NodeCurrencyUnitPb(
           GroupTokenCurrency(
             GroupTokenPb(id, amount.value)
           )
@@ -75,7 +75,7 @@ trait SerializationOps {
       )
     case AssetToken(groupId, seriesId, amount) =>
       Some(
-        BifrostCurrencyUnitPb(
+        NodeCurrencyUnitPb(
           AssetTokenCurrency(
             AssetTokenPb(groupId, seriesId, amount.value)
           )

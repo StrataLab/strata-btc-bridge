@@ -3,9 +3,9 @@ package xyz.stratalab.bridge.consensus.core
 import cats.effect.kernel.{Async, Ref, Sync}
 import cats.effect.std.{Mutex, Queue}
 import cats.effect.{ExitCode, IO, IOApp}
-import xyz.stratalab.sdk.dataApi.BifrostQueryAlgebra
+import xyz.stratalab.sdk.dataApi.NodeQueryAlgebra
 import xyz.stratalab.sdk.models.{GroupId, SeriesId}
-import xyz.stratalab.sdk.monitoring.{BifrostMonitor, BitcoinMonitor}
+import xyz.stratalab.sdk.monitoring.{NodeMonitor, BitcoinMonitor}
 import xyz.stratalab.sdk.utils.Encoding
 import com.google.protobuf.ByteString
 import com.typesafe.config.{Config, ConfigFactory}
@@ -312,7 +312,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
       ) = res
       _           <- requestStateManager.startProcessingEvents()
       pbftService <- pbftServiceResource
-      bifrostQueryAlgebra = BifrostQueryAlgebra
+      bifrostQueryAlgebra = NodeQueryAlgebra
         .make[IO](
           channelResource(
             params.toplHost,
@@ -325,7 +325,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         zmqHost = params.zmqHost,
         zmqPort = params.zmqPort
       )
-      bifrostMonitor <- BifrostMonitor(
+      bifrostMonitor <- NodeMonitor(
         params.toplHost,
         params.toplPort,
         params.toplSecureConnection,
@@ -416,7 +416,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
 
   def getAndSetCurrentStrataHeight[F[_]: Async: Logger](
     currentStrataHeight: Ref[F, Long],
-    bqa:                 BifrostQueryAlgebra[F]
+    bqa:                 NodeQueryAlgebra[F]
   ) = {
     import cats.implicits._
     import scala.concurrent.duration._

@@ -1,7 +1,7 @@
 package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import org.bitcoins.core.currency.CurrencyUnit
-import xyz.stratalab.bridge.consensus.shared.BifrostCurrencyUnit
+import xyz.stratalab.bridge.consensus.shared.NodeCurrencyUnit
 
 sealed trait BlockchainEvent
 
@@ -28,7 +28,7 @@ case class BifrostFundsDeposited(
   address:                  String,
   utxoTxId:                 String,
   utxoIndex:                Int,
-  amount:                   BifrostCurrencyUnit
+  amount:                   NodeCurrencyUnit
 ) extends BlockchainEvent
 
 case class BifrostFundsWithdrawn(
@@ -36,5 +36,5 @@ case class BifrostFundsWithdrawn(
   txId:                 String,
   txIndex:              Int,
   secret:               String,
-  amount:               BifrostCurrencyUnit
+  amount:               NodeCurrencyUnit
 ) extends BlockchainEvent

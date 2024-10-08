@@ -10,8 +10,20 @@ import xyz.stratalab.indexer.services.Txo
 import com.google.protobuf.ByteString
 import com.google.protobuf.struct.Struct
 import quivr.models.Int128
+import xyz.stratalab.sdk.models.TransactionOutputAddress
 
 class BaseTransactionBuilderApi[F[_]] extends TransactionBuilderApi[F] {
+
+  override def buildAssetMergeTransaction(
+    utxosToMerge:           Seq[TransactionOutputAddress],
+    txos:                   Seq[Txo],
+    locks:                  Map[LockAddress, Lock.Predicate],
+    fee:                    Long,
+    mergedAssetLockAddress: LockAddress,
+    changeAddress:          LockAddress,
+    ephemeralMetadata:      Option[Struct],
+    commitment:             Option[ByteString]
+  ): F[Either[BuilderError, IoTransaction]] = ???
 
   override def buildTransferAllTransaction(
     txos:                 Seq[Txo],

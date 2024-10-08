@@ -3,7 +3,7 @@ package xyz.stratalab.bridge.consensus.shared.persistence
 import org.bitcoins.core.currency.Satoshis
 import quivr.models.Int128
 import scodec.bits.ByteVector
-import xyz.stratalab.bridge.consensus.protobuf.BifrostCurrencyUnit.Currency.{
+import xyz.stratalab.bridge.consensus.protobuf.NodeCurrencyUnit.Currency.{
   AssetToken => AssetTokenCurrency,
   GroupToken => GroupTokenCurrency,
   Lvl => LvlCurrency,
@@ -21,7 +21,7 @@ import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
   SkippedStrataBlock => SkippedStrataBlockEvent
 }
 import xyz.stratalab.bridge.consensus.protobuf.{
-  BifrostCurrencyUnit => BifrostCurrencyUnitPb,
+  NodeCurrencyUnit => NodeCurrencyUnitPb,
   BlockchainEvent => BlockchainEventPb
 }
 import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, SeriesToken}
@@ -39,7 +39,7 @@ import xyz.stratalab.bridge.consensus.subsystems.monitor.{
 
 trait DeserializationOps {
 
-  def fromProtobuf(someAmount: Option[BifrostCurrencyUnitPb]) =
+  def fromProtobuf(someAmount: Option[NodeCurrencyUnitPb]) =
     someAmount match {
       case Some(amount) =>
         amount.currency match {

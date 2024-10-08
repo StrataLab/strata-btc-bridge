@@ -2,7 +2,7 @@ package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import xyz.stratalab.sdk.codecs.AddressCodecs
 import xyz.stratalab.sdk.models.box.Attestation
-import xyz.stratalab.sdk.monitoring.BifrostMonitor
+import xyz.stratalab.sdk.monitoring.NodeMonitor
 import xyz.stratalab.sdk.monitoring.BitcoinMonitor.BitcoinBlockSync
 import xyz.stratalab.sdk.utils.Encoding
 
@@ -22,7 +22,7 @@ object BlockProcessor {
   def process[F[_]](
     initialBTCHeight:    Int,
     initialStrataHeight: Long
-  ): Either[BitcoinBlockSync, BifrostMonitor.BifrostBlockSync] => fs2.Stream[
+  ): Either[BitcoinBlockSync, NodeMonitor.NodeBlockSync] => fs2.Stream[
     F,
     BlockchainEvent
   ] = {
@@ -32,7 +32,7 @@ object BlockProcessor {
     var btcAscending = false
     var toplAscending = false
     def processAux[F[_]](
-      block: Either[BitcoinBlockSync, BifrostMonitor.BifrostBlockSync]
+      block: Either[BitcoinBlockSync, NodeMonitor.NodeBlockSync]
     ): fs2.Stream[F, BlockchainEvent] = block match {
       case Left(b) =>
         val allTransactions = fs2.Stream(

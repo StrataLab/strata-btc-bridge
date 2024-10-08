@@ -73,7 +73,7 @@ jobs:
           echo "BRIDGE NETWORK: $BRIDGE"
           export BIFROST_01=`docker run --rm -d --network=$BRIDGE --name bifrost01 -p 9085:9085 -p 9084:9084 -p 9091:9091 -v ${{ github.workspace }}/node01:/staking:rw docker.io/stratalab/strata-node-tooling:0.0.0-8200-7a9041ed --  --config  /staking/config.yaml --regtest`
           echo "BIFROST_01=$BIFROST_01" >> $GITHUB_ENV
-          echo "Bifrost01 container id: $BIFROST_01"
+          echo "Node01 container id: $BIFROST_01"
           curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
           chmod +x cs
           ./cs setup --yes

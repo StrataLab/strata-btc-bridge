@@ -128,9 +128,9 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
     )
   }
 
-  // MWaitingForBTCDeposit not transition on Bifrost events
+  // MWaitingForBTCDeposit not transition on Node events
   test(
-    "PeginTransitionRelation should not transition from MWaitingForBTCDeposit on Bifrost events"
+    "PeginTransitionRelation should not transition from MWaitingForBTCDeposit on Node events"
   ) {
     import xyz.stratalab.sdk.syntax._
     assert(
@@ -443,9 +443,9 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
     )
   }
 
-  // WaitingForClaim not transition on Bifrost events
+  // WaitingForClaim not transition on Node events
   test(
-    "PeginTransitionRelation should not transition from WaitingForClaim on Bifrost events"
+    "PeginTransitionRelation should not transition from WaitingForClaim on Node events"
   ) {
     import xyz.stratalab.sdk.syntax._
     assert(
@@ -474,7 +474,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
               "groupId",
               "seriesId",
               100L
-            ) // Assuming AssetToken is a valid BifrostCurrencyUnit
+            ) // Assuming AssetToken is a valid NodeCurrencyUnit
           )
         )(transitionToEffect[IO](_, _))
         .isEmpty &&
@@ -558,7 +558,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
               Encoding.encodeToBase58(groupId.value.toByteArray),
               Encoding.encodeToBase58(seriesId.value.toByteArray),
               100L
-            ) // Assuming AssetToken is a valid BifrostCurrencyUnit
+            ) // Assuming AssetToken is a valid NodeCurrencyUnit
           )
         )(transitionToEffect[IO](_, _))
         .get
@@ -595,7 +595,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
               "groupId",
               "seriesId",
               100L
-            ) // Assuming AssetToken is a valid BifrostCurrencyUnit
+            ) // Assuming AssetToken is a valid NodeCurrencyUnit
           )
         )(transitionToEffect[IO](_, _))
         .isEmpty

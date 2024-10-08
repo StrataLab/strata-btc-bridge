@@ -7,7 +7,7 @@ import xyz.stratalab.sdk.codecs.AddressCodecs
 import xyz.stratalab.sdk.constants.NetworkConstants
 import xyz.stratalab.sdk.dataApi.{
   FellowshipStorageAlgebra,
-  GenusQueryAlgebra,
+  IndexerQueryAlgebra,
   TemplateStorageAlgebra,
   WalletFellowship,
   WalletStateAlgebra,
@@ -384,7 +384,7 @@ object StrataWalletAlgebra {
     tba:         TransactionBuilderApi[F],
     walletApi:   WalletApi[F],
     wsa:         WalletStateAlgebra[F],
-    utxoAlgebra: GenusQueryAlgebra[F]
+    utxoAlgebra: IndexerQueryAlgebra[F]
   ): F[IoTransaction] = {
     import cats.implicits._
     for {

@@ -4,7 +4,7 @@ import cats.effect.kernel.{Async, Ref, Resource, Sync}
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
 import xyz.stratalab.sdk.dataApi.{
   FellowshipStorageAlgebra,
-  GenusQueryAlgebra,
+  IndexerQueryAlgebra,
   TemplateStorageAlgebra,
   WalletStateAlgebra
 }
@@ -139,7 +139,7 @@ object BridgeStateMachineExecutionManagerImpl {
     wsa:                      WalletStateAlgebra[F],
     groupIdIdentifier:        GroupId,
     seriesIdIdentifier:       SeriesId,
-    utxoAlgebra:              GenusQueryAlgebra[F],
+    utxoAlgebra:              IndexerQueryAlgebra[F],
     channelResource:          Resource[F, ManagedChannel],
     defaultMintingFee:        Lvl,
     lastReplyMap:             LastReplyMap,

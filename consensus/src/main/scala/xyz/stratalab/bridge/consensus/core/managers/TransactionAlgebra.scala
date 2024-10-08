@@ -2,7 +2,7 @@ package xyz.stratalab.bridge.consensus.core.managers
 
 import cats.effect.kernel.{Resource, Sync}
 import xyz.stratalab.sdk.Context
-import xyz.stratalab.sdk.dataApi.{BifrostQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.dataApi.{NodeQueryAlgebra, WalletStateAlgebra}
 import xyz.stratalab.sdk.models.transaction.IoTransaction
 import xyz.stratalab.sdk.models.{Datum, Event}
 import xyz.stratalab.sdk.syntax.cryptoToPbKeyPair
@@ -63,7 +63,7 @@ object TransactionAlgebra {
           )
         )
         .whenA(validations.nonEmpty)
-      response <- BifrostQueryAlgebra
+      response <- NodeQueryAlgebra
         .make[F](channelResource)
         .broadcastTransaction(provedTransaction)
         .map(_ => provedTransaction)
@@ -100,7 +100,7 @@ object TransactionAlgebra {
             mockKeyPair
           )
       )
-      tipBlockHeader <- BifrostQueryAlgebra
+      tipBlockHeader <- NodeQueryAlgebra
         .make[F](channelResource)
         .blockByDepth(1L)
         .map(_.get._2)

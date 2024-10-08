@@ -3,7 +3,7 @@ package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 import cats.effect.kernel.{Async, Resource}
 import cats.implicits._
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.dataApi.{IndexerQueryAlgebra, WalletStateAlgebra}
 import xyz.stratalab.sdk.models.LockAddress
 import xyz.stratalab.sdk.models.box.AssetMintingStatement
 import xyz.stratalab.sdk.wallet.WalletApi
@@ -36,7 +36,7 @@ object WaitingBTCOps {
   private def computeAssetMintingStatement[F[_]: Async: Logger](
     amount:         Int128,
     currentAddress: LockAddress,
-    utxoAlgebra:    GenusQueryAlgebra[F]
+    utxoAlgebra:    IndexerQueryAlgebra[F]
   ) = for {
     txos <- (utxoAlgebra
       .queryUtxo(
@@ -77,7 +77,7 @@ object WaitingBTCOps {
     tba:             TransactionBuilderApi[F],
     walletApi:       WalletApi[F],
     wsa:             WalletStateAlgebra[F],
-    utxoAlgebra:     GenusQueryAlgebra[F],
+    utxoAlgebra:     IndexerQueryAlgebra[F],
     channelResource: Resource[F, ManagedChannel]
   ) = for {
     ioTransaction <- createSimpleAssetMintingTransactionFromParams(
@@ -110,7 +110,7 @@ object WaitingBTCOps {
     walletApi:             WalletApi[F],
     walletStateApi:        WalletStateAlgebra[F],
     transactionBuilderApi: TransactionBuilderApi[F],
-    utxoAlgebra:           GenusQueryAlgebra[F],
+    utxoAlgebra:           IndexerQueryAlgebra[F],
     channelResource:       Resource[F, ManagedChannel],
     defaultMintingFee:     Lvl
   ): F[Unit] = {

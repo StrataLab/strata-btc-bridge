@@ -210,7 +210,7 @@ package object bridge extends ProcessOps {
       )
   )
 
-  def extractIpBifrost(id: Int, bridgeNetwork: String) = IO.fromEither(
+  def extractIpNode(id: Int, bridgeNetwork: String) = IO.fromEither(
     parse(bridgeNetwork)
       .map(x =>
         (((x.asArray.get.head \\ "Containers").head.asObject.map { x =>

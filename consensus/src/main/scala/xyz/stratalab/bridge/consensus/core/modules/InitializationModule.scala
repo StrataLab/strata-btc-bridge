@@ -2,7 +2,7 @@ package xyz.stratalab.bridge.consensus.core.modules
 
 import cats.effect.kernel.{Async, Ref}
 import xyz.stratalab.sdk.builders.TransactionBuilderApi
-import xyz.stratalab.sdk.dataApi.{GenusQueryAlgebra, WalletStateAlgebra}
+import xyz.stratalab.sdk.dataApi.{IndexerQueryAlgebra, WalletStateAlgebra}
 import xyz.stratalab.sdk.models.{GroupId, SeriesId}
 import xyz.stratalab.sdk.syntax._
 import xyz.stratalab.sdk.utils.Encoding
@@ -35,7 +35,7 @@ object InitializationModule {
     bitcoind:          BitcoindRpcClient,
     tba:               TransactionBuilderApi[F],
     wsa:               WalletStateAlgebra[F],
-    genusQueryAlgebra: GenusQueryAlgebra[F]
+    genusQueryAlgebra: IndexerQueryAlgebra[F]
   ) = new InitializationModuleAlgebra[F] {
 
     import WalletApiHelpers._
