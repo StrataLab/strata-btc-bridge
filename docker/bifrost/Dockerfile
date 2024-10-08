@@ -7,7 +7,7 @@ RUN cs setup --yes
 ## create alias in profile
 RUN echo "#!/bin/bash" >> /usr/local/bin/brambl-cli
 ## run forwarding the parameters
-RUN echo 'cs launch -r https://s01.oss.sonatype.org/content/repositories/releases co.topl:brambl-cli_2.13:2.0.0-beta6 -- $@' >> /usr/local/bin/brambl-cli
+RUN echo 'cs launch -r https://s01.oss.sonatype.org/content/repositories/releases xyz.stratalab:brambl-cli_2.13:2.0.0-beta6 -- $@' >> /usr/local/bin/brambl-cli
 RUN chmod +x /usr/local/bin/brambl-cli
 USER 1001:0
 RUN brambl-cli wallet init --network private --password password --newwalletdb /tmp/wallet.db --mnemonicfile /tmp/mnemonic.txt  -o /tmp/keyfile.json

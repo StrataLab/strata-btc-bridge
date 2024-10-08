@@ -103,7 +103,7 @@ object PBFTTransitionRelation {
             cs: PSConfirmingTBTCMint,
             _: UndoTBTCMintEvt
           ) =>
-        import co.topl.brambl.syntax._
+        import xyz.stratalab.sdk.syntax._
         PSMintingTBTC(
           startWaitingBTCBlockHeight = cs.startWaitingBTCBlockHeight,
           currentWalletIdx = cs.currentWalletIdx,

@@ -1,11 +1,6 @@
 package xyz.stratalab.bridge.consensus.core.pbft.statemachine
 
 import cats.effect.kernel.{Async, Ref, Resource, Sync}
-import co.topl.brambl.builders.TransactionBuilderApi
-import co.topl.brambl.dataApi.{FellowshipStorageAlgebra, GenusQueryAlgebra, TemplateStorageAlgebra, WalletStateAlgebra}
-import co.topl.brambl.models.{GroupId, SeriesId}
-import co.topl.brambl.utils.Encoding
-import co.topl.brambl.wallet.WalletApi
 import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
 import org.bitcoins.core.currency.{CurrencyUnit, Satoshis}
@@ -89,6 +84,16 @@ import xyz.stratalab.bridge.shared.{
   StateMachineRequest
 }
 import xyz.stratalab.consensus.core.PBFTInternalGrpcServiceClient
+import xyz.stratalab.sdk.builders.TransactionBuilderApi
+import xyz.stratalab.sdk.dataApi.{
+  FellowshipStorageAlgebra,
+  IndexerQueryAlgebra,
+  TemplateStorageAlgebra,
+  WalletStateAlgebra
+}
+import xyz.stratalab.sdk.models.{GroupId, SeriesId}
+import xyz.stratalab.sdk.utils.Encoding
+import xyz.stratalab.sdk.wallet.WalletApi
 
 import java.security.{KeyPair => JKeyPair}
 import java.util.UUID
@@ -134,7 +139,7 @@ object BridgeStateMachineExecutionManagerImpl {
     wsa:                      WalletStateAlgebra[F],
     groupIdIdentifier:        GroupId,
     seriesIdIdentifier:       SeriesId,
-    utxoAlgebra:              GenusQueryAlgebra[F],
+    utxoAlgebra:              IndexerQueryAlgebra[F],
     channelResource:          Resource[F, ManagedChannel],
     defaultMintingFee:        Lvl,
     lastReplyMap:             LastReplyMap,
@@ -244,7 +249,7 @@ object BridgeStateMachineExecutionManagerImpl {
                 height = value.height
               )
             case PostTBTCMint(value) =>
-              import co.topl.brambl.syntax._
+              import xyz.stratalab.sdk.syntax._
               PostTBTCMintEvt(
                 sessionId = value.sessionId,
                 height = value.height,
@@ -268,7 +273,7 @@ object BridgeStateMachineExecutionManagerImpl {
                 height = value.height
               )
             case PostRedemptionTx(value) =>
-              import co.topl.brambl.syntax._
+              import xyz.stratalab.sdk.syntax._
               PostRedemptionTxEvt(
                 sessionId = value.sessionId,
                 secret = value.secret,
@@ -422,7 +427,7 @@ object BridgeStateMachineExecutionManagerImpl {
             case ConfirmDepositBTC(
                   value
                 ) =>
-              import co.topl.brambl.syntax._
+              import xyz.stratalab.sdk.syntax._
               for {
                 _ <- trace"Deposit has been confirmed"
                 someSessionInfo <- standardResponse(

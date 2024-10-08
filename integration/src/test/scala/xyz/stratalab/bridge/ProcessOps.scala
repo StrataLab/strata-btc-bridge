@@ -58,6 +58,7 @@ trait ProcessOps {
     "-s",
     "false"
   )
+
   def mintBlockDockerSeq(node: Int, nbBlocks: Int) = Seq(
     "exec",
     "bifrost" + f"${node}%02d",
@@ -212,7 +213,7 @@ trait ProcessOps {
         "launch",
         "-r",
         "https://s01.oss.sonatype.org/content/repositories/releases",
-        "co.topl:brambl-cli_2.13:2.0.0-beta6",
+        "xyz.stratalab:brambl-cli_2.13:2.0.0-beta6",
         "--",
         "fellowships",
         "add",
