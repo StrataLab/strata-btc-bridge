@@ -10,8 +10,8 @@ import xyz.stratalab.bridge.consensus.protobuf.NodeCurrencyUnit.Currency.{
   SeriesToken => SeriesTokenCurrency
 }
 import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  BifrostFundsDeposited => BifrostFundsDepositedEvent,
-  BifrostFundsWithdrawn => BifrostFundsWithdrawnEvent,
+  NodeFundsDeposited => NodeFundsDepositedEvent,
+  NodeFundsWithdrawn => NodeFundsWithdrawnEvent,
   BtcFundsDeposited => BtcFundsDepositedEvent,
   BtcFundsWithdrawn,
   Empty,
@@ -28,8 +28,8 @@ import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, Serie
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   BTCFundsDeposited,
   BTCFundsWithdrawn,
-  BifrostFundsDeposited,
-  BifrostFundsWithdrawn,
+  NodeFundsDeposited,
+  NodeFundsWithdrawn,
   BlockchainEvent,
   NewBTCBlock,
   NewStrataBlock,
@@ -78,8 +78,8 @@ trait DeserializationOps {
         )
       case SkippedBTCBlockEvent(value) =>
         SkippedBTCBlock(value.height)
-      case BifrostFundsDepositedEvent(value) =>
-        BifrostFundsDeposited(
+      case NodeFundsDepositedEvent(value) =>
+        NodeFundsDeposited(
           value.currentStrataBlockHeight,
           value.address,
           value.utxoTxId,
@@ -90,8 +90,8 @@ trait DeserializationOps {
         NewStrataBlock(value.height)
       case SkippedStrataBlockEvent(value) =>
         SkippedStrataBlock(value.height)
-      case BifrostFundsWithdrawnEvent(value) =>
-        BifrostFundsWithdrawn(
+      case NodeFundsWithdrawnEvent(value) =>
+        NodeFundsWithdrawn(
           value.currentStrataBlockHeight,
           value.txId,
           value.txIndex,

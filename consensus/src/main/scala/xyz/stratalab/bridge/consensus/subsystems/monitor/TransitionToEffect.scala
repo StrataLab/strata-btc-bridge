@@ -138,7 +138,7 @@ trait TransitionToEffect {
         }
       case (
             _: MMintingTBTC,
-            be: BifrostFundsDeposited
+            be: NodeFundsDeposited
           ) =>
         Async[F]
           .start(
@@ -227,7 +227,7 @@ trait TransitionToEffect {
           Async[F].unit
       case (
             cs: MWaitingForRedemption,
-            ev: BifrostFundsWithdrawn
+            ev: NodeFundsWithdrawn
           ) =>
         import xyz.stratalab.sdk.syntax._
         Async[F]

@@ -95,7 +95,7 @@ object BlockProcessor {
             transaction.inputs
               .filter(x => isLvlSeriesGroupOrAsset(x.value.value))
               .map { input =>
-                BifrostFundsWithdrawn(
+                NodeFundsWithdrawn(
                   b.height,
                   Encoding.encodeToBase58(input.address.id.value.toByteArray()),
                   input.address.index,
@@ -108,7 +108,7 @@ object BlockProcessor {
             transaction.outputs.zipWithIndex.map { outputAndIdx =>
               val (output, idx) = outputAndIdx
               val bifrostCurrencyUnit = toCurrencyUnit(output.value.value)
-              BifrostFundsDeposited(
+              NodeFundsDeposited(
                 b.height,
                 AddressCodecs.encodeAddress(output.address),
                 Encoding.encodeToBase58(

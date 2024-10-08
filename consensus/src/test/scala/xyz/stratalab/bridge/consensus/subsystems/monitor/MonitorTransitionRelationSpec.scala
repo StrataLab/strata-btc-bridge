@@ -11,8 +11,8 @@ import xyz.stratalab.bridge.consensus.shared.AssetToken
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   BTCFundsDeposited,
   BTCFundsWithdrawn,
-  BifrostFundsDeposited,
-  BifrostFundsWithdrawn,
+  NodeFundsDeposited,
+  NodeFundsWithdrawn,
   BlockchainEvent,
   EndTransition,
   FSMTransitionTo,
@@ -144,7 +144,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             redeemAddress,
             claimAddress
           ),
-          BifrostFundsDeposited(
+          NodeFundsDeposited(
             currentStrataBlockHeight = 0L, // Assuming a placeholder value for the missing argument
             address = redeemAddress,
             utxoTxId = "utxoTxId",
@@ -163,7 +163,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             redeemAddress,
             claimAddress
           ),
-          BifrostFundsWithdrawn(
+          NodeFundsWithdrawn(
             1L,
             "bifrostTxId",
             0,
@@ -193,7 +193,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             utxoIndex = 0, // Added missing utxoIndex parameter
             amount = AssetToken("groupId", "seriesId", 100L)
           ),
-          BifrostFundsWithdrawn(
+          NodeFundsWithdrawn(
             1L,
             "bifrostTxId",
             0,
@@ -234,7 +234,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
   }
 
   test(
-    "PeginTransitionRelation should NOT transition from WaitingForRedemption to BifrostFundsWithdrawn if guard fails"
+    "PeginTransitionRelation should NOT transition from WaitingForRedemption to NodeFundsWithdrawn if guard fails"
   ) {
     import xyz.stratalab.sdk.syntax._
     assert(
@@ -252,7 +252,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             utxoIndex = 0,
             amount = AssetToken("groupId", "seriesId", 100L)
           ),
-          BifrostFundsWithdrawn(
+          NodeFundsWithdrawn(
             1L,
             "bifrostTxIdDifferent",
             0,
@@ -275,7 +275,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             utxoIndex = 0,
             amount = AssetToken("groupId", "seriesId", 100L)
           ),
-          BifrostFundsWithdrawn(
+          NodeFundsWithdrawn(
             1L,
             "bifrostTxId",
             1,
@@ -465,7 +465,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             ), // Adjust amount as necessary
             claimAddress = claimAddress
           ),
-          BifrostFundsDeposited(
+          NodeFundsDeposited(
             currentStrataBlockHeight = 0L, // Assuming a missing parameter needs to be added
             address = redeemAddress,
             utxoTxId = "utxoTxId",
@@ -494,7 +494,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             ), // Adjust amount as necessary
             claimAddress = claimAddress
           ),
-          BifrostFundsWithdrawn(
+          NodeFundsWithdrawn(
             1L,
             "bifrostTxId",
             0,
@@ -549,7 +549,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             0,
             100.satoshis
           ),
-          BifrostFundsDeposited(
+          NodeFundsDeposited(
             currentStrataBlockHeight = 0L, // Assuming a missing parameter needs to be added
             address = redeemAddress,
             utxoTxId = "utxoTxId",
@@ -586,7 +586,7 @@ class MonitorTransitionRelationSpec extends CatsEffectSuite with SharedData {
             0,
             100.satoshis
           ),
-          BifrostFundsDeposited(
+          NodeFundsDeposited(
             currentStrataBlockHeight = 0L, // Assuming a missing parameter needs to be added
             address = redeemAddressOther,
             utxoTxId = "utxoTxId",

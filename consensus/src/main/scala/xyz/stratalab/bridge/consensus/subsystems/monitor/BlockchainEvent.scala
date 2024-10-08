@@ -23,7 +23,7 @@ case class BTCFundsDeposited(
   amount:               CurrencyUnit
 ) extends BlockchainEvent
 
-case class BifrostFundsDeposited(
+case class NodeFundsDeposited(
   currentStrataBlockHeight: Long,
   address:                  String,
   utxoTxId:                 String,
@@ -31,7 +31,7 @@ case class BifrostFundsDeposited(
   amount:                   NodeCurrencyUnit
 ) extends BlockchainEvent
 
-case class BifrostFundsWithdrawn(
+case class NodeFundsWithdrawn(
   fundsWithdrawnHeight: Long,
   txId:                 String,
   txIndex:              Int,

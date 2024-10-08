@@ -8,8 +8,8 @@ import xyz.stratalab.bridge.consensus.protobuf.NodeCurrencyUnit.Currency.{
   SeriesToken => SeriesTokenCurrency
 }
 import xyz.stratalab.bridge.consensus.protobuf.BlockchainEvent.Event.{
-  BifrostFundsDeposited => BifrostFundsDepositedEvent,
-  BifrostFundsWithdrawn => BifrostFundsWithdrawnEvent,
+  NodeFundsDeposited => NodeFundsDepositedEvent,
+  NodeFundsWithdrawn => NodeFundsWithdrawnEvent,
   BtcFundsDeposited => BtcFundsDepositedEvent,
   BtcFundsWithdrawn => BtcFundsWithdrawnEvent,
   NewBTCBlock => NewBTCBlockEvent,
@@ -22,8 +22,8 @@ import xyz.stratalab.bridge.consensus.protobuf.{
   BTCFundsDeposited => BTCFundsDepositedPb,
   BTCFundsWithdrawn => BTCFundsWithdrawnPb,
   NodeCurrencyUnit => NodeCurrencyUnitPb,
-  BifrostFundsDeposited => BifrostFundsDepositedPb,
-  BifrostFundsWithdrawn => BifrostFundsWithdrawnPb,
+  NodeFundsDeposited => NodeFundsDepositedPb,
+  NodeFundsWithdrawn => NodeFundsWithdrawnPb,
   BlockchainEvent => BlockchainEventPb,
   GroupToken => GroupTokenPb,
   Lvl => LvlPb,
@@ -37,8 +37,8 @@ import xyz.stratalab.bridge.consensus.shared.{AssetToken, NodeCurrencyUnit, Grou
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   BTCFundsDeposited,
   BTCFundsWithdrawn,
-  BifrostFundsDeposited,
-  BifrostFundsWithdrawn,
+  NodeFundsDeposited,
+  NodeFundsWithdrawn,
   BlockchainEvent,
   NewBTCBlock,
   NewStrataBlock,
@@ -123,7 +123,7 @@ trait SerializationOps {
             )
           )
         )
-      case BifrostFundsDeposited(
+      case NodeFundsDeposited(
             currentStrataBlockHeight,
             address,
             utxoTxId,
@@ -131,8 +131,8 @@ trait SerializationOps {
             amount
           ) =>
         BlockchainEventPb(
-          BifrostFundsDepositedEvent(
-            BifrostFundsDepositedPb(
+          NodeFundsDepositedEvent(
+            NodeFundsDepositedPb(
               currentStrataBlockHeight,
               address,
               utxoTxId,
@@ -141,10 +141,10 @@ trait SerializationOps {
             )
           )
         )
-      case BifrostFundsWithdrawn(height, txId, txIndex, secret, amount) =>
+      case NodeFundsWithdrawn(height, txId, txIndex, secret, amount) =>
         BlockchainEventPb(
-          BifrostFundsWithdrawnEvent(
-            BifrostFundsWithdrawnPb(
+          NodeFundsWithdrawnEvent(
+            NodeFundsWithdrawnPb(
               height,
               txId,
               txIndex,

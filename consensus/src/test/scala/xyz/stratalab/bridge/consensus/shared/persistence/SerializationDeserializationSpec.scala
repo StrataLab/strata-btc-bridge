@@ -7,8 +7,8 @@ import xyz.stratalab.bridge.consensus.shared.{AssetToken, GroupToken, Lvl, Serie
 import xyz.stratalab.bridge.consensus.subsystems.monitor.{
   BTCFundsDeposited,
   BTCFundsWithdrawn,
-  BifrostFundsDeposited,
-  BifrostFundsWithdrawn,
+  NodeFundsDeposited,
+  NodeFundsWithdrawn,
   NewBTCBlock,
   NewStrataBlock,
   SkippedBTCBlock,
@@ -47,17 +47,17 @@ class SerializationDeserializationSpec extends CatsEffectSuite with Serializatio
     assertEquals(fromProtobuf(toProtobuf(event)), event)
   }
 
-  test("Serialization and Deserialization of BifrostFundsDeposited") {
+  test("Serialization and Deserialization of NodeFundsDeposited") {
     import xyz.stratalab.sdk.syntax._
-    val eventLvl = BifrostFundsDeposited(1, "address", "utxoTxId", 1, Lvl(1L))
+    val eventLvl = NodeFundsDeposited(1, "address", "utxoTxId", 1, Lvl(1L))
     assertEquals(fromProtobuf(toProtobuf(eventLvl)), eventLvl)
     val eventSeriesToken =
-      BifrostFundsDeposited(1, "address", "utxoTxId", 1, SeriesToken("id", 1L))
+      NodeFundsDeposited(1, "address", "utxoTxId", 1, SeriesToken("id", 1L))
     assertEquals(fromProtobuf(toProtobuf(eventSeriesToken)), eventSeriesToken)
     val eventGroupToken =
-      BifrostFundsDeposited(1, "address", "utxoTxId", 1, GroupToken("id", 1L))
+      NodeFundsDeposited(1, "address", "utxoTxId", 1, GroupToken("id", 1L))
     assertEquals(fromProtobuf(toProtobuf(eventGroupToken)), eventGroupToken)
-    val eventAssetToken = BifrostFundsDeposited(
+    val eventAssetToken = NodeFundsDeposited(
       1,
       "address",
       "utxoTxId",
@@ -67,17 +67,17 @@ class SerializationDeserializationSpec extends CatsEffectSuite with Serializatio
     assertEquals(fromProtobuf(toProtobuf(eventAssetToken)), eventAssetToken)
   }
 
-  test("Serialization and Deserialization of BifrostFundsWithdrawn") {
+  test("Serialization and Deserialization of NodeFundsWithdrawn") {
     import xyz.stratalab.sdk.syntax._
-    val eventLvl = BifrostFundsWithdrawn(1L, "txId", 1, "secret", Lvl(1))
+    val eventLvl = NodeFundsWithdrawn(1L, "txId", 1, "secret", Lvl(1))
     assertEquals(fromProtobuf(toProtobuf(eventLvl)), eventLvl)
     val eventSeriesToken =
-      BifrostFundsWithdrawn(1L, "txId", 1, "secret", SeriesToken("id", 1L))
+      NodeFundsWithdrawn(1L, "txId", 1, "secret", SeriesToken("id", 1L))
     assertEquals(fromProtobuf(toProtobuf(eventSeriesToken)), eventSeriesToken)
     val eventGroupToken =
-      BifrostFundsWithdrawn(1L, "txId", 1, "secret", GroupToken("id", 1L))
+      NodeFundsWithdrawn(1L, "txId", 1, "secret", GroupToken("id", 1L))
     assertEquals(fromProtobuf(toProtobuf(eventGroupToken)), eventGroupToken)
-    val eventAssetToken = BifrostFundsWithdrawn(
+    val eventAssetToken = NodeFundsWithdrawn(
       1L,
       "txId",
       1,

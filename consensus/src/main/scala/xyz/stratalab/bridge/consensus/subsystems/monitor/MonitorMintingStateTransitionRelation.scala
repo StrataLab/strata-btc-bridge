@@ -48,7 +48,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
           None
       case (
             cs: MMintingTBTC,
-            be: BifrostFundsDeposited
+            be: NodeFundsDeposited
           ) =>
         import xyz.stratalab.sdk.syntax._
 
@@ -155,7 +155,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
           None
       case (
             cs: MWaitingForRedemption,
-            be: BifrostFundsWithdrawn
+            be: NodeFundsWithdrawn
           ) =>
         if (cs.utxoTxId == be.txId && cs.utxoIndex == be.txIndex) {
           Some(
@@ -251,7 +251,7 @@ trait MonitorMintingStateTransitionRelation extends TransitionToEffect {
           None
       case (
             cs: MConfirmingTBTCMint,
-            be: BifrostFundsWithdrawn
+            be: NodeFundsWithdrawn
           ) =>
         if (cs.utxoTxId == be.txId && cs.utxoIndex == be.txIndex) {
           Some(
