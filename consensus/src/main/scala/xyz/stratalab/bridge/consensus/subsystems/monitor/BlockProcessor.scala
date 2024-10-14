@@ -2,11 +2,10 @@ package xyz.stratalab.bridge.consensus.subsystems.monitor
 
 import co.topl.brambl.codecs.AddressCodecs
 import co.topl.brambl.models.box.Attestation
-import co.topl.brambl.monitoring.BifrostMonitor
-import co.topl.brambl.monitoring.BitcoinMonitor.BitcoinBlockSync
 import co.topl.brambl.utils.Encoding
 
 import scala.util.Try
+import xyz.stratalab.bridge.consensus.subsystems.monitor.BitcoinMonitor.BitcoinBlockSync
 
 object BlockProcessor {
 
