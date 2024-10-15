@@ -3,7 +3,7 @@ package xyz.stratalab.bridge.consensus.subsystems.monitor
 import cats.effect.IO
 import cats.effect.kernel.Resource
 import cats.implicits.{catsSyntaxParallelSequence1, toTraverseOps}
-import xyz.stratalab.sdk.display.blockIdDisplay.display
+import co.topl.brambl.dataApi.{BifrostQueryAlgebra, RpcChannelResource}
 import co.topl.brambl.models.transaction.IoTransaction
 import co.topl.consensus.models.{BlockHeader, BlockId}
 import co.topl.node.models.FullBlockBody
@@ -11,9 +11,25 @@ import co.topl.node.services.SynchronizationTraversalRes.Status.{Applied, Empty,
 import co.topl.node.services.{NodeRpcFs2Grpc, SynchronizationTraversalReq, SynchronizationTraversalRes}
 import fs2.Stream
 import io.grpc.Metadata
-import co.topl.brambl.dataApi.BifrostQueryAlgebra
-import xyz.stratalab.bridge.consensus.subsystems.monitor.BifrostMonitor.{AppliedBifrostBlock, UnappliedBifrostBlock, BifrostBlockSync}
-import xyz.stratalab.bridge.consensus.core.channelResource
+import xyz.stratalab.bridge.consensus.subsystems.monitor.BifrostMonitor.{AppliedBifrostBlock, BifrostBlockSync, UnappliedBifrostBlock}
+
+
+// imports from scala sdk 
+
+// import cats.effect.IO
+// import cats.effect.kernel.Resource
+// import cats.implicits.{catsSyntaxParallelSequence1, toTraverseOps}
+// import xyz.stratalab.sdk.dataApi.BifrostQueryAlgebra
+// import xyz.stratalab.sdk.dataApi.RpcChannelResource.channelResource
+// import xyz.stratalab.sdk.display.blockIdDisplay.display
+// import co.topl.brambl.models.transaction.IoTransaction
+// import xyz.stratalab.sdk.monitoring.BifrostMonitor.{AppliedBifrostBlock, BifrostBlockSync, UnappliedBifrostBlock}
+// import co.topl.consensus.models.{BlockHeader, BlockId}
+// import co.topl.node.models.FullBlockBody
+// import co.topl.node.services.SynchronizationTraversalRes.Status.{Applied, Empty, Unapplied}
+// import co.topl.node.services.{NodeRpcFs2Grpc, SynchronizationTraversalReq, SynchronizationTraversalRes}
+// import fs2.Stream
+// import io.grpc.Metadata
 
 /**
  * Class to monitor incoming bifrost blocks via an iterator.
@@ -78,7 +94,7 @@ object BifrostMonitor {
     def getFullBlock(blockId: BlockId): IO[(BlockHeader, FullBlockBody)] = for {
       block <- bifrostQuery.blockById(blockId)
     } yield block match {
-      case None                      => throw new Exception(s"Unable to query block ${display(blockId)}")
+      case None                      => throw new Exception(s"Unable to query block ${blockId.toByteString}") // display(blockId)}")
       case Some((_, header, _, txs)) => (header, FullBlockBody(txs))
     }
     def getBlockIds(startHeight: Option[Long], tipHeight: Option[Long]): IO[Vector[BlockId]] =
@@ -104,7 +120,7 @@ object BifrostMonitor {
         .map(bId => getFullBlock(bId).map(block => AppliedBifrostBlock(block._2, bId, block._1.height)))
         .sequence
         .toResource
-      channel <- channelResource[IO](address, port, secureConnection)
+      channel <- RpcChannelResource.channelResource[IO](address, port, secureConnection)
       stub    <- NodeRpcFs2Grpc.stubResource[IO](channel)
       stream <- IO(stub.synchronizationTraversal(SynchronizationTraversalReq(), new Metadata()).handleErrorWith { e =>
         e.printStackTrace()
