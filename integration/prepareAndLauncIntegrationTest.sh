@@ -80,7 +80,7 @@ sleep 15
 # Prepare the environment
 echo "Preparing the environment"
 shopt -s expand_aliases
-alias brambl-cli="cs launch -r https://s01.oss.sonatype.org/content/repositories/releases co.topl:brambl-cli_2.13:2.0.0-beta5+2-4f603d9d-SNAPSHOT -- "
+alias brambl-cli="cs launch -r https://s01.oss.sonatype.org/content/repositories/releases xyz.stratalab:brambl-cli_2.13:2.0.0-beta5+2-4f603d9d-SNAPSHOT -- "
 export BTC_USER=bitcoin
 export BTC_PASSWORD=password
 export STRATA_WALLET_DB=strata-wallet.db
