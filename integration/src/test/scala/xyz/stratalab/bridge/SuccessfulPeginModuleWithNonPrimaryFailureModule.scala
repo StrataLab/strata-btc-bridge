@@ -14,7 +14,8 @@ trait SuccessfulPeginModuleWithNonPrimaryFailureModule {
 
     assertIO(
       for {
-        _ <- killFiber(5)
+        _ <- killFiber(1) // primary is 0 
+        _ <- killFiber(2)
         _ <- pwd
         _ <- mintStrataBlock(
           1,

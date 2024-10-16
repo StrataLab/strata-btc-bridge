@@ -60,7 +60,7 @@ class BridgeIntegrationSpec
   // }
 
   cleanupDir.test("Bridge should correctly peg-in BTC if non-primary replica fails") { _ =>
-    info"Bridge should correctly peg-in BTC if non-primary replica fails" >> successfulPeginWithNonPrimaryFailure() // primary is 0 and replica 1 is killed 
+    info"Bridge should correctly peg-in BTC if non-primary replica fails" >> successfulPeginWithNonPrimaryFailure() 
   }
 
 }
