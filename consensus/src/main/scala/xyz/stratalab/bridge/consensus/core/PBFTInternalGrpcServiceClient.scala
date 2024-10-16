@@ -1,6 +1,6 @@
 package xyz.stratalab.consensus.core
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Temporal}
 import com.google.protobuf.ByteString
 import fs2.grpc.syntax.all._
 import io.grpc.{ManagedChannelBuilder, Metadata}
@@ -18,6 +18,8 @@ import xyz.stratalab.bridge.consensus.pbft.{
 import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, ReplicaNode}
 
 import java.security.KeyPair
+import scala.concurrent.duration._
+
 
 trait PBFTInternalGrpcServiceClient[F[_]] {
 
@@ -77,7 +79,42 @@ object PBFTInternalGrpcServiceClientImpl {
 
       import xyz.stratalab.bridge.shared.implicits._
 
-      override def viewChange(request: ViewChangeRequest): F[Empty] =
+      // def retryWithBackoff[A](
+      //   operation: => F[A],
+      //   initialDelay: FiniteDuration,
+      //   maxRetries: Int,
+      //   operationName: String,
+      //   defaultValue: => A
+
+      // )(implicit F: Temporal[F]): F[A] = {
+      //   operation.handleErrorWith { error =>
+      //     if (maxRetries > 0) {
+      //       Async[F].sleep(initialDelay) >> {
+      //         trace"Retrying $operationName. Retries left: $maxRetries, Next delay: ${initialDelay * 2}"
+      //         retryWithBackoff(operation, initialDelay * 2, maxRetries - 1, operationName, defaultValue)
+      //       }
+      //     } else {
+      //       trace"Max retries reached for $operationName. Error: ${error.getMessage}" >>
+      //       F.pure(defaultValue)
+      //     }
+      //   }
+      // }
+
+      override def viewChange(request: ViewChangeRequest): F[Empty] = {
+        def retryViewChangeWithBackoff( // TODO: above implementation of a generic function currently times out
+          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          signedRequest: ViewChangeRequest,
+          initialDelay: FiniteDuration,
+          maxRetries: Int
+        ): F[Empty] = {
+          backup.viewChange(signedRequest, new Metadata()).handleErrorWith { error =>
+            maxRetries match {
+              case 0 => Async[F].sleep(initialDelay) >> retryViewChangeWithBackoff(backup, signedRequest, initialDelay * 2, maxRetries - 1)
+              case _ => trace"Max retries reached for ViewChange. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+            }
+          }
+        }
+
         for {
           _ <- trace"Sending ViewChange to all replicas"
           signedBytes <- BridgeCryptoUtils.signBytes[F](
@@ -85,17 +122,32 @@ object PBFTInternalGrpcServiceClientImpl {
             request.signableBytes
           )
           _ <- backupMap.toList.traverse { case (_, backup) =>
-            backup.viewChange(
+            retryViewChangeWithBackoff(
+              backup, 
               request.withSignature(
                 ByteString.copyFrom(signedBytes)
-              ),
-              new Metadata()
-            ).handleErrorWith { _ =>
-           Async[F].pure(Empty())
-         }}
-        } yield Empty()
+              ), 
+              1.second, 
+              2 // TODO : add this retry config through the config file 
+            )
+         }
+        } yield Empty()}
 
-      override def commit(request: CommitRequest): F[Empty] =
+      override def commit(request: CommitRequest): F[Empty] = {
+        def retryCommitWithBackoff(
+          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          signedRequest: CommitRequest,
+          initialDelay: FiniteDuration,
+          maxRetries: Int
+        ): F[Empty] = {
+          backup.commit(signedRequest, new Metadata()).handleErrorWith { error =>
+            maxRetries match {
+              case 0 => Async[F].sleep(initialDelay) >> retryCommitWithBackoff(backup, signedRequest, initialDelay * 2, maxRetries - 1)
+              case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+            }
+          }
+        }
+
         for {
           _ <- trace"Sending CommitRequest to all replicas"
           signedBytes <- BridgeCryptoUtils.signBytes[F](
@@ -113,8 +165,24 @@ object PBFTInternalGrpcServiceClientImpl {
          } // TODO: add retries (5 seconds) delays of 1,2 seconds
           }
         } yield Empty()
+      }
+        
 
-      override def prePrepare(request: PrePrepareRequest): F[Empty] =
+      override def prePrepare(request: PrePrepareRequest): F[Empty] = {
+        def retryPrePrepareWithBackoff(
+          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          request: PrePrepareRequest,
+          initialDelay: FiniteDuration,
+          maxRetries: Int
+        ): F[Empty] = {
+          backup.prePrepare(request, new Metadata()).handleErrorWith { error =>
+            maxRetries match {
+              case 0 => Async[F].sleep(initialDelay) >> retryPrePrepareWithBackoff(backup, request, initialDelay * 2, maxRetries - 1)
+              case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+            }
+          }
+        }
+
         for {
           _ <- trace"Sending PrePrepareRequest to all replicas"
           _ <- backupMap.toList.traverse { case (_, backup) =>
@@ -124,10 +192,25 @@ object PBFTInternalGrpcServiceClientImpl {
         } // TODO: add retries (5 seconds) delays of 1,2 seconds
 
         } yield Empty()
+      }
 
       override def prepare(
         request: PrepareRequest
-      ): F[Empty] =
+      ): F[Empty] = {
+        def retryPrepareWithBackoff(
+          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          signedRequest: PrepareRequest,
+          initialDelay: FiniteDuration,
+          maxRetries: Int
+        ): F[Empty] = {
+          backup.prepare(signedRequest, new Metadata()).handleErrorWith { error =>
+            maxRetries match {
+              case 0 => Async[F].sleep(initialDelay) >> retryPrepareWithBackoff(backup, signedRequest, initialDelay * 2, maxRetries - 1)
+              case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+            }
+          }
+        }
+      
         for {
           _ <- trace"Sending PrepareRequest to all replicas"
           signedBytes <- BridgeCryptoUtils.signBytes[F](
@@ -145,10 +228,26 @@ object PBFTInternalGrpcServiceClientImpl {
          }
           }
         } yield Empty()
+      }
 
       override def checkpoint(
         request: CheckpointRequest
-      ): F[Empty] = for {
+      ): F[Empty] = {
+        def retryCheckpointWithBackoff(
+          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          request: CheckpointRequest,
+          initialDelay: FiniteDuration,
+          maxRetries: Int
+        ): F[Empty] = {
+          backup.checkpoint(request, new Metadata()).handleErrorWith { error =>
+            maxRetries match {
+              case 0 => Async[F].sleep(initialDelay) >> retryCheckpointWithBackoff(backup, request, initialDelay * 2, maxRetries - 1)
+              case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+            }
+          }
+        }
+
+        for {
         _ <- trace"Sending Checkpoint to all replicas"
         _ <- backupMap.toList.traverse { case (_, backup) =>
           backup.checkpoint(request, new Metadata()).handleErrorWith { _ =>
@@ -156,10 +255,26 @@ object PBFTInternalGrpcServiceClientImpl {
          }
         }
       } yield Empty()
+    }
 
       override def newView(
         request: NewViewRequest
-      ): F[Empty] = for {
+      ): F[Empty] = {
+        def retryNewViewWithBackoff(
+          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          signedRequest: NewViewRequest,
+          initialDelay: FiniteDuration,
+          maxRetries: Int
+        ): F[Empty] = {
+          backup.newView(signedRequest, new Metadata()).handleErrorWith { error =>
+            maxRetries match {
+              case 0 => Async[F].sleep(initialDelay) >> retryNewViewWithBackoff(backup, signedRequest, initialDelay * 2, maxRetries - 1)
+              case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+            }
+          }
+        }
+
+        for {
         _ <- trace"Sending NewViewRequest to all replicas"
         signedBytes <- BridgeCryptoUtils.signBytes[F](
           keyPair.getPrivate(),
@@ -176,6 +291,7 @@ object PBFTInternalGrpcServiceClientImpl {
          }
         }
       } yield Empty()
+    }
 
     }
 }
