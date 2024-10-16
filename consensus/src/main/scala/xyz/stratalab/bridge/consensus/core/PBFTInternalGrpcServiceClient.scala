@@ -90,8 +90,9 @@ object PBFTInternalGrpcServiceClientImpl {
                 ByteString.copyFrom(signedBytes)
               ),
               new Metadata()
-            )
-          }
+            ).handleErrorWith { _ =>
+           Async[F].pure(Empty())
+         }}
         } yield Empty()
 
       override def commit(request: CommitRequest): F[Empty] =
@@ -107,7 +108,9 @@ object PBFTInternalGrpcServiceClientImpl {
                 ByteString.copyFrom(signedBytes)
               ),
               new Metadata()
-            )
+            ).handleErrorWith { _ =>
+           Async[F].pure(Empty())
+         } // TODO: add retries (5 seconds) delays of 1,2 seconds
           }
         } yield Empty()
 
@@ -115,8 +118,11 @@ object PBFTInternalGrpcServiceClientImpl {
         for {
           _ <- trace"Sending PrePrepareRequest to all replicas"
           _ <- backupMap.toList.traverse { case (_, backup) =>
-            backup.prePrepare(request, new Metadata())
-          }
+            backup.prePrepare(request, new Metadata()).handleErrorWith { _ =>
+           Async[F].pure(Empty())
+         }
+        } // TODO: add retries (5 seconds) delays of 1,2 seconds
+
         } yield Empty()
 
       override def prepare(
@@ -134,7 +140,9 @@ object PBFTInternalGrpcServiceClientImpl {
                 ByteString.copyFrom(signedBytes)
               ),
               new Metadata()
-            )
+            ).handleErrorWith { _ =>
+           Async[F].pure(Empty())
+         }
           }
         } yield Empty()
 
@@ -143,7 +151,9 @@ object PBFTInternalGrpcServiceClientImpl {
       ): F[Empty] = for {
         _ <- trace"Sending Checkpoint to all replicas"
         _ <- backupMap.toList.traverse { case (_, backup) =>
-          backup.checkpoint(request, new Metadata())
+          backup.checkpoint(request, new Metadata()).handleErrorWith { _ =>
+           Async[F].pure(Empty())
+         }
         }
       } yield Empty()
 
@@ -161,7 +171,9 @@ object PBFTInternalGrpcServiceClientImpl {
               ByteString.copyFrom(signedBytes)
             ),
             new Metadata()
-          )
+          ).handleErrorWith { _ =>
+           Async[F].pure(Empty())
+         }
         }
       } yield Empty()
 

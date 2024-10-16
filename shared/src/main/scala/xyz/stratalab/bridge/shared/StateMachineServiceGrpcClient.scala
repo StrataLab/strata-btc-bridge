@@ -1,6 +1,6 @@
 package xyz.stratalab.bridge.shared
 
-import cats.effect.kernel.{Async, Ref, Sync}
+import cats.effect.kernel.{Async, Ref, Sync, Temporal}
 import cats.effect.std.Mutex
 import com.google.protobuf.ByteString
 import fs2.grpc.syntax.all._
@@ -25,9 +25,11 @@ import xyz.stratalab.bridge.shared.{
   TimeoutTBTCMintOperation
 }
 
+
 import java.security.KeyPair
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
+
 
 trait StateMachineServiceGrpcClient[F[_]] {
 
@@ -79,6 +81,7 @@ object StateMachineServiceGrpcClientImpl {
   import cats.implicits._
   import xyz.stratalab.bridge.shared.implicits._
   import scala.concurrent.duration._
+
 
   def makeContainer[F[_]: Async: Logger](
     currentViewRef: Ref[F, Long],
@@ -281,10 +284,26 @@ object StateMachineServiceGrpcClientImpl {
         } yield winner
       }
 
+      def retryWithBackoff(
+        replica: StateMachineServiceFs2Grpc[F, Metadata],
+        request: StateMachineRequest,
+        initialDelay: FiniteDuration,
+        maxRetries: Int
+      )(implicit F: Temporal[F]): F[Empty] = {
+        info"trying to execute request on replica ${replica.toString()}"
+        replica.executeRequest(request, new Metadata()).handleErrorWith { error =>
+          if (maxRetries > 0)
+            F.sleep(initialDelay) >> retryWithBackoff(replica, request, initialDelay * 2, maxRetries - 1)
+          else
+            error"Max retries reached for request ${request.timestamp}. Error: ${error.getMessage()}" >> F.pure(Empty())
+        }
+      }
+
       def executeRequest(
         request: StateMachineRequest
-      ): F[Either[BridgeError, BridgeResponse]] =
-        for {
+      ): F[Either[BridgeError, BridgeResponse]] = {
+
+      for {
           _ <- info"Sending request to backend"
           // create a new vote table for this request
           _ <- Sync[F].delay(
@@ -308,25 +327,26 @@ object StateMachineServiceGrpcClientImpl {
           _           <- info"Replica count is ${replicaCount.value}"
           currentPrimary = (currentView % replicaCount.value).toInt
           _ <- info"Current primary is $currentPrimary"
-          _ <- replicaMap(currentPrimary).executeRequest(
+          _ <- retryWithBackoff(
+            replicaMap(currentPrimary),
             request,
-            new Metadata()
+            initialDelay = 1.second,
+            maxRetries = 3
           )
           _ <- trace"Waiting for response from backend"
-          someResponse <- Async[F].race(
-            Async[F].sleep(10.second) >> // wait for response
-            error"The request ${request.timestamp} timed out, contacting other replicas" >> // timeout
-            replicaMap
-              .filter(x => x._1 != currentPrimary) // send to all replicas except primary
-              .map(_._2.executeRequest(request, new Metadata()))
-              .toList
-              .sequence >>
-            Async[F].sleep(10.second) >> // wait for response
-            (TimeoutError("Timeout waiting for response"): BridgeError)
-              .pure[F],
+        replicasWithoutPrimary = replicaMap.filter(_._1 != currentPrimary).values.toList
+        result <- Async[F].race(
+            Async[F].sleep(10.second) >>
+              replicasWithoutPrimary.traverse { replica =>
+                Async[F].start(retryWithBackoff(replica, request, 1.second, 3))
+              }.flatMap(_.traverse(_.join)) >> Async[F].sleep(10.second) >> 
+                (TimeoutError("Timeout waiting for response"): BridgeError)
+                  .pure[F],
             checkVoteResult(request.timestamp)
           )
-        } yield someResponse.flatten
+        } yield result.flatten
+      }
+        
 
       def prepareRequest(
         operation: StateMachineRequest.Operation
