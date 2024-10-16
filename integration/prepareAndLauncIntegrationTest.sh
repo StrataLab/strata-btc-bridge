@@ -6,12 +6,31 @@ docker stop $(docker ps -a -q)
 # Remove previous data
 rm consensusPrivateKey.pem consensusPublicKey.pem clientPrivateKey.pem clientPublicKey.pem bridge.db
 
+
+for i in {0..6}; do
+  j=$((2 * i))
+  rm consensusPrivateKey$i.pem
+  rm consensusPublicKey$i.pem
+  rm clientPrivateKey$j.pem
+  rm clientPublicKey$j.pem
+done
+
+
+for i in {0..6}; do
+  rm strata-wallet$i.db
+  rm strata-wallet$i.json
+done
+
 # Create keys
 
-openssl ecparam -name secp256k1 -genkey -noout -out consensusPrivateKey.pem
-openssl ec -in consensusPrivateKey.pem -pubout -out consensusPublicKey.pem
-openssl ecparam -name secp256k1 -genkey -noout -out clientPrivateKey.pem
-openssl ec -in clientPrivateKey.pem -pubout -out clientPublicKey.pem
+
+for i in {0..6}; do
+  j=$((2 * i))
+  openssl ecparam -name secp256k1 -genkey -noout -out consensusPrivateKey$i.pem
+  openssl ec -in consensusPrivateKey$i.pem -pubout -out consensusPublicKey$i.pem
+  openssl ecparam -name secp256k1 -genkey -noout -out clientPrivateKey$j.pem
+  openssl ec -in clientPrivateKey$j.pem -pubout -out clientPublicKey$j.pem
+done
 
 # Start the containers
 echo "Starting containers"
@@ -96,3 +115,8 @@ export ASSET_UTXO=$(brambl-cli tx broadcast -i seriesMintingTxProved.pbuf -h 127
 brambl-cli bifrost-query mint-block --nb-blocks 1 -h 127.0.0.1  --port 9084 -s false
 echo "ASSET_UTXO: $ASSET_UTXO"
 until brambl-cli genus-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $STRATA_WALLET_DB; do sleep 5; done
+
+for i in {0..6}; do
+  cp $STRATA_WALLET_DB strata-wallet$i.db
+  cp $STRATA_WALLET_JSON strata-wallet$i.json
+done

@@ -90,7 +90,7 @@ case class MWaitingForClaim(
   secret:                  String,
   currentWalletIdx:        Int,
   btcTxId:                 String,
-  btcVout:                 Long,
+  btcVout:                 Int,
   scriptAsm:               String,
   amount:                  NodeCurrencyUnit,
   claimAddress:            String
@@ -101,7 +101,7 @@ case class MConfirmingBTCClaim(
   secret:              String,
   currentWalletIdx:    Int,
   btcTxId:             String,
-  btcVout:             Long,
+  btcVout:             Int,
   scriptAsm:           String,
   amount:              NodeCurrencyUnit,
   claimAddress:        String

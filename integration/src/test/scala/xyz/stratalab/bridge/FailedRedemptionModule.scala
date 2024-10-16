@@ -32,7 +32,7 @@ trait FailedRedemptionModule {
             _ <- mintStrataBlock(1, 3)
             _ <- IO.sleep(1.second)
           } yield status)
-            .iterateUntil(_.mintingStatus == "PeginSessionWaitingForRedemption")
+            .iterateUntil(_.mintingStatus == "PeginSessionStateMintingTBTC")
         _ <- info"We are in the waiting for redemption state"
         _ <- checkMintingStatus(startSessionResponse.sessionID)
           .flatMap(x =>

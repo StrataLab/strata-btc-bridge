@@ -28,6 +28,12 @@ trait StorageApi[F[_]] {
     sequenceNumber: Long
   ): F[Seq[PrePrepareRequest]]
 
+  def getPrepareMessage(
+    viewNumber:     Long,
+    sequenceNumber: Long,
+    replicaId:      Int
+  ): F[Option[PrepareRequest]]
+
   def getPrepareMessages(
     viewNumber:     Long,
     sequenceNumber: Long
@@ -37,6 +43,12 @@ trait StorageApi[F[_]] {
     viewNumber:     Long,
     sequenceNumber: Long
   ): F[Seq[CommitRequest]]
+
+  def getCommitMessage(
+    viewNumber:     Long,
+    sequenceNumber: Long,
+    replicaId:      Int
+  ): F[Option[CommitRequest]]
 
   def getCheckpointMessage(
     sequenceNumber: Long,
@@ -136,6 +148,46 @@ object StorageApiImpl {
         }
       }
 
+      override def getCommitMessage(
+        viewNumber:     Long,
+        sequenceNumber: Long,
+        replicaId:      Int
+      ): F[Option[CommitRequest]] = {
+        val selectCommitStmnt =
+          s"SELECT * FROM commit_message WHERE view_number = ${viewNumber} AND sequence_number = ${sequenceNumber} AND replica_id = ${replicaId}"
+        statementResource.use { stmnt =>
+          for {
+            rs <- Sync[F]
+              .blocking(
+                stmnt.executeQuery(
+                  selectCommitStmnt
+                )
+              )
+            commitMessages <- Sync[F].blocking {
+              val commitMessages =
+                scala.collection.mutable.ArrayBuffer.empty[CommitRequest]
+              while (rs.next()) {
+                val digest = rs.getString("digest")
+                val signature = rs.getString("signature")
+                val commit = CommitRequest(
+                  viewNumber = viewNumber,
+                  sequenceNumber = sequenceNumber,
+                  digest = ByteString.copyFrom(
+                    Encoding.decodeFromHex(digest).toOption.get
+                  ),
+                  replicaId = replicaId,
+                  signature = ByteString.copyFrom(
+                    Encoding.decodeFromHex(signature).toOption.get
+                  )
+                )
+                commitMessages += commit
+              }
+              commitMessages.toSeq
+            }
+          } yield commitMessages.headOption
+        }
+      }
+
       override def insertCommitMessage(commit: CommitRequest): F[Boolean] = {
         val insertCommitStmnt =
           "INSERT INTO commit_message (" +
@@ -157,6 +209,46 @@ object StorageApiImpl {
             .blocking(
               stmnt.execute(insertCommitStmnt)
             )
+        }
+      }
+
+      override def getPrepareMessage(
+        viewNumber:     Long,
+        sequenceNumber: Long,
+        replicaId:      Int
+      ): F[Option[PrepareRequest]] = {
+        val selectPrepareStmnt =
+          s"SELECT * FROM prepare_message WHERE view_number = ${viewNumber} AND sequence_number = ${sequenceNumber} AND replica_id = ${replicaId}"
+        statementResource.use { stmnt =>
+          for {
+            rs <- Sync[F]
+              .blocking(
+                stmnt.executeQuery(
+                  selectPrepareStmnt
+                )
+              )
+            prepareMessages <- Sync[F].blocking {
+              val prepareMessages =
+                scala.collection.mutable.ArrayBuffer.empty[PrepareRequest]
+              while (rs.next()) {
+                val digest = rs.getString("digest")
+                val signature = rs.getString("signature")
+                val prepare = PrepareRequest(
+                  viewNumber = viewNumber,
+                  sequenceNumber = sequenceNumber,
+                  digest = ByteString.copyFrom(
+                    Encoding.decodeFromHex(digest).toOption.get
+                  ),
+                  replicaId = replicaId,
+                  signature = ByteString.copyFrom(
+                    Encoding.decodeFromHex(signature).toOption.get
+                  )
+                )
+                prepareMessages += prepare
+              }
+              prepareMessages.toSeq
+            }
+          } yield prepareMessages.headOption
         }
       }
 

@@ -47,7 +47,9 @@ object CheckpointManagerImpl {
         F,
         Map[CheckpointIdentifier, UnstableCheckpoint]
       ](Map())
-      stateSnapshotMap <- Ref.of[F, Map[Long, StateSnapshot]](Map())
+      stateSnapshotMap <- Ref.of[F, Map[Long, StateSnapshot]](
+        Map(0L -> StateSnapshot(0, Encoding.encodeToHex(Array.emptyByteArray), Map()))
+      )
     } yield new CheckpointManager[F] {
 
       override def latestStableCheckpoint: F[StableCheckpoint] =

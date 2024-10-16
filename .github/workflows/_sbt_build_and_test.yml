@@ -111,10 +111,17 @@ jobs:
           echo "ASSET_UTXO: $ASSET_UTXO"
           brambl-cli bifrost-query mint-block --nb-blocks 1 -h localhost  --port 9084 -s false
           until brambl-cli genus-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $STRATA_WALLET_DB; do sleep 5; done
-          openssl ecparam -name secp256k1 -genkey -noout -out integration/consensusPrivateKey.pem
-          openssl ec -in integration/consensusPrivateKey.pem -pubout -out integration/consensusPublicKey.pem
-          openssl ecparam -name secp256k1 -genkey -noout -out integration/clientPrivateKey.pem
-          openssl ec -in integration/clientPrivateKey.pem -pubout -out integration/clientPublicKey.pem
+          for i in {0..6}; do
+            j=$((2 * i))
+            openssl ecparam -name secp256k1 -genkey -noout -out integration/consensusPrivateKey$i.pem
+            openssl ec -in integration/consensusPrivateKey$i.pem -pubout -out integration/consensusPublicKey$i.pem
+            openssl ecparam -name secp256k1 -genkey -noout -out integration/clientPrivateKey$j.pem
+            openssl ec -in integration/clientPrivateKey$j.pem -pubout -out integration/clientPublicKey$j.pem
+          done      
+          for i in {0..6}; do
+            cp $STRATA_WALLET_DB integration/strata-wallet$i.db
+            cp $STRATA_WALLET_JSON integration/strata-wallet$i.json
+          done
       - name: Run integration tests
         run: |
               mkdir node02

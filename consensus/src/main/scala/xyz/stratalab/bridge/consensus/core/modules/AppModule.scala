@@ -28,6 +28,7 @@ import xyz.stratalab.bridge.consensus.core.{
   LastReplyMap,
   PeginWalletManager,
   PublicApiClientGrpcMap,
+  SequenceNumberManager,
   StrataBTCBridgeConsensusParamConfig,
   SystemGlobalState,
   Template,
@@ -82,7 +83,7 @@ trait AppModule extends WalletStateResource {
     pegInWalletManager:          BTCWalletAlgebra[IO],
     logger:                      Logger[IO],
     currentBitcoinNetworkHeight: Ref[IO, Int],
-    currentSequenceRef:          Ref[IO, Long],
+    seqNumberManager:            SequenceNumberManager[IO],
     currentStrataHeight:         Ref[IO, Long],
     currentState:                Ref[IO, SystemGlobalState]
   )(implicit
@@ -175,7 +176,6 @@ trait AppModule extends WalletStateResource {
         queue
       )
       viewManager <- ViewManagerImpl.make[IO](
-        replicaKeyPair,
         params.viewChangeTimeout,
         storageApi,
         checkpointManager,
@@ -192,13 +192,16 @@ trait AppModule extends WalletStateResource {
           )
       requestStateManager <- RequestStateManagerImpl
         .make[IO](
-          replicaKeyPair,
           viewManager,
           queue,
           requestTimerManager,
           bridgeStateMachineExecutionManager
         )
-
+      peginStateMachine <- MonitorStateMachine
+        .make[IO](
+          currentBitcoinNetworkHeight,
+          currentStrataHeight
+        )
     } yield {
       implicit val iRequestStateManager = requestStateManager
       implicit val iRequestTimerManager = requestTimerManager
@@ -209,19 +212,14 @@ trait AppModule extends WalletStateResource {
         viewManager,
         replicaKeysMap
       )
-      val peginStateMachine = MonitorStateMachine
-        .make[IO](
-          currentBitcoinNetworkHeight,
-          currentStrataHeight,
-          new ConcurrentHashMap()
-        )
       (
+        bridgeStateMachineExecutionManager,
         xyz.stratalab.bridge.consensus.core.StateMachineGrpcServiceServer
           .stateMachineGrpcServiceServer(
             replicaKeyPair,
             pbftProtocolClient,
             idReplicaClientMap,
-            currentSequenceRef
+            seqNumberManager
           ),
         InitializationModule
           .make[IO](currentBitcoinNetworkHeight, currentState),

@@ -8,6 +8,11 @@ import xyz.stratalab.bridge.consensus.subsystems.monitor.BlockchainEvent
 
 class BaseStorageApi extends StorageApi[IO] {
 
+  override def getPrepareMessage(viewNumber: Long, sequenceNumber: Long, replicaId: Int): IO[Option[PrepareRequest]] =
+    ???
+
+  override def getCommitMessage(viewNumber: Long, sequenceNumber: Long, replicaId: Int): IO[Option[CommitRequest]] = ???
+
   override def getPrePrepareMessagesFromSeqNumber(
     viewNumber:     Long,
     sequenceNumber: Long

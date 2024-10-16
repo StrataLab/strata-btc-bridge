@@ -1,4 +1,5 @@
 package xyz.stratalab.bridge
+
 import cats.effect.IO
 
 import scala.concurrent.duration._
@@ -14,21 +15,21 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
 
     assertIO(
       for {
-        _ <- mintStrataBlock(1, 1)
-        bridgeNetwork <- computeBridgeNetworkName
-        ipBitcoin02 <- extractIpBtc(2, bridgeNetwork._1)
-        ipBitcoin01 <- extractIpBtc(1, bridgeNetwork._1)
-        _ <- pwd
-        _ <- initStrataWallet(2)
-        _ <- addFellowship(2)
-        _ <- addSecret(2)
-        newAddress <- getNewAddress
-        _ <- generateToAddress(1, 1, newAddress)
+        _                <- mintStrataBlock(1, 1)
+        bridgeNetwork    <- computeBridgeNetworkName
+        ipBitcoin02      <- extractIpBtc(2, bridgeNetwork._1)
+        ipBitcoin01      <- extractIpBtc(1, bridgeNetwork._1)
+        _                <- pwd
+        _                <- initStrataWallet(2)
+        _                <- addFellowship(2)
+        _                <- addSecret(2)
+        newAddress       <- getNewAddress
+        _                <- generateToAddress(1, 1, newAddress)
         txIdAndBTCAmount <- extractGetTxIdAndAmount
         (txId, btcAmount, btcAmountLong) = txIdAndBTCAmount
         startSessionResponse <- startSession(2)
-        _ <- info"minHeight: ${startSessionResponse.minHeight}"
-        _ <- info"maxHeight: ${startSessionResponse.maxHeight}"
+        _                    <- info"minHeight: ${startSessionResponse.minHeight}"
+        _                    <- info"maxHeight: ${startSessionResponse.maxHeight}"
         _ <- addTemplate(
           2,
           shaSecretMap(2),
@@ -41,23 +42,17 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
           btcAmount
         )
         signedTxHex <- signTransaction(bitcoinTx)
-        _ <- sendTransaction(signedTxHex)
-        _ <- generateToAddress(1, 8, newAddress)
-        mintingStatusResponse <- (for {
-          status <- checkMintingStatus(startSessionResponse.sessionID)
-          _ <- info"Current minting status: ${status.mintingStatus}"
-          _ <-
-            if (
-              status.mintingStatus == "PeginSessionStateMintingTBTC" ||
-              status.mintingStatus == "PeginSessionMintingTBTCConfirmation"
-            )
-              mintStrataBlock(1, 2)
-            else IO.unit
-          _ <- IO.sleep(1.second)
-        } yield status)
-          .iterateUntil(
-            _.mintingStatus == "PeginSessionWaitingForRedemption"
-          )
+        _           <- sendTransaction(signedTxHex)
+        _           <- generateToAddress(1, 8, newAddress)
+        mintingStatusResponse <-
+          (for {
+            status <- checkMintingStatus(startSessionResponse.sessionID)
+            _      <- info"Current minting status: ${status.mintingStatus}"
+            _      <- mintStrataBlock(1, 1)
+            _      <- generateToAddress(1, 1, newAddress)
+            _      <- IO.sleep(1.second)
+          } yield status)
+            .iterateUntil(_.mintingStatus == "PeginSessionStateMintingTBTC")
         _ <- createVkFile(vkFile)
         _ <- importVks(2)
         _ <- fundRedeemAddressTx(
@@ -105,15 +100,14 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
         _ <- getCurrentUtxosFromAddress(2, currentAddress)
           .iterateUntil(_.contains("Asset"))
         _ <- mintStrataBlock(1, 7)
-        _ <- (for {
-          status <- checkMintingStatus(startSessionResponse.sessionID)
-          _ <- info"Current minting status: ${status.mintingStatus}"
-          _ <- generateToAddress(1, 1, newAddress)
-          _ <- IO.sleep(1.second)
-        } yield status)
-          .iterateUntil(
-            _.mintingStatus == "PeginSessionWaitingForClaimBTCConfirmation"
-          )
+        _ <- List
+          .fill(5)((for {
+            status <- checkMintingStatus(startSessionResponse.sessionID)
+            _      <- info"Current minting status: ${status.mintingStatus}"
+            _      <- generateToAddress(1, 1, newAddress)
+            _      <- IO.sleep(1.second)
+          } yield status))
+          .sequence
         _ <- generateToAddress(2, 8, newAddress)
         // reconnect networks
         _ <- setNetworkActive(2, true)
@@ -123,7 +117,7 @@ trait SuccessfulPeginWithClaimReorgRetryModule {
         _ <- forceConnection(2, ipBitcoin01, 18444)
         _ <- (for {
           status <- checkMintingStatus(startSessionResponse.sessionID)
-          _ <- IO.sleep(1.second)
+          _      <- IO.sleep(1.second)
         } yield status)
           .iterateUntil(
             _.mintingStatus == "PeginSessionWaitingForClaim"

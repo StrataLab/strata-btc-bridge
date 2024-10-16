@@ -18,7 +18,7 @@ trait PublicApiParamsDescriptor {
         .action((x, c) => c.copy(configurationFile = x))
         .validate(x =>
           if (x.exists) success
-          else failure("Configuration file does not exist")
+          else failure(s"Configuration file does not exist: ${x.getAbsolutePath}")
         )
         .text(
           "Configuration file for the strata-btc-bridge-public-api service"

@@ -175,7 +175,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     walletManager:               BTCWalletAlgebra[IO],
     pegInWalletManager:          BTCWalletAlgebra[IO],
     currentBitcoinNetworkHeight: Ref[IO, Int],
-    currentSequenceRef:          Ref[IO, Long],
+    seqNumberManager:            SequenceNumberManager[IO],
     currentStrataHeight:         Ref[IO, Long],
     currentState:                Ref[IO, SystemGlobalState]
   )(implicit
@@ -208,7 +208,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         pegInWalletManager,
         logger,
         currentBitcoinNetworkHeight,
-        currentSequenceRef,
+        seqNumberManager,
         currentStrataHeight,
         currentState
       )
@@ -219,7 +219,8 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
       res._2,
       res._3,
       res._4,
-      res._5
+      res._5,
+      res._6
     )
   }
 
@@ -230,7 +231,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     walletManager:               BTCWalletAlgebra[IO],
     pegInWalletManager:          BTCWalletAlgebra[IO],
     currentBitcoinNetworkHeight: Ref[IO, Int],
-    currentSequenceRef:          Ref[IO, Long],
+    seqNumberManager:            SequenceNumberManager[IO],
     currentStrataHeight:         Ref[IO, Long],
     currentState:                Ref[IO, SystemGlobalState]
   )(implicit
@@ -271,6 +272,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
       idReplicaClientMap <- createReplicaClienMap[IO](replicaNodes)
       mutex              <- Mutex[IO].toResource
       pbftProtocolClientGrpc <- PBFTInternalGrpcServiceClientImpl.make[IO](
+        replicaKeyPair,
         replicaNodes
       )
       viewReference <- Ref[IO].of(0L).toResource
@@ -297,13 +299,14 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         walletManager,
         pegInWalletManager,
         currentBitcoinNetworkHeight,
-        currentSequenceRef,
+        seqNumberManager,
         currentStrataHeight,
         currentState
       ).toResource
       (
         currentStrataHeightVal,
         currentBitcoinNetworkHeightVal,
+        bridgeStateMachineExecutionManager,
         grpcServiceResource,
         init,
         peginStateMachine,
@@ -311,6 +314,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         requestStateManager
       ) = res
       _           <- requestStateManager.startProcessingEvents()
+      _           <- IO.asyncForIO.background(bridgeStateMachineExecutionManager.runStream().compile.drain)
       pbftService <- pbftServiceResource
       bifrostQueryAlgebra = NodeQueryAlgebra
         .make[IO](
@@ -499,7 +503,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
       currentStrataHeight         <- Ref[IO].of(0L)
       queue                       <- Queue.unbounded[IO, SessionEvent]
       currentBitcoinNetworkHeight <- Ref[IO].of(0)
-      currentSequenceRef          <- Ref[IO].of(0L)
+      seqNumberManager            <- SequenceNumberManagerImpl.make[IO]()
       _ <- startResources(
         privateKeyFile,
         params,
@@ -507,7 +511,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         walletManager,
         pegInWalletManager,
         currentBitcoinNetworkHeight,
-        currentSequenceRef,
+        seqNumberManager,
         currentStrataHeight,
         globalState
       ).useForever
