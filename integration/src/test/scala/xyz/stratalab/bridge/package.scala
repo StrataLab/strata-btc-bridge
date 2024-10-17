@@ -390,8 +390,8 @@ package object bridge extends ProcessOps {
   val csParams = Seq(
     "launch",
     "-r",
-    "https://s01.oss.sonatype.org/content/repositories/releases",
-    "xyz.stratalab:strata-cli_2.13:2.0.0-beta6",
+    "https://s01.oss.sonatype.org/content/repositories/staging",
+    "xyz.stratalab:strata-cli_2.13:0.0.0+196-15bc1892-SNAPSHOT",
     "--"
   )
 
