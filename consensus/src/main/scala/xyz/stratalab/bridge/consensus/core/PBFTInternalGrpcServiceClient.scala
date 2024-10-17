@@ -1,6 +1,6 @@
 package xyz.stratalab.consensus.core
 
-import cats.effect.kernel.{Async, Temporal}
+import cats.effect.kernel._
 import com.google.protobuf.ByteString
 import fs2.grpc.syntax.all._
 import io.grpc.{ManagedChannelBuilder, Metadata}
