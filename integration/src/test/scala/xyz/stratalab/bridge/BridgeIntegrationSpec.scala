@@ -6,7 +6,6 @@ class BridgeIntegrationSpec
     extends CatsEffectSuite
     with SuccessfulPeginModule
     with SuccessfulPeginWithNonPrimaryFailureModule
-    with SuccessfulPeginWithPrimaryFailureModule
     with FailedPeginNoDepositModule
     with FailedPeginNoMintModule
     with FailedRedemptionModule
@@ -60,11 +59,8 @@ class BridgeIntegrationSpec
   //   info"Bridge should correctly go back to minting if there is a reorg" >> failedMintingReorgModule()
   // }
 
-  // cleanupDir.test("Bridge should correctly peg-in BTC if non-primaries replica fails") { _ =>
-  //   info"Bridge should correctly peg-in BTC if non-primaries replica fails" >> successfulPeginWithNonPrimaryFailure() 
-  // }
-
-  cleanupDir.test("Bridge should correctly peg-in BTC if primary replica fails") { _ =>
-    info"Bridge should correctly peg-in BTC if primary replica fails" >> successfulPeginWithPrimaryFailure() 
+  cleanupDir.test("Bridge should correctly peg-in BTC if non-primaries replica fails") { _ =>
+    info"Bridge should correctly peg-in BTC if non-primaries replica fails" >> successfulPeginWithNonPrimaryFailure() 
   }
+
 }
