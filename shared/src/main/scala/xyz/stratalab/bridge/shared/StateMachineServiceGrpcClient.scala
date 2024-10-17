@@ -29,6 +29,7 @@ import xyz.stratalab.bridge.shared.{
 import java.security.KeyPair
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
+import cats.effect.kernel.Resource
 
 
 trait StateMachineServiceGrpcClient[F[_]] {
@@ -299,6 +300,38 @@ object StateMachineServiceGrpcClientImpl {
         }
       }
 
+      def createRaceResource(
+        request: StateMachineRequest,
+        replicasWithoutPrimary: List[StateMachineServiceFs2Grpc[F, Metadata]]
+      ): Resource[F, F[Either[BridgeError, BridgeResponse]]] = {
+        Resource.make(
+          acquire = Async[F].delay(new java.util.concurrent.atomic.AtomicBoolean(false))
+        ) { hasCompleted =>
+          Async[F].delay(hasCompleted.set(true))
+        }.flatMap { _ =>
+          Resource.make(
+            acquire = Async[F].delay(())
+          ) { _ => Async[F].unit
+          }.as {
+            Async[F].race(
+              for {
+                _ <- Async[F].sleep(10.seconds)
+                fibers <- replicasWithoutPrimary.traverse { replica =>
+                  Async[F].start(retryWithBackoff(replica, request, 1.second, 3))
+                }
+                _ <- Async[F].sleep(10.seconds)
+                _ <- fibers.traverse_(_.cancel)
+                result <- (TimeoutError("Timeout waiting for response"): BridgeError).asLeft[BridgeResponse].pure[F]
+              } yield result,
+              checkVoteResult(request.timestamp)
+            ).map {
+              case Left(_) => Left(TimeoutError("Timeout occured"))
+              case Right(response) => response
+            } 
+          }
+        }
+      }
+
       def executeRequest(
         request: StateMachineRequest
       ): F[Either[BridgeError, BridgeResponse]] = {
@@ -334,17 +367,11 @@ object StateMachineServiceGrpcClientImpl {
             maxRetries = 3
           )
           _ <- trace"Waiting for response from backend"
-        replicasWithoutPrimary = replicaMap.filter(_._1 != currentPrimary).values.toList
-        result <- Async[F].race(
-            Async[F].sleep(10.second) >>
-              replicasWithoutPrimary.traverse { replica =>
-                Async[F].start(retryWithBackoff(replica, request, 1.second, 3))
-              }.flatMap(_.traverse(_.join)) >> Async[F].sleep(10.second) >> 
-                (TimeoutError("Timeout waiting for response"): BridgeError)
-                  .pure[F],
-            checkVoteResult(request.timestamp)
-          )
-        } yield result.flatten
+          replicasWithoutPrimary = replicaMap.filter(_._1 != currentPrimary).values.toList
+          result <- createRaceResource(request, replicasWithoutPrimary).use { race =>
+            race
+          }
+        } yield result
       }
         
 

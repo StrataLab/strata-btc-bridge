@@ -4,7 +4,7 @@ import org.typelevel.log4cats.syntax._
 
 import scala.concurrent.duration._
 
-trait SuccessfulPeginModuleWithNonPrimaryFailureModule {
+trait SuccessfulPeginWithNonPrimaryFailureModule {
 
   // self BridgeIntegrationSpec
   self: BridgeIntegrationSpec =>

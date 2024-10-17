@@ -186,13 +186,11 @@ trait BridgeSetupModule extends CatsEffectSuite with ReplicaConfModule with Publ
         for {
           _ <- consensusFiber.cancel
           _ <- publicApiFiber.cancel
-          _ <- IO.delay {
-            fiber02 = fiber02.filter(_._2 != replicaId)
-            fiber01 = fiber01.filter(_._2 != replicaId)
-          }
+          // _ <- IO.delay {
+          //   fiber02 = fiber02.filter(_._2 != replicaId)
+          //   fiber01 = fiber01.filter(_._2 != replicaId)
+          // }
           _ <- IO.println(s"Killed both consensus and public API fibers for replica $replicaId")
-          _ <- IO.println(s"Public API fibers (fiber01) length: ${fiber01.length}")
-          _ <- IO.println(s"Consensus fibers (fiber02) length: ${fiber02.length}")
         } yield ()
       case (Some((consensusFiber, _)), None) =>
         for {
