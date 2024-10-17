@@ -17,7 +17,7 @@ strata-cli simple-transaction create --from-fellowship nofellowship --from-templ
 strata-cli tx prove -i genesisTx.pbuf --walletdb $TOPL_WALLET_DB --keyfile $TOPL_WALLET_JSON -w $TOPL_WALLET_PASSWORD -o genesisTxProved.pbuf
 export GROUP_UTXO=$(strata-cli tx broadcast -i genesisTxProved.pbuf -h 127.0.0.1 --port 9084)
 strata-cli node-query mint-block --nb-blocks 1 -h 127.0.0.1  --port 9084 -s false
-until strata-cli genus-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $TOPL_WALLET_DB; do sleep 5; done
+until strata-cli indexer-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $TOPL_WALLET_DB; do sleep 5; done
 echo "label: ToplBTCGroup" > groupPolicy.yaml
 echo "registrationUtxo: $GROUP_UTXO#0" >> groupPolicy.yaml
 strata-cli simple-minting create --from-fellowship self --from-template default  -h 127.0.0.1 --port 9084 -n private --keyfile $TOPL_WALLET_JSON -w $TOPL_WALLET_PASSWORD -o groupMintingtx.pbuf -i groupPolicy.yaml  --mint-amount 1 --fee 10 --walletdb $TOPL_WALLET_DB --mint-token group
@@ -25,7 +25,7 @@ strata-cli tx prove -i groupMintingtx.pbuf --walletdb $TOPL_WALLET_DB --keyfile 
 export SERIES_UTXO=$(strata-cli tx broadcast -i groupMintingtxProved.pbuf -h 127.0.0.1 --port 9084)
 strata-cli node-query mint-block --nb-blocks 1 -h 127.0.0.1  --port 9084 -s false
 echo "SERIES_UTXO: $SERIES_UTXO"
-until strata-cli genus-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $TOPL_WALLET_DB; do sleep 5; done
+until strata-cli indexer-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $TOPL_WALLET_DB; do sleep 5; done
 echo "label: ToplBTCSeries" > seriesPolicy.yaml
 echo "registrationUtxo: $SERIES_UTXO#0" >> seriesPolicy.yaml
 echo "fungibility: group-and-series" >> seriesPolicy.yaml
@@ -35,4 +35,4 @@ strata-cli tx prove -i seriesMintingTx.pbuf --walletdb $TOPL_WALLET_DB --keyfile
 export ASSET_UTXO=$(strata-cli tx broadcast -i seriesMintingTxProved.pbuf -h 127.0.0.1 --port 9084)
 strata-cli node-query mint-block --nb-blocks 1 -h 127.0.0.1  --port 9084 -s false
 echo "ASSET_UTXO: $ASSET_UTXO"
-until strata-cli genus-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $TOPL_WALLET_DB; do sleep 5; done
+until strata-cli indexer-query utxo-by-address --host localhost --port 9084 --secure false --walletdb $TOPL_WALLET_DB; do sleep 5; done

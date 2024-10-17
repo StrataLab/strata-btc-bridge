@@ -409,7 +409,7 @@ package object bridge extends ProcessOps {
     .ProcessBuilder(
       CS_CMD,
       csParams ++ Seq(
-        "genus-query",
+        "indexer-query",
         "utxo-by-address",
         "--host",
         "localhost",
@@ -429,7 +429,7 @@ package object bridge extends ProcessOps {
     .ProcessBuilder(
       CS_CMD,
       csParams ++ Seq(
-        "genus-query",
+        "indexer-query",
         "utxo-by-address",
         "--host",
         "localhost",
