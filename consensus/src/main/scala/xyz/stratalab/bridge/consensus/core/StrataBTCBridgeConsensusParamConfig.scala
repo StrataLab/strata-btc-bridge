@@ -2,11 +2,15 @@ package xyz.stratalab.bridge.consensus.core
 
 import co.topl.brambl.models.{GroupId, SeriesId}
 import org.bitcoins.core.currency.{CurrencyUnit, SatoshisLong}
-import java.io.File
-import xyz.stratalab.bridge.shared.{PbftInternalClientConfig, PBFTInternalGrpcServiceClientRetryConfig}
-  import xyz.stratalab.bridge.shared.{StateMachineServiceGrpcClientRetryConfig, StateMachineClientConfig}
+import xyz.stratalab.bridge.shared.{
+  PBFTInternalGrpcServiceClientRetryConfig,
+  PbftInternalClientConfig,
+  StateMachineClientConfig,
+  StateMachineServiceGrpcClientRetryConfig
+}
 
-  
+import java.io.File
+
 case class StrataBTCBridgeConsensusParamConfig(
   btcWaitExpirationTime:     Int = 100, // the number of blocks to wait before the user can reclaim their funds
   btcConfirmationThreshold:  Int = 6, // the number of confirmations required for a peg-in transaction
@@ -39,7 +43,7 @@ case class StrataBTCBridgeConsensusParamConfig(
   seriesId:                  SeriesId,
   configurationFile:         File = new File("application.conf"),
   dbFile:                    File = new File("bridge.db"),
-  toplSecureConnection:      Boolean = false, 
-  pbftInternalClientConfig:  PBFTInternalGrpcServiceClientRetryConfig = PbftInternalClientConfig, 
+  toplSecureConnection:      Boolean = false,
+  pbftInternalClientConfig:  PBFTInternalGrpcServiceClientRetryConfig = PbftInternalClientConfig,
   stateMachineClientConfig:  StateMachineServiceGrpcClientRetryConfig = StateMachineClientConfig
 )

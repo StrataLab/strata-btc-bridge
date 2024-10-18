@@ -15,11 +15,10 @@ import xyz.stratalab.bridge.consensus.pbft.{
   PrepareRequest,
   ViewChangeRequest
 }
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, ReplicaNode, PBFTInternalGrpcServiceClientRetryConfig}
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, PBFTInternalGrpcServiceClientRetryConfig, ReplicaNode}
 
 import java.security.KeyPair
 import scala.concurrent.duration._
-
 
 trait PBFTInternalGrpcServiceClient[F[_]] {
 
@@ -55,7 +54,7 @@ object PBFTInternalGrpcServiceClientImpl {
 
   def make[F[_]: Async: Logger](
     keyPair:      KeyPair,
-    replicaNodes: List[ReplicaNode[F]],
+    replicaNodes: List[ReplicaNode[F]]
   )(implicit pbftInternalClientConfig: PBFTInternalGrpcServiceClientRetryConfig) =
     for {
       idBackupMap <- (for {
@@ -80,12 +79,12 @@ object PBFTInternalGrpcServiceClientImpl {
       import xyz.stratalab.bridge.shared.implicits._
 
       def retryWithBackoff[A](
-        operation: => F[A],
-        initialDelay: FiniteDuration,
-        maxRetries: Int,
+        operation:     => F[A],
+        initialDelay:  FiniteDuration,
+        maxRetries:    Int,
         operationName: String,
-        defaultValue: => A
-      )(implicit F: Temporal[F]): F[A] = {
+        defaultValue:  => A
+      )(implicit F: Temporal[F]): F[A] =
         operation.handleErrorWith { error =>
           if (maxRetries > 0) {
             F.sleep(initialDelay) >> {
@@ -97,43 +96,49 @@ object PBFTInternalGrpcServiceClientImpl {
             F.pure(defaultValue)
           }
         }
-      }
 
-      override def viewChange(request: ViewChangeRequest): F[Empty] = {
+      override def viewChange(request: ViewChangeRequest): F[Empty] =
         for {
           _ <- trace"Sending ViewChange to all replicas"
           signedBytes <- BridgeCryptoUtils.signBytes[F](
             keyPair.getPrivate(),
             request.signableBytes
           )
-          _ <- backupMap.toList.traverse { case (_, backup) => 
+          _ <- backupMap.toList.traverse { case (_, backup) =>
             retryWithBackoff(
               backup.viewChange(
                 request.withSignature(
                   ByteString.copyFrom(signedBytes)
-                ), new Metadata()),
-              pbftInternalClientConfig.getInitialDelay, 
-              pbftInternalClientConfig.getMaxRetries, 
-              "View Change", 
+                ),
+                new Metadata()
+              ),
+              pbftInternalClientConfig.getInitialDelay,
+              pbftInternalClientConfig.getMaxRetries,
+              "View Change",
               Empty()
             )
           }
-        } yield Empty()}
+        } yield Empty()
 
       override def commit(request: CommitRequest): F[Empty] = {
         def retryCommitWithBackoff(
-          backup: PBFTInternalServiceFs2Grpc[F,io.grpc.Metadata],
+          backup:        PBFTInternalServiceFs2Grpc[F, io.grpc.Metadata],
           signedRequest: CommitRequest,
-          initialDelay: FiniteDuration,
-          maxRetries: Int
-        ): F[Empty] = {
+          initialDelay:  FiniteDuration,
+          maxRetries:    Int
+        ): F[Empty] =
           backup.commit(signedRequest, new Metadata()).handleErrorWith { error =>
             maxRetries match {
-              case 0 => Async[F].sleep(initialDelay) >> retryCommitWithBackoff(backup, signedRequest, initialDelay * 2, maxRetries - 1)
+              case 0 =>
+                Async[F].sleep(initialDelay) >> retryCommitWithBackoff(
+                  backup,
+                  signedRequest,
+                  initialDelay * 2,
+                  maxRetries - 1
+                )
               case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
             }
           }
-        }
 
         for {
           _ <- trace"Sending CommitRequest to all replicas"
@@ -143,109 +148,104 @@ object PBFTInternalGrpcServiceClientImpl {
           )
           _ <- backupMap.toList.traverse { case (_, backup) =>
             retryCommitWithBackoff(
-              backup, 
+              backup,
               request.withSignature(
                 ByteString.copyFrom(signedBytes)
               ),
-              pbftInternalClientConfig.getInitialDelay, 
-              pbftInternalClientConfig.getMaxRetries, 
+              pbftInternalClientConfig.getInitialDelay,
+              pbftInternalClientConfig.getMaxRetries
             ).handleErrorWith { _ =>
-           Async[F].pure(Empty())
-         } 
+              Async[F].pure(Empty())
+            }
           }
         } yield Empty()
       }
-        
 
-      override def prePrepare(request: PrePrepareRequest): F[Empty] = {
+      override def prePrepare(request: PrePrepareRequest): F[Empty] =
         for {
           _ <- trace"Sending PrePrepareRequest to all replicas"
           _ <- backupMap.toList.traverse { case (_, backup) =>
             retryWithBackoff(
               backup.prePrepare(
-                request, 
+                request,
                 new Metadata()
-              ), 
-              pbftInternalClientConfig.getInitialDelay, 
-              pbftInternalClientConfig.getMaxRetries, 
-              "Pre Prepare", 
+              ),
+              pbftInternalClientConfig.getInitialDelay,
+              pbftInternalClientConfig.getMaxRetries,
+              "Pre Prepare",
               Empty()
             )
           }
         } yield Empty()
-      }
 
       override def prepare(
         request: PrepareRequest
-      ): F[Empty] = {
+      ): F[Empty] =
         for {
           _ <- trace"Sending PrepareRequest to all replicas"
           signedBytes <- BridgeCryptoUtils.signBytes[F](
             keyPair.getPrivate(),
             request.signableBytes
           )
-         _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- backupMap.toList.traverse { case (_, backup) =>
             retryWithBackoff(
               backup.prepare(
                 request.withSignature(
-                ByteString.copyFrom(signedBytes)
+                  ByteString.copyFrom(signedBytes)
                 ),
                 new Metadata()
-              ), 
-              pbftInternalClientConfig.getInitialDelay, 
-              pbftInternalClientConfig.getMaxRetries, 
-              "Prepare", 
+              ),
+              pbftInternalClientConfig.getInitialDelay,
+              pbftInternalClientConfig.getMaxRetries,
+              "Prepare",
               Empty()
             )
           }
         } yield Empty()
-      }
 
       override def checkpoint(
         request: CheckpointRequest
-      ): F[Empty] = {
+      ): F[Empty] =
         for {
-        _ <- trace"Sending Checkpoint to all replicas"
-        _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- trace"Sending Checkpoint to all replicas"
+          _ <- backupMap.toList.traverse { case (_, backup) =>
             retryWithBackoff(
               backup.checkpoint(
                 request,
                 new Metadata()
-              ), 
-              pbftInternalClientConfig.getInitialDelay, 
-              pbftInternalClientConfig.getMaxRetries, 
-              "Checkpoint", 
+              ),
+              pbftInternalClientConfig.getInitialDelay,
+              pbftInternalClientConfig.getMaxRetries,
+              "Checkpoint",
               Empty()
             )
           }
-      } yield Empty()
-    }
+        } yield Empty()
 
       override def newView(
         request: NewViewRequest
-      ): F[Empty] = {
+      ): F[Empty] =
         for {
-        _ <- trace"Sending NewViewRequest to all replicas"
-        signedBytes <- BridgeCryptoUtils.signBytes[F](
-          keyPair.getPrivate(),
-          request.signableBytes
-        )
-        _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- trace"Sending NewViewRequest to all replicas"
+          signedBytes <- BridgeCryptoUtils.signBytes[F](
+            keyPair.getPrivate(),
+            request.signableBytes
+          )
+          _ <- backupMap.toList.traverse { case (_, backup) =>
             retryWithBackoff(
               backup.newView(
                 request.withSignature(
-              ByteString.copyFrom(signedBytes)
-            ),
+                  ByteString.copyFrom(signedBytes)
+                ),
                 new Metadata()
-              ), 
-              pbftInternalClientConfig.getInitialDelay, 
-              pbftInternalClientConfig.getMaxRetries,  
-              "new View", 
+              ),
+              pbftInternalClientConfig.getInitialDelay,
+              pbftInternalClientConfig.getMaxRetries,
+              "new View",
               Empty()
             )
           }
-      } yield Empty()
-    }
+        } yield Empty()
 
     }
 }

@@ -27,7 +27,7 @@ import xyz.stratalab.bridge.shared.{
   ReplicaNode,
   ResponseGrpcServiceServer,
   StateMachineServiceGrpcClient,
-  StateMachineServiceGrpcClientImpl, 
+  StateMachineServiceGrpcClientImpl,
   StateMachineServiceGrpcClientRetryConfig
 }
 
@@ -92,11 +92,11 @@ object Main extends IOApp with PublicApiParamsDescriptor {
     privateKeyFile: String,
     replicaNodes:   List[ReplicaNode[IO]],
     replicaKeysMap: Map[Int, PublicKey],
-    currentViewRef: Ref[IO, Long], 
+    currentViewRef: Ref[IO, Long]
   )(implicit
-    replicaCount: ReplicaCount,
-    clientNumber: ClientId,
-    logger:       Logger[IO],
+    replicaCount:             ReplicaCount,
+    clientNumber:             ClientId,
+    logger:                   Logger[IO],
     stateMachineClientConfig: StateMachineServiceGrpcClientRetryConfig
   ) = {
     val messageResponseMap =

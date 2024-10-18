@@ -246,7 +246,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     clientId:           ClientId,
     replicaId:          ReplicaId,
     clientCount:        ClientCount,
-    replicaCount:       ReplicaCount, 
+    replicaCount:       ReplicaCount
   ) = {
     import fs2.grpc.syntax.all._
     import scala.jdk.CollectionConverters._

@@ -1,10 +1,10 @@
 package xyz.stratalab.bridge.publicapi
 
-import java.io.File
-import xyz.stratalab.bridge.shared.{StateMachineServiceGrpcClientRetryConfig, StateMachineClientConfig}
+import xyz.stratalab.bridge.shared.{StateMachineClientConfig, StateMachineServiceGrpcClientRetryConfig}
 
+import java.io.File
 
 case class StrataBTCBridgePublicApiParamConfig(
-  configurationFile: File = new File("application.conf"),
-  stateMachineClientConfig:  StateMachineServiceGrpcClientRetryConfig = StateMachineClientConfig
+  configurationFile:        File = new File("application.conf"),
+  stateMachineClientConfig: StateMachineServiceGrpcClientRetryConfig = StateMachineClientConfig
 )
