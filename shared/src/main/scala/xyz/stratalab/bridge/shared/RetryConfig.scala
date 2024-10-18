@@ -7,7 +7,6 @@ sealed abstract class StateMachineServiceGrpcClientRetryConfig (
   val finalSleep: FiniteDuration, 
   val initialDuration: FiniteDuration, 
   val maxRetries: Int
-
 ) {
   def getInitialSleep: FiniteDuration = initialSleep
 
@@ -23,7 +22,6 @@ sealed abstract class StateMachineServiceGrpcClientRetryConfig (
 sealed abstract class PBFTInternalGrpcServiceClientRetryConfig (
   val initialDelay: FiniteDuration, 
   val maxRetries: Int
-
 ) {
 
   def getInitialDelay: FiniteDuration = initialDelay

@@ -15,6 +15,7 @@ import xyz.stratalab.bridge.consensus.pbft.{
   PrepareRequest,
   ViewChangeRequest
 }
+import cats.Parallel
 import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, PBFTInternalGrpcServiceClientRetryConfig, ReplicaNode}
 
 import java.security.KeyPair
@@ -52,7 +53,7 @@ object PBFTInternalGrpcServiceClientImpl {
 
   import cats.implicits._
 
-  def make[F[_]: Async: Logger](
+  def make[F[_]: Parallel: Async:  Logger](
     keyPair:      KeyPair,
     replicaNodes: List[ReplicaNode[F]]
   )(implicit pbftInternalClientConfig: PBFTInternalGrpcServiceClientRetryConfig) =
@@ -104,7 +105,7 @@ object PBFTInternalGrpcServiceClientImpl {
             keyPair.getPrivate(),
             request.signableBytes
           )
-          _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- backupMap.toList.parTraverse { case (_, backup) =>
             retryWithBackoff(
               backup.viewChange(
                 request.withSignature(
@@ -121,24 +122,24 @@ object PBFTInternalGrpcServiceClientImpl {
         } yield Empty()
 
       override def commit(request: CommitRequest): F[Empty] = {
-        def retryCommitWithBackoff(
-          backup:        PBFTInternalServiceFs2Grpc[F, io.grpc.Metadata],
-          signedRequest: CommitRequest,
-          initialDelay:  FiniteDuration,
-          maxRetries:    Int
-        ): F[Empty] =
-          backup.commit(signedRequest, new Metadata()).handleErrorWith { error =>
-            maxRetries match {
-              case 0 =>
-                Async[F].sleep(initialDelay) >> retryCommitWithBackoff(
-                  backup,
-                  signedRequest,
-                  initialDelay * 2,
-                  maxRetries - 1
-                )
-              case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
-            }
-          }
+        // def retryCommitWithBackoff(
+        //   backup:        PBFTInternalServiceFs2Grpc[F, io.grpc.Metadata],
+        //   signedRequest: CommitRequest,
+        //   initialDelay:  FiniteDuration,
+        //   maxRetries:    Int
+        // ): F[Empty] =
+        //   backup.commit(signedRequest, new Metadata()).handleErrorWith { error =>
+        //     maxRetries match {
+        //       case 0 =>
+        //         Async[F].sleep(initialDelay) >> retryCommitWithBackoff(
+        //           backup,
+        //           signedRequest,
+        //           initialDelay * 2,
+        //           maxRetries - 1
+        //         )
+        //       case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
+        //     }
+        //   }
 
         for {
           _ <- trace"Sending CommitRequest to all replicas"
@@ -146,14 +147,15 @@ object PBFTInternalGrpcServiceClientImpl {
             keyPair.getPrivate(),
             request.signableBytes
           )
-          _ <- backupMap.toList.traverse { case (_, backup) =>
-            retryCommitWithBackoff(
-              backup,
-              request.withSignature(
+          _ <- backupMap.toList.parTraverse { case (_, backup) =>
+            retryWithBackoff(
+              backup.commit(request.withSignature(
                 ByteString.copyFrom(signedBytes)
-              ),
+              ), new Metadata()),
               pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries
+              pbftInternalClientConfig.getMaxRetries, 
+              "Commit", 
+              Empty()
             ).handleErrorWith { _ =>
               Async[F].pure(Empty())
             }
@@ -164,7 +166,7 @@ object PBFTInternalGrpcServiceClientImpl {
       override def prePrepare(request: PrePrepareRequest): F[Empty] =
         for {
           _ <- trace"Sending PrePrepareRequest to all replicas"
-          _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- backupMap.toList.parTraverse { case (_, backup) =>
             retryWithBackoff(
               backup.prePrepare(
                 request,
@@ -187,7 +189,7 @@ object PBFTInternalGrpcServiceClientImpl {
             keyPair.getPrivate(),
             request.signableBytes
           )
-          _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- backupMap.toList.parTraverse { case (_, backup) =>
             retryWithBackoff(
               backup.prepare(
                 request.withSignature(
@@ -208,7 +210,7 @@ object PBFTInternalGrpcServiceClientImpl {
       ): F[Empty] =
         for {
           _ <- trace"Sending Checkpoint to all replicas"
-          _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- backupMap.toList.parTraverse { case (_, backup) =>
             retryWithBackoff(
               backup.checkpoint(
                 request,
@@ -231,7 +233,7 @@ object PBFTInternalGrpcServiceClientImpl {
             keyPair.getPrivate(),
             request.signableBytes
           )
-          _ <- backupMap.toList.traverse { case (_, backup) =>
+          _ <- backupMap.toList.parTraverse { case (_, backup) =>
             retryWithBackoff(
               backup.newView(
                 request.withSignature(
@@ -246,6 +248,5 @@ object PBFTInternalGrpcServiceClientImpl {
             )
           }
         } yield Empty()
-
     }
 }
