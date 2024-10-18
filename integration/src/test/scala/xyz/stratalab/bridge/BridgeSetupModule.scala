@@ -32,7 +32,7 @@ trait BridgeSetupModule extends CatsEffectSuite with ReplicaConfModule with Publ
   def createReplicaConfigurationFiles[F[_]: file.Files: Async]() = (for {
     replicaId <- 0 until replicaCount
   } yield fs2
-    .Stream(consensusConfString(replicaId, replicaCount))
+    .Stream(consensusConfString(replicaId, replicaCount ))
     .through(fs2.text.utf8.encode)
     .through(file.Files[F].writeAll(fs2.io.file.Path(s"replicaConfig${replicaId}.conf")))
     .compile
