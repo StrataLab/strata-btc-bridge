@@ -493,7 +493,6 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
       org.typelevel.log4cats.slf4j.Slf4jLogger
         .getLoggerFromName[IO]("consensus-" + f"${replicaId.id}%02d")
 
-    implicit val pbftInternalClientConfig = params.pbftInternalClientConfig
     (for {
       _                  <- IO(Security.addProvider(new BouncyCastleProvider()))
       pegInKm            <- loadKeyPegin(params)

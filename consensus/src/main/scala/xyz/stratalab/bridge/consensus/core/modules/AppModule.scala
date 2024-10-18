@@ -208,7 +208,6 @@ trait AppModule extends WalletStateResource {
       implicit val iRequestTimerManager = requestTimerManager
       implicit val iViewManager = viewManager
       implicit val iCheckpointManager = checkpointManager
-      implicit val pbftInternalClientConfig = params.pbftInternalClientConfig
 
       implicit val pbftReqProcessor = PBFTRequestPreProcessorImpl.make[IO](
         queue,
