@@ -34,6 +34,15 @@ trait PublicApiConfModule extends CommonSetupModule {
 ${replicasConfString(replicaCount)}
 |      }
 |    }
+|    stateMachine { 
+|     # in seconds
+|     intialSleep = 10 
+|     # in seconds
+|     finalSleep = 10 
+|     # in seconds
+|     initialDelay = 1
+|     maxRetries = 3
+|   }
 |  }
 |}
   """.trim().stripMargin
