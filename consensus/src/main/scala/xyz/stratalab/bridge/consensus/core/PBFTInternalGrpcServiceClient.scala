@@ -16,7 +16,7 @@ import xyz.stratalab.bridge.consensus.pbft.{
   ViewChangeRequest
 }
 import cats.Parallel
-import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, PBFTInternalGrpcServiceClientRetryConfig, ReplicaNode}
+import xyz.stratalab.bridge.shared.{BridgeCryptoUtils, Empty, PBFTInternalGrpcServiceClientRetryConfigImpl, ReplicaNode}
 
 import java.security.KeyPair
 import scala.concurrent.duration._
@@ -53,10 +53,10 @@ object PBFTInternalGrpcServiceClientImpl {
 
   import cats.implicits._
 
-  def make[F[_]: Parallel: Async:  Logger](
+  def make[F[_]: Parallel: Async: Logger](
     keyPair:      KeyPair,
     replicaNodes: List[ReplicaNode[F]]
-  )(implicit pbftInternalClientConfig: PBFTInternalGrpcServiceClientRetryConfig) =
+  )(implicit pbftInternalConfig: PBFTInternalGrpcServiceClientRetryConfigImpl) =
     for {
       idBackupMap <- (for {
         replicaNode <- replicaNodes
@@ -113,34 +113,15 @@ object PBFTInternalGrpcServiceClientImpl {
                 ),
                 new Metadata()
               ),
-              pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries,
+              pbftInternalConfig.getInitialDelay,
+              pbftInternalConfig.getMaxRetries,
               "View Change",
               Empty()
             )
           }
         } yield Empty()
 
-      override def commit(request: CommitRequest): F[Empty] = {
-        // def retryCommitWithBackoff(
-        //   backup:        PBFTInternalServiceFs2Grpc[F, io.grpc.Metadata],
-        //   signedRequest: CommitRequest,
-        //   initialDelay:  FiniteDuration,
-        //   maxRetries:    Int
-        // ): F[Empty] =
-        //   backup.commit(signedRequest, new Metadata()).handleErrorWith { error =>
-        //     maxRetries match {
-        //       case 0 =>
-        //         Async[F].sleep(initialDelay) >> retryCommitWithBackoff(
-        //           backup,
-        //           signedRequest,
-        //           initialDelay * 2,
-        //           maxRetries - 1
-        //         )
-        //       case _ => trace"Max retries reached for Commit. Error: ${error.getMessage}" >> Async[F].pure(Empty())
-        //     }
-        //   }
-
+      override def commit(request: CommitRequest): F[Empty] =
         for {
           _ <- trace"Sending CommitRequest to all replicas"
           signedBytes <- BridgeCryptoUtils.signBytes[F](
@@ -149,19 +130,21 @@ object PBFTInternalGrpcServiceClientImpl {
           )
           _ <- backupMap.toList.parTraverse { case (_, backup) =>
             retryWithBackoff(
-              backup.commit(request.withSignature(
-                ByteString.copyFrom(signedBytes)
-              ), new Metadata()),
-              pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries, 
-              "Commit", 
+              backup.commit(
+                request.withSignature(
+                  ByteString.copyFrom(signedBytes)
+                ),
+                new Metadata()
+              ),
+              pbftInternalConfig.getInitialDelay,
+              pbftInternalConfig.getMaxRetries,
+              "Commit",
               Empty()
             ).handleErrorWith { _ =>
               Async[F].pure(Empty())
             }
           }
         } yield Empty()
-      }
 
       override def prePrepare(request: PrePrepareRequest): F[Empty] =
         for {
@@ -172,8 +155,8 @@ object PBFTInternalGrpcServiceClientImpl {
                 request,
                 new Metadata()
               ),
-              pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries,
+              pbftInternalConfig.getInitialDelay,
+              pbftInternalConfig.getMaxRetries,
               "Pre Prepare",
               Empty()
             )
@@ -197,8 +180,8 @@ object PBFTInternalGrpcServiceClientImpl {
                 ),
                 new Metadata()
               ),
-              pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries,
+              pbftInternalConfig.getInitialDelay,
+              pbftInternalConfig.getMaxRetries,
               "Prepare",
               Empty()
             )
@@ -216,8 +199,8 @@ object PBFTInternalGrpcServiceClientImpl {
                 request,
                 new Metadata()
               ),
-              pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries,
+              pbftInternalConfig.getInitialDelay,
+              pbftInternalConfig.getMaxRetries,
               "Checkpoint",
               Empty()
             )
@@ -241,8 +224,8 @@ object PBFTInternalGrpcServiceClientImpl {
                 ),
                 new Metadata()
               ),
-              pbftInternalClientConfig.getInitialDelay,
-              pbftInternalClientConfig.getMaxRetries,
+              pbftInternalConfig.getInitialDelay,
+              pbftInternalConfig.getMaxRetries,
               "new View",
               Empty()
             )

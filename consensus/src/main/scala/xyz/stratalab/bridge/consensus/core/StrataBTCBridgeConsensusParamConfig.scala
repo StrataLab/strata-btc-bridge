@@ -2,12 +2,6 @@ package xyz.stratalab.bridge.consensus.core
 
 import co.topl.brambl.models.{GroupId, SeriesId}
 import org.bitcoins.core.currency.{CurrencyUnit, SatoshisLong}
-import xyz.stratalab.bridge.shared.{
-  PBFTInternalGrpcServiceClientRetryConfig,
-  PbftInternalClientConfig,
-  StateMachineClientConfig,
-  StateMachineServiceGrpcClientRetryConfig
-}
 
 import java.io.File
 
@@ -43,7 +37,5 @@ case class StrataBTCBridgeConsensusParamConfig(
   seriesId:                  SeriesId,
   configurationFile:         File = new File("application.conf"),
   dbFile:                    File = new File("bridge.db"),
-  toplSecureConnection:      Boolean = false,
-  pbftInternalClientConfig:  PBFTInternalGrpcServiceClientRetryConfig = PbftInternalClientConfig,
-  stateMachineClientConfig:  StateMachineServiceGrpcClientRetryConfig = StateMachineClientConfig
+  toplSecureConnection:      Boolean = false
 )

@@ -22,7 +22,8 @@ import xyz.stratalab.bridge.shared.{
   StateMachineRequest,
   TimeoutDepositBTCOperation,
   TimeoutError,
-  TimeoutTBTCMintOperation
+  TimeoutTBTCMintOperation,
+  StateMachineServiceGrpcClientRetryConfigImpl
 }
 
 import java.security.KeyPair
@@ -98,7 +99,7 @@ object StateMachineServiceGrpcClientImpl {
         BridgeResponse
       ], LongAdder]
     ],
-  )(implicit replicaCount: ReplicaCount,stateMachineClientConfig: StateMachineServiceGrpcClientRetryConfig) = {
+  )(implicit replicaCount: ReplicaCount,stateMachineConf: StateMachineServiceGrpcClientRetryConfigImpl) = {
     for {
       idClientList <- (for {
         replicaNode <- replicaNodes
@@ -329,18 +330,18 @@ object StateMachineServiceGrpcClientImpl {
           _ <- retryWithBackoff(
             replicaMap(currentPrimary),
             request,
-            stateMachineClientConfig.getInitialDuration, 
-            stateMachineClientConfig.getMaxRetries
+            stateMachineConf.getInitialDelay, 
+            stateMachineConf.getMaxRetries
           )
           _ <- trace"Waiting for response from backend"
           replicasWithoutPrimary = replicaMap.filter(_._1 != currentPrimary).values.toList
           someResponse <- Async[F].race(
-            Async[F].sleep(10.second) >> // wait for response
+            Async[F].sleep(stateMachineConf.getInitialSleep) >> // wait for response
             error"The request ${request.timestamp} timed out, contacting other replicas" >> // timeout
             replicasWithoutPrimary.parTraverse{
-            replica => retryWithBackoff(replica, request, stateMachineClientConfig.getInitialDuration, stateMachineClientConfig.getMaxRetries)
+            replica => retryWithBackoff(replica, request, stateMachineConf.getInitialDelay, stateMachineConf.getMaxRetries)
           } >>
-            Async[F].sleep(10.second) >> // wait for response
+            Async[F].sleep(stateMachineConf.getFinalSleep) >> // wait for response
             (TimeoutError("Timeout waiting for response"): BridgeError)
               .pure[F],
             checkVoteResult(request.timestamp)

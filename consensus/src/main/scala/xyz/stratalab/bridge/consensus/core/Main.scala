@@ -43,7 +43,9 @@ import xyz.stratalab.bridge.shared.{
   ReplicaNode,
   ResponseGrpcServiceServer,
   StateMachineServiceGrpcClient,
-  StateMachineServiceGrpcClientImpl
+  StateMachineServiceGrpcClientImpl,
+  PBFTInternalGrpcServiceClientRetryConfigImpl,
+  StateMachineServiceGrpcClientRetryConfigImpl
 }
 import xyz.stratalab.consensus.core.{PBFTInternalGrpcServiceClient, PBFTInternalGrpcServiceClientImpl}
 
@@ -246,7 +248,9 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     clientId:           ClientId,
     replicaId:          ReplicaId,
     clientCount:        ClientCount,
-    replicaCount:       ReplicaCount
+    replicaCount:       ReplicaCount,
+    pbftInternalConfig: PBFTInternalGrpcServiceClientRetryConfigImpl,
+    stateMachineConf:   StateMachineServiceGrpcClientRetryConfigImpl
   ) = {
     import fs2.grpc.syntax.all._
     import scala.jdk.CollectionConverters._
@@ -261,8 +265,6 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         ConcurrentHashMap[Int, Int]
       ]()
 
-    implicit val pbftInternalClientConfig = params.pbftInternalClientConfig
-    implicit val stateMachineClientConfig = params.stateMachineClientConfig
     for {
       replicaKeyPair <- BridgeCryptoUtils
         .getKeyPair[IO](privateKeyFile)
@@ -492,6 +494,18 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     implicit val logger =
       org.typelevel.log4cats.slf4j.Slf4jLogger
         .getLoggerFromName[IO]("consensus-" + f"${replicaId.id}%02d")
+
+    implicit val pbftInternalConfig = PBFTInternalGrpcServiceClientRetryConfigImpl(
+      conf.getInt("bridge.replica.clients.pbftInternal.initialDelay"),
+      conf.getInt("bridge.replica.clients.pbftInternal.maxRetries")
+    )
+
+    implicit val stateMachineConf = StateMachineServiceGrpcClientRetryConfigImpl(
+      conf.getInt("bridge.replica.clients.stateMachine.intialSleep"),
+      conf.getInt("bridge.replica.clients.stateMachine.finalSleep"),
+      conf.getInt("bridge.replica.clients.stateMachine.initialDelay"),
+      conf.getInt("bridge.replica.clients.stateMachine.maxRetries")
+    )
 
     (for {
       _                  <- IO(Security.addProvider(new BouncyCastleProvider()))

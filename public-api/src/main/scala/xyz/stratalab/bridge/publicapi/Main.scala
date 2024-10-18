@@ -27,8 +27,8 @@ import xyz.stratalab.bridge.shared.{
   ReplicaNode,
   ResponseGrpcServiceServer,
   StateMachineServiceGrpcClient,
-  StateMachineServiceGrpcClientImpl,
-  StateMachineServiceGrpcClientRetryConfig
+  StateMachineServiceGrpcClientRetryConfigImpl,
+  StateMachineServiceGrpcClientImpl
 }
 
 import java.net.InetSocketAddress
@@ -94,10 +94,10 @@ object Main extends IOApp with PublicApiParamsDescriptor {
     replicaKeysMap: Map[Int, PublicKey],
     currentViewRef: Ref[IO, Long]
   )(implicit
-    replicaCount:             ReplicaCount,
-    clientNumber:             ClientId,
-    logger:                   Logger[IO],
-    stateMachineClientConfig: StateMachineServiceGrpcClientRetryConfig
+    replicaCount:     ReplicaCount,
+    clientNumber:     ClientId,
+    logger:           Logger[IO],
+    stateMachineConf: StateMachineServiceGrpcClientRetryConfigImpl
   ) = {
     val messageResponseMap =
       new ConcurrentHashMap[ConsensusClientMessageId, ConcurrentHashMap[Either[
@@ -205,7 +205,13 @@ object Main extends IOApp with PublicApiParamsDescriptor {
           org.typelevel.log4cats.slf4j.Slf4jLogger
             .getLoggerFromName[IO]("public-api-" + f"${client.id}%02d")
 
-        implicit val stateMachineClientConfig = configuration.stateMachineClientConfig
+        implicit val stateMachineConf = StateMachineServiceGrpcClientRetryConfigImpl(
+          conf.getInt("bridge.client.stateMachine.intialSleep"),
+          conf.getInt("bridge.client.stateMachine.finalSleep"),
+          conf.getInt("bridge.client.stateMachine.initialDelay"),
+          conf.getInt("bridge.client.stateMachine.maxRetries")
+        )
+
         for {
           _ <- info"Configuration parameters"
           _ <- IO(Security.addProvider(new BouncyCastleProvider()))
