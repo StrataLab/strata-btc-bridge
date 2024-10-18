@@ -27,7 +27,8 @@ import xyz.stratalab.bridge.shared.{
   ReplicaNode,
   ResponseGrpcServiceServer,
   StateMachineServiceGrpcClient,
-  StateMachineServiceGrpcClientImpl
+  StateMachineServiceGrpcClientImpl, 
+  StateMachineServiceGrpcClientRetryConfig
 }
 
 import java.net.InetSocketAddress
@@ -91,11 +92,12 @@ object Main extends IOApp with PublicApiParamsDescriptor {
     privateKeyFile: String,
     replicaNodes:   List[ReplicaNode[IO]],
     replicaKeysMap: Map[Int, PublicKey],
-    currentViewRef: Ref[IO, Long]
+    currentViewRef: Ref[IO, Long], 
   )(implicit
     replicaCount: ReplicaCount,
     clientNumber: ClientId,
-    logger:       Logger[IO]
+    logger:       Logger[IO],
+    stateMachineClientConfig: StateMachineServiceGrpcClientRetryConfig
   ) = {
     val messageResponseMap =
       new ConcurrentHashMap[ConsensusClientMessageId, ConcurrentHashMap[Either[
@@ -202,6 +204,8 @@ object Main extends IOApp with PublicApiParamsDescriptor {
         implicit val logger =
           org.typelevel.log4cats.slf4j.Slf4jLogger
             .getLoggerFromName[IO]("public-api-" + f"${client.id}%02d")
+
+        implicit val stateMachineClientConfig = configuration.stateMachineClientConfig
         for {
           _ <- info"Configuration parameters"
           _ <- IO(Security.addProvider(new BouncyCastleProvider()))

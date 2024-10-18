@@ -246,7 +246,7 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     clientId:           ClientId,
     replicaId:          ReplicaId,
     clientCount:        ClientCount,
-    replicaCount:       ReplicaCount
+    replicaCount:       ReplicaCount, 
   ) = {
     import fs2.grpc.syntax.all._
     import scala.jdk.CollectionConverters._
@@ -260,6 +260,9 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
         ConsensusClientMessageId,
         ConcurrentHashMap[Int, Int]
       ]()
+
+    implicit val pbftInternalClientConfig = params.pbftInternalClientConfig
+    implicit val stateMachineClientConfig = params.stateMachineClientConfig
     for {
       replicaKeyPair <- BridgeCryptoUtils
         .getKeyPair[IO](privateKeyFile)
@@ -489,6 +492,8 @@ object Main extends IOApp with ConsensusParamsDescriptor with AppModule with Ini
     implicit val logger =
       org.typelevel.log4cats.slf4j.Slf4jLogger
         .getLoggerFromName[IO]("consensus-" + f"${replicaId.id}%02d")
+
+    implicit val pbftInternalClientConfig = params.pbftInternalClientConfig
     (for {
       _                  <- IO(Security.addProvider(new BouncyCastleProvider()))
       pegInKm            <- loadKeyPegin(params)

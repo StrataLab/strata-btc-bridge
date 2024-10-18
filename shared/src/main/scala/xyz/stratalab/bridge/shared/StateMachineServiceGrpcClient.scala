@@ -25,7 +25,6 @@ import xyz.stratalab.bridge.shared.{
   TimeoutTBTCMintOperation
 }
 
-
 import java.security.KeyPair
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
@@ -99,8 +98,8 @@ object StateMachineServiceGrpcClientImpl {
         BridgeError,
         BridgeResponse
       ], LongAdder]
-    ]
-  )(implicit replicaCount: ReplicaCount) = {
+    ],
+  )(implicit replicaCount: ReplicaCount,stateMachineClientConfig: StateMachineServiceGrpcClientRetryConfig) = {
     for {
       idClientList <- (for {
         replicaNode <- replicaNodes
@@ -315,11 +314,11 @@ object StateMachineServiceGrpcClientImpl {
           }.as {
             Async[F].race(
               for {
-                _ <- Async[F].sleep(10.seconds)
+                _ <- Async[F].sleep(stateMachineClientConfig.getInitialSleep)
                 fibers <- replicasWithoutPrimary.traverse { replica =>
-                  Async[F].start(retryWithBackoff(replica, request, 1.second, 3))
+                  Async[F].start(retryWithBackoff(replica, request, stateMachineClientConfig.getInitialDuration, stateMachineClientConfig.getMaxRetries))
                 }
-                _ <- Async[F].sleep(10.seconds)
+                _ <- Async[F].sleep(stateMachineClientConfig.getFinalSleep)
                 _ <- fibers.traverse_(_.cancel)
                 result <- (TimeoutError("Timeout waiting for response"): BridgeError).asLeft[BridgeResponse].pure[F]
               } yield result,
@@ -363,7 +362,7 @@ object StateMachineServiceGrpcClientImpl {
           _ <- retryWithBackoff(
             replicaMap(currentPrimary),
             request,
-            initialDelay = 1.second,
+            initialDelay = 1.second, // TODO: use configuration file
             maxRetries = 3
           )
           _ <- trace"Waiting for response from backend"
