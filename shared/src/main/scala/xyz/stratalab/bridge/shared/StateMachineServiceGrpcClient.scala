@@ -362,8 +362,8 @@ object StateMachineServiceGrpcClientImpl {
           _ <- retryWithBackoff(
             replicaMap(currentPrimary),
             request,
-            initialDelay = 1.second, // TODO: use configuration file
-            maxRetries = 3
+            stateMachineClientConfig.getInitialDuration, 
+            stateMachineClientConfig.getMaxRetries
           )
           _ <- trace"Waiting for response from backend"
           replicasWithoutPrimary = replicaMap.filter(_._1 != currentPrimary).values.toList
